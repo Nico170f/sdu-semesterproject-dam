@@ -1,4 +1,4 @@
-# # DAM Project
+# DAM Project
 
 This repository contains the Digital Asset Management (DAM) system for our semester project, where the entire class collaborates to build a complete webshop system. Our team is responsible for developing the DAM component.
 
