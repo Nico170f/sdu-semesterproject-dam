@@ -2,8 +2,55 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:App.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="App.MainWindow"
-        Title="App">
-    Welcome to Avalonia!
+        Title="Digital Asset Manager">
+    
+    <!-- Define styles for the window. This is "global", meaning it also affects the other views. -->
+    <Window.Styles>
+        
+        <!-- Style for all grids that enables grid lines. Useful for debugging, but a little misleading if you ask me. -->
+        <Style Selector="Grid">
+            <Setter Property="ShowGridLines" Value="False"></Setter>
+        </Style>
+        
+        <!-- Style for all buttons in the sidebar. -->
+        <Style Selector="Button.SideBar">
+            <Setter Property="Margin" Value="10 5 10 5"></Setter>
+        </Style>
+        <!-- Style for the top button in the sidebar. It simply changes the margin slightly to get a nicer look. -->
+        <Style Selector="Button.TopButton">
+            <Setter Property="Margin" Value="10 10 10 5"></Setter>
+        </Style>
+        
+        <!-- Style for the view elements. Needed to allow for the class. No graphical changes done here. -->
+        <Style Selector="UserControl.ViewElement"></Style>
+    </Window.Styles>
+    
+    <!-- Define the main grid that contains the sidebar and the view elements. -->
+    <Grid Name="MainGrid" ColumnDefinitions="Auto *" RowDefinitions="*">
+        
+        <!-- Define the sidebar grid that contains the logo and the buttons stackPanel. -->
+        <Grid Name="SideBarGrid" ColumnDefinitions="*" RowDefinitions="50 *" Grid.Column="0" Grid.Row="0">
+            
+            <!-- "Logo" -->
+            <Rectangle Grid.Column="0" Grid.Row="0" Fill="#4444FF"></Rectangle>
+            <Label Name="LogoTextLabel" Grid.Column="0" Grid.Row="0" Content="DAM" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            
+            <!-- Buttons -->
+            <Rectangle Grid.Column="0" Grid.Row="1" Fill="#7777FF"></Rectangle>
+            <StackPanel Name="SideBarButtonsPanel" Grid.Column="0" Grid.Row="1">
+                
+                <Button Name="HomeButton" Classes="SideBar TopButton" Click="HomeButton_OnClick" Content="Home" HorizontalAlignment="Center"/>
+                <Button Name="SettingsButton" Classes="SideBar" Click="SettingsButton_OnClick" Content="Settings" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Define the view elements stackPanel that contains the views. Only one view is visible at a time. -->
+        <StackPanel Grid.Column="1" Grid.Row="0">
+        <views:HomeView Name="HomeViewElement" Classes="ViewElement" IsVisible="True"/>
+        <views:SettingsView Name="SettingsViewElement" Classes="ViewElement" IsVisible="False"></views:SettingsView>
+        </StackPanel>
+    </Grid>
 </Window>
