@@ -45,6 +45,7 @@
                 <Button Name="HomeButton" Classes="SideBar TopButton" Click="Button_OnClick" Content="Home" HorizontalAlignment="Center"/>
                 <Button Name="SettingsButton" Classes="SideBar" Click="Button_OnClick" Content="Settings" HorizontalAlignment="Center"/>
                 <Button Name="AboutButton" Classes="SideBar" Click="Button_OnClick" Content="About" HorizontalAlignment="Center"/>
+                <Button Name="AddButton" Classes="SideBar" Click="Button_OnClick" Content="Add" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
         
