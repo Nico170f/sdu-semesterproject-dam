@@ -12,16 +12,31 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
     
-    private void HomeButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-	    SetActiveView(HomeViewElement);
-    }
 
-    private void SettingsButton_OnClick(object? sender, RoutedEventArgs e)
+    /// <summary>
+    /// Event handler for button clicks that manages view switching based on the button's name.
+    /// </summary>
+    /// <param name="sender">The button that triggered the event.</param>
+    /// <param name="e">Event arguments.</param>
+    /// <remarks>
+    /// This method extracts the view name from the button's Name property by removing "Button" suffix 
+    /// and appending "ViewElement". It then finds the corresponding UserControl view and activates it.
+    /// The button names must follow the pattern "[Name]Button" and corresponding views must be named 
+    /// "[Name]ViewElement".
+    /// </remarks>
+    private void Button_OnClick(object? sender, RoutedEventArgs e)
     {
-	    SetActiveView(SettingsViewElement);
+	    if (sender is Button button)
+	    {
+		    string viewName = button.Name!.Replace("Button", "ViewElement");
+		    UserControl? view = this.FindControl<UserControl>(viewName);
+		    if (view != null)
+		    {
+			    SetActiveView(view);
+		    }
+	    }
     }
-
+    
     /// <summary>
     /// Deactivates all views and activates the view passed as parameter
     /// </summary>

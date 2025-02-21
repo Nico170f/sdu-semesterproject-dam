@@ -42,8 +42,9 @@
             <Rectangle Grid.Column="0" Grid.Row="1" Fill="#7777FF"></Rectangle>
             <StackPanel Name="SideBarButtonsPanel" Grid.Column="0" Grid.Row="1">
                 
-                <Button Name="HomeButton" Classes="SideBar TopButton" Click="HomeButton_OnClick" Content="Home" HorizontalAlignment="Center"/>
-                <Button Name="SettingsButton" Classes="SideBar" Click="SettingsButton_OnClick" Content="Settings" HorizontalAlignment="Center"/>
+                <Button Name="HomeButton" Classes="SideBar TopButton" Click="Button_OnClick" Content="Home" HorizontalAlignment="Center"/>
+                <Button Name="SettingsButton" Classes="SideBar" Click="Button_OnClick" Content="Settings" HorizontalAlignment="Center"/>
+                <Button Name="AboutButton" Classes="SideBar" Click="Button_OnClick" Content="About" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
         
@@ -51,6 +52,7 @@
         <StackPanel Grid.Column="1" Grid.Row="0">
         <views:HomeView Name="HomeViewElement" Classes="ViewElement" IsVisible="True"/>
         <views:SettingsView Name="SettingsViewElement" Classes="ViewElement" IsVisible="False"></views:SettingsView>
+        <views:AboutView Name="AboutViewElement" Classes="ViewElement" IsVisible="False"></views:AboutView>
         </StackPanel>
     </Grid>
 </Window>

@@ -4,5 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="App.Views.HomeView">
-    <Label Content="HomeView"></Label>
+    <Grid ColumnDefinitions="*" RowDefinitions="Auto Auto *">
+        <Label Grid.Column="0" Grid.Row="0" Content="Home Overview"></Label>
+        
+        <Grid Grid.Column="0" Grid.Row="1" ColumnDefinitions="* Auto" RowDefinitions="*">
+            <TextBox Grid.Column="0" Grid.Row="0" Watermark="Enter search string"></TextBox>
+            <Button Grid.Column="1" Grid.Row="0" Content="🔍"></Button>
+        </Grid>
+        
+        <ScrollViewer Grid.Column="0" Grid.Row="2">
+            <Grid ColumnDefinitions="* * * *" RowDefinitions="*"></Grid>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
