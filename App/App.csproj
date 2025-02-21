@@ -21,6 +21,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Assets\" />
+      <None Remove="Assets\Henrik.jpg" />
+      <AvaloniaResource Include="Assets\Henrik.jpg">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </AvaloniaResource>
     </ItemGroup>
 </Project>

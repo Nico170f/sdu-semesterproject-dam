@@ -42,7 +42,7 @@
             <Rectangle Grid.Column="0" Grid.Row="1" Fill="#7777FF"></Rectangle>
             <StackPanel Name="SideBarButtonsPanel" Grid.Column="0" Grid.Row="1">
                 
-                <Button Name="HomeButton" Classes="SideBar TopButton" Click="Button_OnClick" Content="Home" HorizontalAlignment="Center"/>
+                <Button Name="HomeButton" Classes="SideBar TopButton" Click="Button_OnClick" Content="Main Overview" HorizontalAlignment="Center"/>
                 <Button Name="SettingsButton" Classes="SideBar" Click="Button_OnClick" Content="Settings" HorizontalAlignment="Center"/>
                 <Button Name="AboutButton" Classes="SideBar" Click="Button_OnClick" Content="About" HorizontalAlignment="Center"/>
                 <Button Name="AddButton" Classes="SideBar" Click="Button_OnClick" Content="Add" HorizontalAlignment="Center"/>
@@ -50,10 +50,11 @@
         </Grid>
         
         <!-- Define the view elements stackPanel that contains the views. Only one view is visible at a time. -->
-        <StackPanel Grid.Column="1" Grid.Row="0">
+        <WrapPanel Grid.Column="1" Grid.Row="0">
         <views:HomeView Name="HomeViewElement" Classes="ViewElement" IsVisible="True"/>
         <views:SettingsView Name="SettingsViewElement" Classes="ViewElement" IsVisible="False"></views:SettingsView>
         <views:AboutView Name="AboutViewElement" Classes="ViewElement" IsVisible="False"></views:AboutView>
-        </StackPanel>
+        <views:AddView Name="AddViewElement" Classes="ViewElement" IsVisible="False"></views:AddView>
+        </WrapPanel>
     </Grid>
 </Window>

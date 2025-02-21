@@ -4,16 +4,46 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="App.Views.HomeView">
+    
+    <UserControl.Styles>
+        <Style Selector="Image">
+            <Setter Property="Margin" Value="20"></Setter>
+        </Style>
+    </UserControl.Styles>
+    
     <Grid ColumnDefinitions="*" RowDefinitions="Auto Auto *">
         <Label Grid.Column="0" Grid.Row="0" Content="Home Overview"></Label>
         
         <Grid Grid.Column="0" Grid.Row="1" ColumnDefinitions="* Auto" RowDefinitions="*">
-            <TextBox Grid.Column="0" Grid.Row="0" Watermark="Enter search string"></TextBox>
-            <Button Grid.Column="1" Grid.Row="0" Content="🔍"></Button>
+            <TextBox Name="SeachBox" Grid.Column="0" Grid.Row="0" Watermark="Enter search string"/>
+            <Button Name="SearchButton" Grid.Column="1" Grid.Row="0" Content="🔍"/>
         </Grid>
         
         <ScrollViewer Grid.Column="0" Grid.Row="2">
-            <Grid ColumnDefinitions="* * * *" RowDefinitions="*"></Grid>
+            <StackPanel>
+                <Grid ColumnDefinitions="* * * *" RowDefinitions="* * * * *">
+                    <Image Grid.Column="0" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="1" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="2" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="3" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="0" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="1" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="2" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="3" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="0" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="1" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="2" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="3" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="0" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="1" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="2" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="3" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="0" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="1" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="2" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
+                    <Image Grid.Column="3" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
+                </Grid>
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>
