@@ -1,0 +1,24 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+        xmlns:controls="using:App.ScreenElements">
+    <Design.PreviewWith>
+        <controls:ImageWithTitle />
+    </Design.PreviewWith>
+
+    <Style Selector="controls|ImageWithTitle">
+        <!-- Set Defaults -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!-- Define the layout of the control -->
+                <Grid ColumnDefinitions="* *" RowDefinitions="Auto * Auto">
+                    <Label Grid.Column="0" Grid.Row="0" Content="{TemplateBinding ProductName}" Margin="10 5" HorizontalAlignment="Left"/>
+                    <Label Grid.Column="1" Grid.Row="0" Content="{TemplateBinding ProductID}" Margin="10 5" HorizontalAlignment="Right"/>
+                    <!-- The AdvancedImage control is from the AsyncImageLoader library (https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia) -->
+                    <asyncImageLoader:AdvancedImage Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Source="{TemplateBinding ProductImage}"></asyncImageLoader:AdvancedImage>
+                    <Button Name="Button" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Content="Select" HorizontalAlignment="Center"/>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+</Styles>

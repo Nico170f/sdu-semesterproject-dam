@@ -2,48 +2,30 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:screenElements="clr-namespace:App.ScreenElements"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="App.Views.HomeView">
     
     <UserControl.Styles>
-        <Style Selector="Image">
+        <!-- Required to use/show the custom TemplatedControl -->
+        <Style Selector="Image, screenElements|ImageWithTitle">
             <Setter Property="Margin" Value="20"></Setter>
         </Style>
     </UserControl.Styles>
     
     <Grid ColumnDefinitions="*" RowDefinitions="Auto Auto *">
+        <!--- Title of the view. -->
         <Label Grid.Column="0" Grid.Row="0" Content="Home Overview"></Label>
         
+        <!--- Search box and button. -->
         <Grid Grid.Column="0" Grid.Row="1" ColumnDefinitions="* Auto" RowDefinitions="*">
-            <TextBox Name="SeachBox" Grid.Column="0" Grid.Row="0" Watermark="Enter search string"/>
+            <TextBox Name="SearchBox" Grid.Column="0" Grid.Row="0" Watermark="Enter search string"/>
             <Button Name="SearchButton" Grid.Column="1" Grid.Row="0" Content="🔍"/>
         </Grid>
         
         <ScrollViewer Grid.Column="0" Grid.Row="2">
-            <StackPanel>
-                <Grid ColumnDefinitions="* * * *" RowDefinitions="* * * * *">
-                    <Image Grid.Column="0" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="1" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="2" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="3" Grid.Row="0" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="0" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="1" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="2" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="3" Grid.Row="1" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="0" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="1" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="2" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="3" Grid.Row="2" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="0" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="1" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="2" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="3" Grid.Row="3" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="0" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="1" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="2" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
-                    <Image Grid.Column="3" Grid.Row="4" Source="../Assets/Henrik.jpg"></Image>
-                </Grid>
-            </StackPanel>
+            <!--- This is where the products will be displayed. The content is set from the code-behind-->
+            <Grid Name="ProductsContainer" ColumnDefinitions="* * * *" RowDefinitions="* * * * *"/>
         </ScrollViewer>
     </Grid>
 </UserControl>

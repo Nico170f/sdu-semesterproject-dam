@@ -5,18 +5,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="App.Views.SettingsView">
     <StackPanel>
-        <Label Content="Story 1: 5"></Label>
-        <Label Content="Story 2: 8"></Label>
-        <Label Content="Story 3: 13"></Label>
-        <Label Content="Story 4: 5"></Label>
-        <Label Content="Story 5: 3"></Label>
-        <Label Content="Story 6: 2"></Label>
-        <Label Content="Story 7: 5"></Label>
-        <Label Content="Story 8: 8"></Label>
-        <Label Content="Story 9: 8"></Label>
-        <Label Content="Story 10: 5"></Label>
-        <Label Content="Story 11: 5"></Label>
-        <Label Content="Story 12: 5"></Label>
-        <Label Content="Story 13: 1"></Label>
+        <Label Content="Settings WIP"></Label>
     </StackPanel>
 </UserControl>
