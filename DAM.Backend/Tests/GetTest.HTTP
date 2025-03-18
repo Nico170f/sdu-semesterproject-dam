@@ -1,0 +1,6 @@
+GET http://localhost:5115/test
+Content-Type: application/json
+
+{
+    "test": "test"
+}
