@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "App\App.csproj", "{5BF90BBF-F58E-4F50-A524-8E76435F38F8}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAM.Backend", "DAM.Backend\DAM.Backend.csproj", "{2ED1D84A-3663-4C46-BAFD-7B647A23C0FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAM.Presentation", "DAM.Presentation\DAM.Presentation.csproj", "{53E85021-27AB-4E14-A7E2-9D6335D1DF04}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,13 +10,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5BF90BBF-F58E-4F50-A524-8E76435F38F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5BF90BBF-F58E-4F50-A524-8E76435F38F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5BF90BBF-F58E-4F50-A524-8E76435F38F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5BF90BBF-F58E-4F50-A524-8E76435F38F8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2ED1D84A-3663-4C46-BAFD-7B647A23C0FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2ED1D84A-3663-4C46-BAFD-7B647A23C0FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2ED1D84A-3663-4C46-BAFD-7B647A23C0FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2ED1D84A-3663-4C46-BAFD-7B647A23C0FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53E85021-27AB-4E14-A7E2-9D6335D1DF04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53E85021-27AB-4E14-A7E2-9D6335D1DF04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53E85021-27AB-4E14-A7E2-9D6335D1DF04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53E85021-27AB-4E14-A7E2-9D6335D1DF04}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
