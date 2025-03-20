@@ -1,0 +1,6 @@
+GET http://localhost:5115/api/v1/assets/10/2
+Content-Type: application/json
+
+{
+  
+}

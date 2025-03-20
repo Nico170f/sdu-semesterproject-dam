@@ -22,21 +22,7 @@ public sealed class Webserver
             return _instance;
         }
     }
-
-    /// <summary>
-    /// Starts the web server if it is not already running.
-    /// </summary>
-    /// <param name="args">Command line arguments to be passed to the web application.</param>
-    /// <remarks>
-    /// This method initializes and starts the web application by:
-    /// - Creating a WebApplicationBuilder
-    /// - Configuring services via AddServices
-    /// - Building the WebApplication
-    /// - Configuring the application pipeline via ConfigureApp
-    /// - Running the web server
-    /// 
-    /// Once called, the server will remain running until the application is terminated.
-    /// </remarks>
+    
     public void Start(string[] args)
     {
         if(_isRunning) return;

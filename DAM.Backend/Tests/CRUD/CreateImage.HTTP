@@ -1,0 +1,11 @@
+POST http://localhost:5115/api/v1/assets/10
+Content-Type: application/json
+
+{
+  "UUID": "23794238946273478",
+  "Content": "SGVsbG8=",
+  "Product": {
+    "UUID": "23794238946273478123",
+    "Name": "Product 1"
+  }
+}
