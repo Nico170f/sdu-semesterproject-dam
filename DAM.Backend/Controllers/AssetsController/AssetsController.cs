@@ -21,28 +21,37 @@ public class AssetsController : ApiController
     [HttpGet("{productId}")]
     public async Task<IActionResult> GetProductAssets(string productId)
     {
-        return await _assetService.HandleGetAssetsFromProduct(productId);
+        return await _assetService.GetProductAssets(productId);
     }
 
-    [HttpGet("{productId}/{imageId}")]
-    public async Task<IActionResult> GetImageFromProduct(string productId, string imageId)
+    [HttpGet("{productId}/{priority}")]
+    public async Task<IActionResult> GetImageFromProduct(string productId, string priority)
     {
-        return await _assetService.HandleGetImageFromProduct(productId, imageId);
+        return await _assetService.GetAssetImage(productId, priority);
     }
     
     [HttpPost("{productId}")]
-    public async Task<IActionResult> PostCreateImage(string productId, [FromBody] Image requestParametre)
+    public async Task<IActionResult> PostCreateImage(string productId, [FromBody] CreateImageRequest requestParams)
     {
-        return await _assetService.HandlePostCreateImage(productId, requestParametre);
+        return await _assetService.CreateImage(productId, requestParams);
     }
     
-}
-
-
-public class RequestParametre
-{
-
-    public string navn;
-    public string magnus;
-
+    [HttpPut("{imageId}")]
+    public async Task<IActionResult> PutUpdateImage(string imageId, [FromBody] UpdateImageRequest requestParams)
+    {
+        return await _assetService.UpdateImage(imageId, requestParams);
+    }
+    
+    [HttpPatch("{imageId}")]
+    public async Task<IActionResult> PatchUpdateImage(string imageId, [FromBody] PatchImageRequest requestParams)
+    {
+        return await _assetService.PatchImage(imageId, requestParams);
+    }
+    
+    [HttpDelete("{imageId}")]
+    public async Task<IActionResult> DeleteImage(string imageId)
+    {
+        return await _assetService.DeleteImage(imageId);
+    }
+    
 }
