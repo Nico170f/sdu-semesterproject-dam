@@ -31,12 +31,21 @@ public class AssetService : IAssetService
        Image image = DummyDataGenerator.CreateImage(requestParams);
        return new OkObjectResult("Created image: " + image.UUID);
     }
-    
-    public async Task<IActionResult> UpdateImage(string productId, CreateImageRequest requestParams)
+
+    public Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
     {
-        return null;
+        throw new NotImplementedException();
     }
-    
+
+    public Task<IActionResult> PatchImage(string imageId, PatchImageRequest requestParametre)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IActionResult> DeleteImage(string imageId)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 
