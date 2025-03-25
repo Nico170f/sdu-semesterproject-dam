@@ -19,12 +19,14 @@ public class AssetsController : ApiController
     }
     
     [HttpGet("{productId}")]
+    //[AllowAnonymous]
     public async Task<IActionResult> GetProductAssets(string productId)
     {
         return await _assetService.GetProductAssets(productId);
     }
 
     [HttpGet("{productId}/{priority}")]
+    //[AllowAnonymous]
     public async Task<IActionResult> GetImageFromProduct(string productId, string priority)
     {
         return await _assetService.GetAssetImage(productId, priority);

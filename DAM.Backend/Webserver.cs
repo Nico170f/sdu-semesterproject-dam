@@ -1,4 +1,5 @@
 using DAM.Backend.Services.ControllerServices;
+using DAM.Backend.Services.Formatters;
 
 namespace DAM.Backend;
 
@@ -40,9 +41,17 @@ public sealed class Webserver
     private void ConfigureApp(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
-        {
-            
-        }
+        {} 
+
+        // app.UseExceptionHandler("/error");
+        // app.UseCors(options =>
+        // {
+        //     options.AllowCredentials();
+        //     options.WithOrigins(Config.Database.origin);
+        //     options.WithMethods("GET", "POST", "DELETE");
+        //     options.AllowAnyHeader();
+        // });
+
         
         app.UseHttpsRedirection();
         app.MapControllers();
@@ -58,15 +67,17 @@ public sealed class Webserver
 
         //RegisterDB(builder);
 
+        // todo: do we need to access the context? 
+        // we probable need this for the file output formatter
+        builder.Services.AddHttpContextAccessor();
+
         builder.Services.AddScoped<IAssetService, AssetService>();
-        RegisterWebControllers(builder);
+
+        builder.Services.AddControllers(options => {
+            options.OutputFormatters.Add(new FileOutputFormatter());
+        });
     }
 
-
-    private void RegisterWebControllers(WebApplicationBuilder builder)
-    {
-        builder.Services.AddControllers();
-    }
 
     // private void RegisterDB(WebApplicationBuilder builder)
     // {
