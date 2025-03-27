@@ -29,7 +29,7 @@ public class AssetsController : ApiController
     //[AllowAnonymous]
     public async Task<IActionResult> GetImageFromProduct(string productId, string priority)
     {
-        return await _assetService.GetAssetImage(productId, priority);
+        return await _assetService.GetImage(productId, priority);
     }
     
     [HttpPost("{productId}")]

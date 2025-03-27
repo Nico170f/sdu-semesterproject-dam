@@ -6,7 +6,7 @@ public class Image
 {
     [Key]
     public Guid UUID { get; set; }
-    public byte[] Content { get; set; }
+    public string Content { get; set; } //changed to string from byte[]
     public int Width { get; set; }
     public int Height { get; set; }
     public Product Product { get; set; }

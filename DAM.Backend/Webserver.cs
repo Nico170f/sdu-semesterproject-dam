@@ -72,6 +72,7 @@ public sealed class Webserver
         builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddScoped<IAssetService, AssetService>();
+        // builder.Services.AddSingleton<AssetService>();
 
         builder.Services.AddControllers(options => {
             options.OutputFormatters.Add(new FileOutputFormatter());

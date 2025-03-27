@@ -32,10 +32,10 @@ public sealed class Database : DbContext
 
     private Database()
     {
-        // Navigate up from bin\Debug to the project root
+        // Use platform-independent path handling
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..\\..\\..\\"));
-        string dbFolderPath = Path.Combine(projectRoot, "Data\\Database");
+        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
+        string dbFolderPath = Path.Combine(projectRoot, "Data", "Database");
 
         // Create the directory if it doesn't exist
         if (!Directory.Exists(dbFolderPath))
@@ -45,6 +45,8 @@ public sealed class Database : DbContext
 
         DbPath = Path.Combine(dbFolderPath, "DAM_database.db");
         Console.WriteLine("Database path: " + DbPath);
+        
+        // Make sure the database is created
         this.Database.EnsureCreated();
     }
 
