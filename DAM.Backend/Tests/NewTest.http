@@ -1,0 +1,19 @@
+// Include shared variables
+@import = ./environment.http
+
+include ./environment.http
+
+
+### Your test request
+GET {{baseUrl}}/api/v1/assets/{{productId}}
+// Import tests from CRUD.http
+@import = ./CRUD.http
+
+### Make a custom request that uses variables/values from the imported file
+POST {{baseUrl}}/api/v1/assets/{{productId}}
+Content-Type: application/json
+
+{
+  "content": "new test content",
+  "isShown": true
+}
