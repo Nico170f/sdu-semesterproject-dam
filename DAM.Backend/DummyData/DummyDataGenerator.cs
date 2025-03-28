@@ -21,8 +21,6 @@ public static class DummyDataGenerator
         "e40add7e-c42a-4ce4-a7f7-3da530bb6e9e",
         "c5fb57c9-5634-4fbb-936f-c40d6983d044"
     };
-    
-    
     public async static void CreateProducts()
     {
         for(int i = 0; i < SampleProductIds.Length; i++)
