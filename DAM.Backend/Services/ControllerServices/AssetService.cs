@@ -16,6 +16,12 @@ public class AssetService : IAssetService
         _configuration = configuration;
     }
 
+    public AssetService()
+    {
+        
+    }
+    
+
     public async Task<IActionResult> GetProductAssets(string productId)
     {
         return new OkObjectResult("Produkt ID: " + productId);
