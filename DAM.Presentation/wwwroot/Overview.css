@@ -1,0 +1,36 @@
+body {
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.search-container input {
+  width: 80%;
+  max-width: 400px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.gallery {
+  margin: 10px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.gallery img {
+  width: 20vw;
+  height: 20vw; /* Forces square scaling */
+  border-radius: 5px;
+  object-fit: cover;
+  border: 2px solid #000000;
+  padding: 1vw;
+}

@@ -1,4 +1,5 @@
 using DAM.Backend.Services.ControllerServices;
+using DAM.Backend.Services.Formatters;
 
 namespace DAM.Backend;
 
@@ -22,21 +23,7 @@ public sealed class Webserver
             return _instance;
         }
     }
-
-    /// <summary>
-    /// Starts the web server if it is not already running.
-    /// </summary>
-    /// <param name="args">Command line arguments to be passed to the web application.</param>
-    /// <remarks>
-    /// This method initializes and starts the web application by:
-    /// - Creating a WebApplicationBuilder
-    /// - Configuring services via AddServices
-    /// - Building the WebApplication
-    /// - Configuring the application pipeline via ConfigureApp
-    /// - Running the web server
-    /// 
-    /// Once called, the server will remain running until the application is terminated.
-    /// </remarks>
+    
     public void Start(string[] args)
     {
         if(_isRunning) return;
@@ -54,9 +41,17 @@ public sealed class Webserver
     private void ConfigureApp(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
-        {
-            
-        }
+        {} 
+
+        // app.UseExceptionHandler("/error");
+        // app.UseCors(options =>
+        // {
+        //     options.AllowCredentials();
+        //     options.WithOrigins(Config.Database.origin);
+        //     options.WithMethods("GET", "POST", "DELETE");
+        //     options.AllowAnyHeader();
+        // });
+
         
         app.UseHttpsRedirection();
         app.MapControllers();
@@ -64,6 +59,13 @@ public sealed class Webserver
 
     private void AddServices(WebApplicationBuilder builder)
     {
+        builder.Services.AddControllers(options => {
+            options.OutputFormatters.Add(new FileOutputFormatter());
+        }); 
+        
+        
+        // builder.Services.AddControllers();
+        
         builder.Services.AddLogging(config =>
         {
             config.AddConsole();
@@ -72,15 +74,16 @@ public sealed class Webserver
 
         //RegisterDB(builder);
 
+        // todo: do we need to access the context? 
+        // we probable need this for the file output formatter
+        builder.Services.AddHttpContextAccessor();
+
         builder.Services.AddScoped<IAssetService, AssetService>();
-        RegisterWebControllers(builder);
-    }
+        // builder.Services.AddSingleton<AssetService>();
 
 
-    private void RegisterWebControllers(WebApplicationBuilder builder)
-    {
-        builder.Services.AddControllers();
     }
+
 
     // private void RegisterDB(WebApplicationBuilder builder)
     // {
