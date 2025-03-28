@@ -28,7 +28,7 @@ public static class DummyDataGenerator
         for(int i = 0; i < SampleProductIds.Length; i++)
         {
             Product product = new Product();
-            product.UUID = Guid.Parse(SampleProductIds[i]);
+            product.UUID = SampleProductIds[i];
             product.Name = "Product " + i;
             products.Add(product);
         }

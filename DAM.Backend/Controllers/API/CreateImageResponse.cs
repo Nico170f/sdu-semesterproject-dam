@@ -4,7 +4,7 @@ namespace DAM.Backend.Controllers;
 
 public class CreateImageResponse
 {
-    public Guid ImageId { get; set; }
+    public string ImageId { get; set; }
 
     public CreateImageResponse(Image image)
     {

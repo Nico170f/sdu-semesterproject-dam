@@ -9,8 +9,11 @@ namespace DAM.Backend.Services.ControllerServices;
 public class AssetService : IAssetService
 {
 
-    public AssetService()
+    private readonly IConfiguration _configuration;
+
+    public AssetService(IConfiguration configuration)
     {
+        _configuration = configuration;
     }
 
     public async Task<IActionResult> GetProductAssets(string productId)
@@ -20,22 +23,27 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> GetImage(string productId, string priority)
     {
+
+        List<Image> images = Database.Instance.Images.ToList();
+        Image? image = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
         
+        if (image == null)
+        {
+            image = new Image();
+            image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+        }
+
+        var imageParts = image.Content.Split(";base64,");
+        var imageType = imageParts[0].Substring(5);
         
+        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
+        return new FileContentResult(imageBytes, imageType);
         
-        throw new NotImplementedException();
-        
-        // Image? foundImage = DummyDataGenerator.GetImageByProductAndPriority(Guid.Parse(productId), int.Parse(priority));
-        // if (foundImage == null)
-        // {
-        //     return new NotFoundObjectResult("No image found by that UUID and priority");
-        // }
-        // return new OkObjectResult(foundImage);
     }
 
-    public async Task<IActionResult> CreateImage(string productId, CreateImageRequest requestParams)
+    public async Task<IActionResult> CreateImage(CreateImageRequest requestParams)
     {
-        if (!Guid.TryParse(productId, out Guid productGuid))
+        if (!Guid.TryParse($"{requestParams.ProductId}", out Guid productGuid))
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
@@ -46,7 +54,7 @@ public class AssetService : IAssetService
             Console.WriteLine(p.UUID);
         }
 
-        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == productGuid);
+        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParams.ProductId);
         if (product == null)
         {
             return new NotFoundObjectResult("No product found by that UUID");
@@ -54,7 +62,7 @@ public class AssetService : IAssetService
 
         
         Image image = new Image();
-        image.UUID = Guid.NewGuid();
+        image.UUID = Guid.NewGuid().ToString();
         image.Content = requestParams.Content;
         image.IsShown = requestParams.IsShown;
         image.Product = product;

@@ -1,20 +1,7 @@
-@Endpoint = http://localhost:5115/api/v1/
-@Route = assets/
-
-@Product1 = dce69c0d-39e0-48bf-a193-d452da142b1c
-@Product2 = cb7e6c6d-15c7-48e3-b355-31b77114d60f
-@Product3 = 99f5aa6c-e5cf-41a5-8c7e-f4fabeab3ccf
-@Product4 = a29c372e-1ef0-4f3c-b0ce-62dad345f037
-@Product5 = 11e00953-bc06-4e9f-bc09-df9a6793baa8
-@Product6 = 9efac388-b05f-4c46-9cdc-9b1bf0346d39
-@Product7 = 0d359178-8c8c-494b-83a9-f68da3a186c7
-@Product8 = a57583ac-3d4e-404c-84e7-602cae3097c3
-@Product9 = e40add7e-c42a-4ce4-a7f7-3da530bb6e9e
-@Product10 = c5fb57c9-5634-4fbb-936f-c40d6983d044
-
+@route = assets
 
 # @name = Create an image
-POST {{Endpoint}}{{Route}}{{Product1}}
+POST {{baseUrl}}/{{route}}/{{Product1}}
 Content-Type: application/json
 
 {

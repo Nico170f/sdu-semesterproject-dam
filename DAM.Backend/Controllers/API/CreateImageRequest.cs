@@ -9,7 +9,7 @@ public class CreateImageRequest
     public string Content { get; set; }
 
     [Required]
-    public Guid ProductId { get; set; }
+    public string ProductId { get; set; }
     
     [Required]
     public bool IsShown { get; set; }
