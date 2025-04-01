@@ -3,6 +3,7 @@ using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace DAM.Backend.Services.ControllerServices;
 
@@ -22,11 +23,13 @@ public class AssetService : IAssetService
     }
     
 
+    //Method for returning all assets for a product by productId
     public async Task<IActionResult> GetProductAssets(string productId)
     {
         return new OkObjectResult("Produkt ID: " + productId);
     }
 
+    //Method for returning a single image by productId and priority
     public async Task<IActionResult> GetImage(string productId, string priority)
     {
 
@@ -47,6 +50,7 @@ public class AssetService : IAssetService
         
     }
 
+    //Method for creating a new image
     public async Task<IActionResult> CreateImage(CreateImageRequest requestParams)
     {
         if (!Guid.TryParse($"{requestParams.ProductId}", out Guid productGuid))
@@ -92,19 +96,101 @@ public class AssetService : IAssetService
         return new OkObjectResult(response);
     }
 
-    public Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
+    public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
     {
-        throw new NotImplementedException();
+        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image fonud by that UUID");
+        }
+        
+        try
+        {
+            image.Content = requestParametre.Content;
+            image.IsShown = requestParametre.IsShown;
+            image.Width = requestParametre.Width ?? 0;
+            image.Height = requestParametre.Height ?? 0;
+            image.Priority = requestParametre.Priority ?? 0;
+            image.UpdatedAt = DateTime.Now;
+        }
+        catch (Exception e)
+        {
+            return new BadRequestObjectResult("Failed to update image");
+        }
+
+        return new OkObjectResult("Image updated");
     }
 
-    public Task<IActionResult> PatchImage(string imageId, PatchImageRequest requestParametre)
+    public async Task<IActionResult> PatchImage(string imageId, PatchImageRequest requestParametre)
     {
-        throw new NotImplementedException();
+        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image fonud by that UUID");
+        }
+        
+        //Checks every line of the requestParametre and updates the image if the line is not null
+        if (requestParametre.Content != null)
+        {
+            image.Content = requestParametre.Content;
+        }
+        if (requestParametre.ProductId != null)
+        {
+            image.Product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParametre.ProductId);
+        }
+
+        if (requestParametre.IsShown != null)
+        {
+            image.IsShown = requestParametre.IsShown;
+        }
+        if (requestParametre.Priority != null)
+        {
+            image.Priority = requestParametre.Priority ?? throw new Exception("Priority is null");
+        }
+
+        if (requestParametre.Width != null)
+        {
+            image.Width = requestParametre.Width ?? throw new Exception("Width is null");
+        }
+
+        if (requestParametre.Height != null)
+        {
+            image.Height = requestParametre.Height ?? throw new Exception("Height is null");
+        }
+        
+        return new OkObjectResult("Image updated");
     }
 
-    public Task<IActionResult> DeleteImage(string imageId)
+    public async Task<IActionResult> DeleteImage(string imageId)
     {
-        throw new NotImplementedException();
+        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image found by that UUID");
+        }
+
+        var result = await Database.Instance.Delete(image);
+        if (!result)
+        {
+            return new BadRequestObjectResult("Failed to delete image");
+        }
+
+        return new OkObjectResult("Image deleted successfully");
     }
 }
 
