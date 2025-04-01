@@ -12,4 +12,8 @@ public interface IAssetService
     Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre);
     Task<IActionResult> PatchImage(string imageId, PatchImageRequest requestParametre);
     Task<IActionResult> DeleteImage(string imageId);
+    Task<IActionResult> GetImageIdPile(int size, int offset);
+    Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery);
+    Task<IActionResult> GetImageByUUID(string uuid);
+
 }

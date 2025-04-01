@@ -84,7 +84,6 @@ public sealed class Webserver
 
     }
 
-
     // private void RegisterDB(WebApplicationBuilder builder)
     // {
     //     builder.Services.AddDbContext<ImageDbContext>(options => {

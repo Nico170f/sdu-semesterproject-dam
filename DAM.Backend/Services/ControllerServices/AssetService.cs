@@ -3,6 +3,8 @@ using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using System.Linq;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAM.Backend.Services.ControllerServices;
 
@@ -24,7 +26,7 @@ public class AssetService : IAssetService
     public async Task<IActionResult> GetImage(string productId, string priority)
     {
 
-        List<Image> images = Database.Instance.Images.ToList();
+        List<Image> images = await Database.Instance.Images.ToListAsync();
         Image? image = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
         
         if (image == null)
@@ -37,8 +39,7 @@ public class AssetService : IAssetService
         var imageType = imageParts[0].Substring(5);
         
         byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);
-        
+        return new FileContentResult(imageBytes, imageType);   
     }
 
     public async Task<IActionResult> CreateImage(CreateImageRequest requestParams)
@@ -99,6 +100,51 @@ public class AssetService : IAssetService
     public Task<IActionResult> DeleteImage(string imageId)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> GetImageIdPile(int size, int offset) {
+        int currentRowNumber = offset;
+        List<string> imageIds = await Database.Instance.Images
+        .Select(img => img.UUID)
+        .OrderBy(uuid => uuid)
+        .Skip(offset)
+        .Take(size)
+        .ToListAsync();
+        
+        return new OkObjectResult(imageIds);
+    }
+
+public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
+{
+    List<string> imageIds = await Database.Instance.Images
+        .Where(img => img.Product != null)
+        .Where(img => img.Product!.Name.Contains(searchquery)) // Filter by search query
+        .OrderBy(img => img.Product!.Name) // Order by name
+        .Skip(offset) // Skip offset
+        .Take(size) // Take only the required size
+        .Select(img => img.UUID) // Select UUID instead of name
+        .ToListAsync();
+
+    return new OkObjectResult(imageIds);
+    }
+
+
+    public async Task<IActionResult> GetImageByUUID(string uuid)
+    {
+        List<Image> images = await Database.Instance.Images.ToListAsync();
+        Image? image = images.FirstOrDefault(i => i.UUID == uuid);
+        
+        if (image == null)
+        {
+            image = new Image();
+            image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+        }
+
+        var imageParts = image.Content.Split(";base64,");
+        var imageType = imageParts[0].Substring(5);
+        
+        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
+        return new FileContentResult(imageBytes, imageType);   
     }
 }
 
