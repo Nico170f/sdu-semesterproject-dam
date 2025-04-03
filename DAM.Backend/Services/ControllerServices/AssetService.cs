@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace DAM.Backend.Services.ControllerServices;
 
@@ -15,11 +16,6 @@ public class AssetService : IAssetService
     public AssetService(IConfiguration configuration)
     {
         _configuration = configuration;
-    }
-
-    public AssetService()
-    {
-        
     }
     
 
@@ -33,21 +29,27 @@ public class AssetService : IAssetService
     public async Task<IActionResult> GetImage(string productId, string priority)
     {
 
-        List<Image> images = Database.Instance.Images.ToList();
-        Image? image = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
-        
-        if (image == null)
+        Image? finalImage = null;
+
+        try
         {
-            image = new Image();
-            image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+            List<Image> images = Database.Instance.Images.ToList();
+            finalImage = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            if (finalImage == null)
+            {
+                Console.WriteLine("Image was not found");
+                finalImage = GetDefaultImage();
+            }
         }
 
-        var imageParts = image.Content.Split(";base64,");
-        var imageType = imageParts[0].Substring(5);
-        
-        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);
-        
+        return ConvertImageToFileContent(finalImage);
     }
 
     //Method for creating a new image
@@ -64,7 +66,7 @@ public class AssetService : IAssetService
             Console.WriteLine(p.UUID);
         }
 
-        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParams.ProductId);
+        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParams.ProductId.ToUpper());
         if (product == null)
         {
             return new NotFoundObjectResult("No product found by that UUID");
@@ -106,7 +108,7 @@ public class AssetService : IAssetService
         var image = await Database.Instance.Images.FindAsync(imageGuid);
         if (image == null)
         {
-            return new NotFoundObjectResult("No image fonud by that UUID");
+            return new NotFoundObjectResult("No image found by that UUID");
         }
         
         try
@@ -126,49 +128,34 @@ public class AssetService : IAssetService
         return new OkObjectResult("Image updated");
     }
 
-    public async Task<IActionResult> PatchImage(string imageId, PatchImageRequest requestParametre)
+    public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDocument)
     {
         if (!Guid.TryParse(imageId, out Guid imageGuid))
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
-
+        
         var image = await Database.Instance.Images.FindAsync(imageGuid);
         if (image == null)
         {
-            return new NotFoundObjectResult("No image fonud by that UUID");
+            return new NotFoundObjectResult("No image found by that UUID");
         }
         
-        //Checks every line of the requestParametre and updates the image if the line is not null
-        if (requestParametre.Content != null)
-        {
-            image.Content = requestParametre.Content;
-        }
-        if (requestParametre.ProductId != null)
-        {
-            image.Product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParametre.ProductId);
-        }
-
-        if (requestParametre.IsShown != null)
-        {
-            image.IsShown = requestParametre.IsShown;
-        }
-        if (requestParametre.Priority != null)
-        {
-            image.Priority = requestParametre.Priority ?? throw new Exception("Priority is null");
-        }
-
-        if (requestParametre.Width != null)
-        {
-            image.Width = requestParametre.Width ?? throw new Exception("Width is null");
-        }
-
-        if (requestParametre.Height != null)
-        {
-            image.Height = requestParametre.Height ?? throw new Exception("Height is null");
-        }
         
-        return new OkObjectResult("Image updated");
+        // Apply the patch document to the entity
+        patchDocument.ApplyTo(image);
+    
+        // Update timestamp
+        image.UpdatedAt = DateTime.Now;
+
+        // Save changes to database
+        var result = await Database.Instance.Update(image);
+        if (!result)
+        {
+            return new BadRequestObjectResult("Failed to update image");
+        }
+
+        return new OkObjectResult("Image updated successfully");
     }
 
     public async Task<IActionResult> DeleteImage(string imageId)
@@ -191,6 +178,23 @@ public class AssetService : IAssetService
         }
 
         return new OkObjectResult("Image deleted successfully");
+    }
+
+
+    private Image GetDefaultImage()
+    {
+        Image image = new Image();
+        image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+        return image;
+    }
+
+    private FileContentResult ConvertImageToFileContent(Image finalImage)
+    { 
+        var imageParts = finalImage.Content.Split(";base64,");
+        var imageType = imageParts[0].Substring(5);
+        
+        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
+        return new FileContentResult(imageBytes, imageType);
     }
 }
 

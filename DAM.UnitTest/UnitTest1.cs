@@ -12,20 +12,30 @@ namespace DAM.UnitTest;
 
 public class Tests
 {
+    
+    // inMemorySettings = new Dictionary<string, string> {
+    //     {"DefaultImages:NotFound", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="}
+    // };
+
+    private Dictionary<string, string> inMemorySettings = new Dictionary<string, string>();
+
+    private IConfiguration _configuration;
+    
+    private IAssetService _assetService;
+    
     [SetUp]
     public void Setup()
     {
-        
+        inMemorySettings["DefaultImages:NotFound"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==";
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings!)
+            .Build();
+        _assetService = new AssetService(_configuration);
     }
 
     [Test]
     public async Task TestGetProductAssets()
     {
-        
-        // Object
-        IAssetService _assetService = new AssetService();
-        
-        // Act
         IActionResult actionResult = await _assetService.GetProductAssets("test");
         
         // Assert
@@ -38,15 +48,16 @@ public class Tests
     [Test]
     public async Task TestGetImage()
     {
-        
+        IActionResult actionResult = await _assetService.GetImage("nonexistentId", "1");
+
+        var fileResult = Assert.IsType<FileContentResult>(actionResult);
+        Assert.Equal("image/png", fileResult.ContentType);
     }
     
 
     [Test]
     public async Task TestCreateImage()
     {
-        IAssetService _assetService = new AssetService();
-        
         CreateImageRequest imageRequest = new CreateImageRequest();
         imageRequest.Content = "test";
         imageRequest.ProductId = System.Guid.NewGuid().ToString();
