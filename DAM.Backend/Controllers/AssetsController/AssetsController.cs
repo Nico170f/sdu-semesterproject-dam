@@ -46,9 +46,9 @@ public class AssetsController : ApiController
     }
     
     [HttpPatch("{imageId}")]
-    public async Task<IActionResult> PatchUpdateImage(string imageId, [FromBody] PatchImageRequest requestParams)
+    public async Task<IActionResult> PatchUpdateImage(string imageId, [FromBody] JsonPatchDocument<Image> patchDoc)
     {
-        return await _assetService.PatchImage(imageId, requestParams);
+        return await _assetService.PatchImage(imageId, patchDoc);
     }
     
     [HttpDelete("{imageId}")]
