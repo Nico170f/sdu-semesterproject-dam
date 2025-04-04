@@ -36,7 +36,7 @@ public class AssetsController : ApiController
         return await _assetService.GetImage(productId, priority);
     }
     
-    [HttpPost()]
+    [HttpPost("add")]
     public async Task<IActionResult> PostCreateImage([FromBody] CreateImageRequest requestParams)
     {
         return await _assetService.CreateImage(requestParams);
