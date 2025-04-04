@@ -14,12 +14,13 @@ public class AssetService : IAssetService
 {
 
     private readonly IConfiguration _configuration;
+    private readonly Database _database;
 
-    public AssetService(IConfiguration configuration)
+    public AssetService(IConfiguration configuration, Database database)
     {
         _configuration = configuration;
+        _database = database;
     }
-    
 
     //Method for returning all assets for a product by productId
     public async Task<IActionResult> GetProductAssets(string productId)
@@ -210,7 +211,7 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> GetImageIdPile(int size, int offset) {
         int currentRowNumber = offset;
-        List<string> imageIds = await Database.Instance.Images
+        List<string> imageIds = await _database.Images
         .Select(img => img.UUID)
         .OrderBy(uuid => uuid)
         .Skip(offset)
@@ -237,8 +238,9 @@ public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, 
 
     public async Task<IActionResult> GetImageByUUID(string uuid)
     {
-        List<Image> images = await Database.Instance.Images.ToListAsync();
-        Image? image = images.FirstOrDefault(i => i.UUID == uuid);
+		// Image? image = await Database.Instance.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
+		
+		Image? image = await _database.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
         
         if (image == null)
         {
