@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -56,5 +57,20 @@ public class AssetsController : ApiController
     {
         return await _assetService.DeleteImage(imageId);
     }
+
+    [HttpGet("imageIdPile")]
+    public async Task<IActionResult> GetImageIdPile([FromQuery] int size, [FromQuery] int page) 
+    {
+        int offset = page*size;
+        return await _assetService.GetImageIdPile(size, offset);
+    }
+
     
+    [HttpGet("imageIdPileFromSearch")]
+    public async Task<IActionResult> GetImageIdPileFromSearch([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchquery) 
+    {
+        int offset = page*size;
+        return await _assetService.GetImageIdPileFromSearch(size, offset, searchquery);
+    }
+
 }

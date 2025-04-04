@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\mathi\\OneDrive - Syddansk Universitet\\2SemesterProject\\sdu-semesterproject-dam\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{53E85021-27AB-4E14-A7E2-9D6335D1DF04}|DAM.Presentation\\DAM.Presentation.csproj|c:\\users\\mathi\\onedrive - syddansk universitet\\2semesterproject\\sdu-semesterproject-dam\\dam.presentation\\dam.presentation.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{53E85021-27AB-4E14-A7E2-9D6335D1DF04}|DAM.Presentation\\DAM.Presentation.csproj|solutionrelative:dam.presentation\\dam.presentation.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "DAM.Presentation",
+              "DocumentMoniker": "C:\\Users\\mathi\\OneDrive - Syddansk Universitet\\2SemesterProject\\sdu-semesterproject-dam\\DAM.Presentation\\DAM.Presentation.csproj",
+              "RelativeDocumentMoniker": "DAM.Presentation\\DAM.Presentation.csproj",
+              "ToolTip": "C:\\Users\\mathi\\OneDrive - Syddansk Universitet\\2SemesterProject\\sdu-semesterproject-dam\\DAM.Presentation\\DAM.Presentation.csproj",
+              "RelativeToolTip": "DAM.Presentation\\DAM.Presentation.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-03-20T07:24:34.319Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
