@@ -13,47 +13,55 @@ public sealed class Database : DbContext
     public DbSet<Product> Product { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<TagImageGroup> TagImageGroups { get; set; }
+	
+	
+	public Database(DbContextOptions<Database> options) : base(options)
+	{
+		this.Database.EnsureCreated();
+	}
+	
 
+	//todo: we do not need these anymore
     private static Database? _instance = null;
-
     public static Database Instance
     {
         get
         {
             if (_instance is null)
             {
-                _instance = new Database();
+                _instance = new Database(null);
             }
             return _instance;
         }
     }
 
-    public string DbPath { get; }
-
-    private Database()
+    public static string GetDatabasePath()
     {
-        // Use platform-independent path handling
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
         string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
         string dbFolderPath = Path.Combine(projectRoot, "Data", "Database");
 
-        // Create the directory if it doesn't exist
         if (!Directory.Exists(dbFolderPath))
         {
             Directory.CreateDirectory(dbFolderPath);
         }
 
-        DbPath = Path.Combine(dbFolderPath, "DAM_database.db");
-        Console.WriteLine("Database path: " + DbPath);
-        
-        // Make sure the database is created
-        this.Database.EnsureCreated();
+        return Path.Combine(dbFolderPath, "DAM_database.db");
     }
-
+	
+	
     // The following configures EF to create a Sqlite database file
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
+    // protected override void OnConfiguring(DbContextOptionsBuilder options)
+    //     => options.UseSqlite($"Data Source={DbPath}");
 
+	protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        if (!options.IsConfigured)
+        {
+            options.UseSqlite($"Data Source=" + GetDatabasePath());
+        }
+    }
+	
     // Create
     public async Task<bool> Create<T>(T entity) where T : class
     {

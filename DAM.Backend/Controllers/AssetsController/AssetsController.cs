@@ -73,4 +73,9 @@ public class AssetsController : ApiController
         return await _assetService.GetImageIdPileFromSearch(size, offset, searchquery);
     }
 
+    [HttpGet("getImageByUUID")]
+    public async Task<IActionResult> GetImageByUUID([FromQuery] string uuid)
+    {
+	    return await _assetService.GetImageByUUID(uuid);
+    }
 }

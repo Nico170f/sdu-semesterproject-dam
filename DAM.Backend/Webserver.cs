@@ -1,5 +1,7 @@
 using DAM.Backend.Services.ControllerServices;
 using DAM.Backend.Services.Formatters;
+using DAM.Backend.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAM.Backend;
 
@@ -34,6 +36,7 @@ public sealed class Webserver
 
         WebApplication app = builder.Build();
         ConfigureApp(app);
+        
 
         app.Run();
     }
@@ -43,15 +46,14 @@ public sealed class Webserver
         if (app.Environment.IsDevelopment())
         {} 
 
-        // app.UseExceptionHandler("/error");
-        // app.UseCors(options =>
-        // {
-        //     options.AllowCredentials();
-        //     options.WithOrigins(Config.Database.origin);
-        //     options.WithMethods("GET", "POST", "DELETE");
-        //     options.AllowAnyHeader();
-        // });
-
+        app.UseExceptionHandler("/error");
+        app.UseCors(options =>
+        {
+            ///////options.AllowCredentials();
+            /////////options.WithOrigins(Config.Database.origin);
+            /////////options.WithMethods("GET", "POST", "DELETE");
+            options.AllowAnyHeader();
+        });
         
         app.UseHttpsRedirection();
         app.MapControllers();
@@ -89,13 +91,20 @@ public sealed class Webserver
         builder.Services.AddScoped<IAssetService, AssetService>();
         // builder.Services.AddSingleton<AssetService>();
 
-
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins("http://localhost:5000") // Your frontend URL
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+		
+		// builder.Services.AddTransient<DbContext, Database>();
+            
+        builder.Services.AddDbContext<Database>();
     }
-
-    // private void RegisterDB(WebApplicationBuilder builder)
-    // {
-    //     builder.Services.AddDbContext<ImageDbContext>(options => {
-    //         options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-    //     });
-    // }
+    
 }
