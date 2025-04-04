@@ -66,44 +66,28 @@ public class AssetService : IAssetService
     //Method for creating a new image
     public async Task<IActionResult> CreateImage(CreateImageRequest requestParams)
     {
-        if (!Guid.TryParse($"{requestParams.ProductId}", out Guid productGuid))
+        if (requestParams.Content.Length < 30)
         {
-            return new BadRequestObjectResult("Invalid UUID format");
+            return new BadRequestObjectResult("Image content is too short");
         }
-
-        // Console.WriteLine(_database.Product.ToList().Count);
-        // foreach(var p in _database.Product.ToList())
-        // {
-        //     Console.WriteLine(p.UUID);
-        // }
-
-        Product? product = _database.Product.ToList().Find(p => p.UUID == requestParams.ProductId.ToUpper());
-        if (product == null)
-        {
-            return new NotFoundObjectResult("No product found by that UUID");
-        }
-
         
         Image image = new Image();
         image.UUID = Guid.NewGuid().ToString();
         image.Content = requestParams.Content;
-        image.IsShown = requestParams.IsShown;
-        image.Product = product;
-        image.Width = requestParams.Width ?? 0;
-        image.Height = requestParams.Height ?? 0;
-        
-        
-        //Todo: If no priority is set, it should default to the last element in the list.
-        //todo: if priority is set, other elements should be shifted.
-        image.Priority = requestParams.Priority ?? 0;
-        
+        image.Priority = 0;
+        image.IsShown = true;
         image.CreatedAt = DateTime.Now;
         image.UpdatedAt = DateTime.Now;
-        
-        var result = await _database.Create(image);
-        if(result == false) {
+
+        bool imageCreated = await _database.Create(image);
+        if (!imageCreated)
+        {
             return new BadRequestObjectResult("Failed to create image");
         }
+
+        //Todo: This has to be set based on the image content
+        image.Width = 0;
+        image.Height = 0;
 
         CreateImageResponse response = new CreateImageResponse(image);
         return new OkObjectResult(response);
@@ -111,32 +95,33 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
     {
-        if (!Guid.TryParse(imageId, out Guid imageGuid))
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
-        var image = await _database.Images.FindAsync(imageGuid);
-        if (image == null)
-        {
-            return new NotFoundObjectResult("No image found by that UUID");
-        }
-        
-        try
-        {
-            image.Content = requestParametre.Content;
-            image.IsShown = requestParametre.IsShown;
-            image.Width = requestParametre.Width ?? 0;
-            image.Height = requestParametre.Height ?? 0;
-            image.Priority = requestParametre.Priority ?? 0;
-            image.UpdatedAt = DateTime.Now;
-        }
-        catch (Exception e)
-        {
-            return new BadRequestObjectResult("Failed to update image");
-        }
-
-        return new OkObjectResult("Image updated");
+        // if (!Guid.TryParse(imageId, out Guid imageGuid))
+        // {
+        //     return new BadRequestObjectResult("Invalid UUID format");
+        // }
+        //
+        // var image = await _database.Images.FindAsync(imageGuid);
+        // if (image == null)
+        // {
+        //     return new NotFoundObjectResult("No image found by that UUID");
+        // }
+        //
+        // try
+        // {
+        //     image.Content = requestParametre.Content;
+        //     image.IsShown = requestParametre.IsShown;
+        //     image.Width = requestParametre.Width ?? 0;
+        //     image.Height = requestParametre.Height ?? 0;
+        //     image.Priority = requestParametre.Priority ?? 0;
+        //     image.UpdatedAt = DateTime.Now;
+        // }
+        // catch (Exception e)
+        // {
+        //     return new BadRequestObjectResult("Failed to update image");
+        // }
+        //
+        // return new OkObjectResult("Image updated");
+        return null;
     }
 
     
