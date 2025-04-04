@@ -39,14 +39,13 @@ public class AssetService : IAssetService
         {
             int priorityNum = int.Parse(priority);
             
-            // This performs the filtering at the database level
-            finalImage = await Database.Instance.Images
-                .Include(i => i.Product)  // Include related product data
+            finalImage = await _database.Images
+                .Include(i => i.Product)
                 .Where(i => i.Product != null && 
                             i.Product.UUID.ToUpper() == productId.ToUpper() && 
                             i.Priority == priorityNum)
-                .FirstOrDefaultAsync();  // Only fetch the one record you need
-            }
+                .FirstOrDefaultAsync();
+        }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
@@ -72,13 +71,13 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        Console.WriteLine(Database.Instance.Product.ToList().Count);
-        foreach(var p in Database.Instance.Product.ToList())
-        {
-            Console.WriteLine(p.UUID);
-        }
+        // Console.WriteLine(_database.Product.ToList().Count);
+        // foreach(var p in _database.Product.ToList())
+        // {
+        //     Console.WriteLine(p.UUID);
+        // }
 
-        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParams.ProductId.ToUpper());
+        Product? product = _database.Product.ToList().Find(p => p.UUID == requestParams.ProductId.ToUpper());
         if (product == null)
         {
             return new NotFoundObjectResult("No product found by that UUID");
@@ -101,7 +100,7 @@ public class AssetService : IAssetService
         image.CreatedAt = DateTime.Now;
         image.UpdatedAt = DateTime.Now;
         
-        var result = await Database.Instance.Create(image);
+        var result = await _database.Create(image);
         if(result == false) {
             return new BadRequestObjectResult("Failed to create image");
         }
@@ -117,7 +116,7 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        var image = await _database.Images.FindAsync(imageGuid);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
@@ -147,7 +146,7 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
         
-        var image = await Database.Instance.Images.FindAsync(imageId);
+        var image = await _database.Images.FindAsync(imageId);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
@@ -161,7 +160,7 @@ public class AssetService : IAssetService
         image.UpdatedAt = DateTime.Now;
 
         // Save changes to database
-        var result = await Database.Instance.Update(image);
+        var result = await _database.Update(image);
         if (!result)
         {
             return new BadRequestObjectResult("Failed to update image");
@@ -177,13 +176,13 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        var image = await _database.Images.FindAsync(imageGuid);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
 
-        var result = await Database.Instance.Delete(image);
+        var result = await _database.Delete(image);
         if (!result)
         {
             return new BadRequestObjectResult("Failed to delete image");
@@ -223,7 +222,7 @@ public class AssetService : IAssetService
 
 public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
 {
-    List<string> imageIds = await Database.Instance.Images
+    List<string> imageIds = await _database.Images
         .Where(img => img.Product != null)
         .Where(img => img.Product!.Name.Contains(searchquery)) // Filter by search query
         .OrderBy(img => img.Product!.Name) // Order by name
@@ -238,7 +237,7 @@ public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, 
 
     public async Task<IActionResult> GetImageByUUID(string uuid)
     {
-		// Image? image = await Database.Instance.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
+		// Image? image = await _database.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
 		
 		Image? image = await _database.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
         

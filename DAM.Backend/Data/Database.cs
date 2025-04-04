@@ -19,21 +19,7 @@ public sealed class Database : DbContext
 	{
 		this.Database.EnsureCreated();
 	}
-	
-
-	//todo: we do not need these anymore
-    private static Database? _instance = null;
-    public static Database Instance
-    {
-        get
-        {
-            if (_instance is null)
-            {
-                _instance = new Database(null);
-            }
-            return _instance;
-        }
-    }
+    
 
     public static string GetDatabasePath()
     {

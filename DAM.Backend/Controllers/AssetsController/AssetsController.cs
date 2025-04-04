@@ -84,9 +84,9 @@ public class AssetsController : ApiController
     [HttpPost("delete-all")]
     public async Task<IActionResult> DeleteAllImages()
     {
-        var allImages = await Database.Instance.Images.ToListAsync();
-        Database.Instance.Images.RemoveRange(allImages);
-        await Database.Instance.SaveChangesAsync();
+        // var allImages = await Database.Instance.Images.ToListAsync();
+        // Database.Instance.Images.RemoveRange(allImages);
+        // await Database.Instance.SaveChangesAsync();
 
         return Ok();
     }
