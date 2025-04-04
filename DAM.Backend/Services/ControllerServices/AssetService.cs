@@ -32,11 +32,28 @@ public class AssetService : IAssetService
     {
 
         Image? finalImage = null;
+        
 
         try
         {
             List<Image> images = Database.Instance.Images.ToList();
-            finalImage = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
+            
+            var imagesWithProducts = images.Where(i => i.Product != null).ToList();
+            Console.WriteLine($"Images with non-null products: {imagesWithProducts.Count}");
+            
+            var matchingUuid = imagesWithProducts
+                .Where(i => string.Equals(i.Product.UUID, productId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            Console.WriteLine($"Images matching UUID: {matchingUuid.Count}");
+            
+            // Finally check priority
+            int priorityNum = int.Parse(priority);
+            finalImage = matchingUuid.FirstOrDefault(i => i.Priority == priorityNum);
+            
+            finalImage = images.FirstOrDefault(i => 
+                i.Product != null && 
+                string.Equals(i.Product.UUID, productId, StringComparison.OrdinalIgnoreCase) && 
+                i.Priority == int.Parse(priority));
         }
         catch (Exception ex)
         {
@@ -138,7 +155,7 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
         
-        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        var image = await Database.Instance.Images.FindAsync(imageId);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");

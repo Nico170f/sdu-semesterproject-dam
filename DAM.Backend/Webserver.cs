@@ -62,17 +62,9 @@ public sealed class Webserver
         builder.Services.AddControllers(options =>
         {
             options.OutputFormatters.Add(new FileOutputFormatter());
-        }).AddNewtonsoftJson();
-            // .AddNewtonsoftJson();
-            // .AddMvcOptions(options =>
-            // {
-            //     var formatter = options.OutputFormatters.OfType<FileOutputFormatter>().First();
-            //     formatter.SupportedMediaTypes.Clear();
-            //     formatter.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("image/*"));
-            // });
+        });
         
-        
-        // builder.Services.AddControllers();
+        builder.Services.AddControllers().AddNewtonsoftJson();
         
         builder.Services.AddLogging(config =>
         {

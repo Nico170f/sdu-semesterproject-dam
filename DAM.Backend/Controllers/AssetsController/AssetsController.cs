@@ -65,7 +65,6 @@ public class AssetsController : ApiController
         return await _assetService.GetImageIdPile(size, offset);
     }
 
-    
     [HttpGet("imageIdPileFromSearch")]
     public async Task<IActionResult> GetImageIdPileFromSearch([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchquery) 
     {
@@ -73,4 +72,7 @@ public class AssetsController : ApiController
         return await _assetService.GetImageIdPileFromSearch(size, offset, searchquery);
     }
 
+    
+    
+    // [HttpGet("imageIdPileFromSearchAndProduct")]
 }
