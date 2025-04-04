@@ -1,0 +1,226 @@
+@page "/dam/assets"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Json
+
+<style>
+    body {
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+    }
+
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    {
+        width: 80%
+    ;
+        max-width: 400px
+    ;
+        padding: 10px
+    ;
+        font-size: 16px
+    ;
+        border: 1px solid #ccc
+    ;
+        border-radius: 5px
+    ;
+    }
+
+    .gallery {
+        margin: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .gallery img {
+        width: 20vw;
+        height: 20vw; /* Forces square scaling */
+        border-radius: 5px;
+        object-fit: cover;
+        border: 2px solid #000000;
+        padding: 1vw;
+        transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+    }
+    
+    .gallery img:hover{
+        transform: scale(1.05);
+    }
+    
+</style>
+
+<PageTitle>Assets Overview</PageTitle>
+<div style="visibility: @(_isLoaded ? "visible" : "hidden")">
+
+    <div>
+        <h1>Assets Gallery</h1>
+        <InputText @bind-Value="searchText" placeholder="Search for assets"/>
+        <InputNumber @bind-Value="size">number of products to show</InputNumber>
+        <p>@pageNumber</p>
+        <button @onclick="() => NavigateToPage(pageNumber - 1)">Previous page</button>
+        <button @onclick="() => NavigateToPage(pageNumber + 1)">Next Page</button>
+        <button @onclick="UpdateButton">Update</button>
+        <InputFile OnChange="UploadImage" accept="image/*" />
+    </div>
+
+    <div style="text-align: left">
+        <button @onclick="NavigateToHome">Back</button>
+    </div>
+    
+
+    <div class="gallery" id="imageGrid">
+        @foreach (string uuid in imageIds)
+        {
+            var src = $"http://localhost:5115/api/v1/assets/GetImageByUUID?uuid={uuid}";
+            <div class="image-container" @onclick="() => SelectId(uuid)">
+                <img loading="lazy" src="@src" alt="Placeholder Image"/>
+                <p>@uuid</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool DEBUG = true;
+    private bool _isLoaded = false;
+
+    private string searchText = "";
+    private int size = 20;
+    private int pageNumber = 1;
+    private List<string> imageIds = new List<string>();
+    private HashSet<string> selectedImageIds = new HashSet<string>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(250);
+            _isLoaded = true;
+            StateHasChanged();
+        }
+    }
+    
+    public void SelectId(string uuid)
+    {
+        selectedImageIds.Add(uuid);
+    }
+
+    public async Task UpdateButton()
+    {
+        await GetImageIds();
+    }
+
+    private async Task UploadImage(InputFileChangeEventArgs e)
+    {
+        // Select a file 
+        var file = e.File;
+
+        if (file != null)
+        {   
+            // Finding the datatype of the file
+            var datatype = file.ContentType;
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB limit
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            string imageString = Convert.ToBase64String(bytes);
+            string dataUrl = $"data:{datatype};base64,{imageString}";
+            //Console.WriteLine(dataUrl);
+
+            // Make payload for uploading an image to the backend
+            var payload = new ImageUploadWithoutProduct
+            {
+                    Content = dataUrl
+            };
+
+            // Make a new HttpClient
+            using HttpClientHandler handler = new HttpClientHandler();
+            using HttpClient Http = new HttpClient(handler)
+            {
+                    BaseAddress = new Uri("http://localhost:5115/") // Replace with your API's base URL
+            };
+            // Post to the backend via HTTP
+            var response = await Http.PostAsJsonAsync("api/v1/assets/add", payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Image uploaded successfully.");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.StatusCode} - {error}");
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(250);
+
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        if (queryParams.TryGetValue("Page", out var pageNumString))
+            pageNumber = int.Parse(pageNumString);
+
+        await GetImageIds();
+    }
+
+    public void NavigateToHome()
+    {
+        Navigation.NavigateTo("/", true);
+    }
+
+    public void NavigateToPage(int pageNum)
+    {
+        Navigation.NavigateTo($"/dam/assets?Page={pageNum}", true);
+    }
+
+    private async Task GetImageIds()
+    {
+        try
+        {
+            HttpClientHandler handler = new HttpClientHandler();
+            HttpClient Http = new HttpClient(handler)
+            {
+                BaseAddress = new Uri("http://localhost:5115/") // Replace with your API's base URL
+            };
+
+            string apiUrl =  $"api/v1/assets/imageIdPile?size={size}&offset={pageNumber}";
+            
+            if(!string.IsNullOrEmpty(searchText))
+            {
+                apiUrl = $"api/v1/assets/imageIdPileFromSearch?size={size}&offset={pageNumber}&searchquery={searchText}";
+            }
+            
+            
+            imageIds = await Http.GetFromJsonAsync<List<string>>(apiUrl);
+            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        
+        foreach(string uuid in imageIds)
+        {
+            Console.WriteLine(uuid);
+        }
+        
+    }
+
+    public class ImageUploadWithoutProduct
+    {
+        public string Content { get; set; }
+    }
+
+}
+

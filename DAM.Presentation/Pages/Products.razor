@@ -1,0 +1,184 @@
+﻿@page "/dam/products"
+@attribute [StreamRendering]
+@rendermode  InteractiveServer
+@inject NavigationManager NavigationManager
+
+<style>
+    body {
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+    }
+
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    {
+        width: 80%;
+        max-width: 400px;
+        padding: 10px;
+        font-size: 24px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    .gallery {
+        margin: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .gallery img {
+        width: 20vw;
+        height: 20vw;  /* Forces square scaling */
+        border-radius: 5px;
+        object-fit: cover;
+        border: 2px solid #000000;
+        padding: 1vw;
+    }
+</style>
+
+<link rel="stylesheet" href="Overview.css" />
+
+<PageTitle>DAM Overview</PageTitle>
+
+<div style="visibility: @(_isLoaded ? "visible" : "hidden")">
+    <div style="text-align: left">
+        <button @onclick="NavigateToHome">Back</button>
+    </div>
+
+    <h1>Product Gallery</h1>
+    <!-- Search bar -->
+    <input class="form-control" @bind="searchProduct" @bind:event="oninput" placeholder="Search by product name, id or image tag..."/>
+
+    <div class="gallery" id="imageGrid">
+        @foreach(Product product in FilteredProducts())
+        {
+            <div class="image-container" @onclick="@(e => OnImageClickNavigateTo(@product.ProductId))">
+                <img src="@product.Url" alt="Placeholder Image">
+
+                <p>@($"{product.Name}")</p>
+                <p>@($"{product.ProductId}")</p>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+
+    private string searchProduct = ""; //variable that holds text in searchbar
+
+    private bool _isLoaded = false;
+    private string searchText = ""; // Holds the search text
+    List<Product> products = new List<Product>();
+
+    protected override void OnInitialized ()
+    {
+        base.OnInitialized();
+
+        MockProducts();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(100);
+            _isLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+    public void MockProducts ()
+    {
+
+        string[] names = [
+            @"Lenovo LoQ - 15.6"" | RTX 4070 | AMD Ryzen™ 7 7435HS | 24GB | 1TB",
+            @"Kingston FURY Beast DDR5-6400 - 64GB - CL32 - Dual Channel (2 pcs) - AMD EXPO & Intel XMP - Sort",
+            @"Canon EOS R10 + RF-S 18-45mm F4.5-6.3 IS STM",
+            @"Logitech G502 HERO - Gaming Mus - Optisk - 11 knapper - Sort med RGB lys",
+            @"Pro HDMI - Micro HDMI 2.0 - Skærmkabel - 5m - Sort",
+            @"Steelseries Apex Pro Tkl Wireless Gen Gaming Tastatur Uden Numpad Nordisk Sort",
+            @"Shure SM7B Vokalmikrofon",
+            @"Apple MacBook Air - 13.6"" | M4 | 16GB | 256GB | Sky Blue",
+            @"Samsung 990 Pro SSD - 2TB - Uden køleprofil - M.2 2280 - PCIe 4.0",
+            @"Samsung Galaxy S25+ 256GB/12GB - Navy",
+            @"Nothing Phone (3a) 256GB/12GB - Black",
+            @"Philips Hue Bevægelsessensor",
+            @"Logitech G560 - 2.1 Kanal - Sort"];
+        string[] imageUrls = ["https://www.proshop.dk/Images/300x251/3265125_d00b1b375815.png",
+            "https://www.proshop.dk/Images/300x251/3252630_38e96b07e036.jpg",
+            "https://www.proshop.dk/Images/1600x1200/3102491_92f88358cdc7.jpg",
+            "https://www.proshop.dk/Images/300x251/2680952_2efbf2afedac.jpg",
+            "https://www.proshop.dk/Images/1600x1200/2971893_fcc1fb5d76e9.jpg",
+            "https://www.proshop.dk/Images/300x251/3335683_de5c27e34603.jpg",
+            "https://www.proshop.dk/Images/300x251/2932782_67111a5120c1.png",
+            "https://www.proshop.dk/Images/300x251/3351366_51c3ddce1fee.jpg",
+            "https://www.proshop.dk/Images/1600x1200/3103447_4ee041b928cb.png",
+            "https://www.proshop.dk/Images/1600x1200/3329203_e893d1988125.png",
+            "https://www.proshop.dk/Images/1600x1200/3336300_41c7badbc96b.jpg",
+            "https://www.proshop.dk/Images/1600x1200/2990958_944ae001f3cd.png",
+            "https://www.proshop.dk/Images/1600x1200/2649079_16e9f65de615.jpg"
+        ];
+
+        string[] productIds = ["0ae877ea-e04b-4819-b933-e9dd2ea291b3",
+            "708a7331-3072-4c1d-8344-e5e8f1a18bef",
+            "0aad21e1-5ba7-43f7-8367-d3cae88c3c7b",
+            "3edaccfa-eef3-4c27-9942-090a5fb6a098",
+            "99595c59-594a-4192-805e-a8f6f732b8aa",
+            "ae1eb446-1ca1-4a28-ae39-72c21d5b2745",
+            "78b502d5-d9ba-4013-ab08-94e4c88e9634",
+            "de881083-1016-435c-b5a3-0eb2491c438c",
+            "1fe93da8-6010-4bea-803d-da9dee0f84e0",
+            "656df932-b786-48db-84a0-d4d32860ebef",
+            "b3d49e5e-6c4a-4e16-9016-56177c52fac2",
+            "9d8cfa78-306f-44f3-b160-f0805720d3de",
+            "a597942a-a841-4e1c-b30b-4799c71c3eb1"];
+
+        for(int i = 0; i < imageUrls.Length ; i++){
+            products.Add(new Product
+            {
+                Name = names[i],
+                Url = imageUrls[i],
+                ProductId = productIds[i]
+            });
+        }
+    }
+
+    public void NavigateToHome ()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void OnImageClickNavigateTo(string productId)
+    {
+        NavigationManager.NavigateTo($"/dam/edit?productId={productId}");
+    }
+    
+    
+    
+    private IEnumerable<Product> FilteredProducts()
+    {
+        if (string.IsNullOrWhiteSpace(searchProduct)) //if there is nothing in search product it search for all the products
+            return products;
+
+        return products.Where(products =>
+            (products.Name != null && products.Name.Contains(searchProduct, StringComparison.OrdinalIgnoreCase)) || //returns based on product name and product id
+            (products.ProductId != null && products.ProductId.Contains(searchProduct, StringComparison.OrdinalIgnoreCase)));
+    }
+
+
+    public class Product
+    {
+        public string Name { get; set; }
+        public string Url { get; set; }
+        public string ProductId { get; set; }
+    }
+}
+    
