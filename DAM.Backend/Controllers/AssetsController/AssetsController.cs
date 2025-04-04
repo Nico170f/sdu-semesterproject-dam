@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
+using DAM.Backend.Data;
 using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace DAM.Backend.Controllers;
@@ -74,5 +76,14 @@ public class AssetsController : ApiController
 
     
     
-    // [HttpGet("imageIdPileFromSearchAndProduct")]
+    //Test method to delete all images
+    [HttpPost("delete-all")]
+    public async Task<IActionResult> DeleteAllImages()
+    {
+        var allImages = await Database.Instance.Images.ToListAsync();
+        Database.Instance.Images.RemoveRange(allImages);
+        await Database.Instance.SaveChangesAsync();
+
+        return Ok();
+    }
 }

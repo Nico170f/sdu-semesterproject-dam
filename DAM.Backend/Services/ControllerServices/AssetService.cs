@@ -36,25 +36,16 @@ public class AssetService : IAssetService
 
         try
         {
-            List<Image> images = Database.Instance.Images.ToList();
-            
-            var imagesWithProducts = images.Where(i => i.Product != null).ToList();
-            Console.WriteLine($"Images with non-null products: {imagesWithProducts.Count}");
-            
-            var matchingUuid = imagesWithProducts
-                .Where(i => string.Equals(i.Product.UUID, productId, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            Console.WriteLine($"Images matching UUID: {matchingUuid.Count}");
-            
-            // Finally check priority
             int priorityNum = int.Parse(priority);
-            finalImage = matchingUuid.FirstOrDefault(i => i.Priority == priorityNum);
             
-            finalImage = images.FirstOrDefault(i => 
-                i.Product != null && 
-                string.Equals(i.Product.UUID, productId, StringComparison.OrdinalIgnoreCase) && 
-                i.Priority == int.Parse(priority));
-        }
+            // This performs the filtering at the database level
+            finalImage = await Database.Instance.Images
+                .Include(i => i.Product)  // Include related product data
+                .Where(i => i.Product != null && 
+                            i.Product.UUID.ToUpper() == productId.ToUpper() && 
+                            i.Priority == priorityNum)
+                .FirstOrDefaultAsync();  // Only fetch the one record you need
+            }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
