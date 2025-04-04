@@ -139,6 +139,8 @@ public class AssetService : IAssetService
         return new OkObjectResult("Image updated");
     }
 
+    
+    //Does this work?
     public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDocument)
     {
         if (!Guid.TryParse(imageId, out Guid imageGuid))
@@ -151,7 +153,28 @@ public class AssetService : IAssetService
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
-        
+
+
+
+        var productImages = await _database.Images
+            .Where(i => i.Product != null && i.Product.UUID == image.Product.UUID)
+            .OrderBy(i => i.Priority)
+            .ToListAsync();
+
+        var imagePriority =
+            patchDocument.Operations.FirstOrDefault(op =>
+                op.path.Equals("/priority", StringComparison .OrdinalIgnoreCase));
+        int.TryParse(imagePriority.value.ToString(), out int newPriority);
+            
+        if (newPriority != image.Priority && productImages[newPriority] != null)
+        {
+            productImages.Insert(newPriority, image);
+            
+            for (int i = 0; i < productImages.Count; i++)
+            {
+                productImages[i].Priority = i;
+            }
+        }
         
         // Apply the patch document to the entity
         patchDocument.ApplyTo(image);
@@ -190,7 +213,6 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image deleted successfully");
     }
-
 
     private Image GetDefaultImage()
     {
