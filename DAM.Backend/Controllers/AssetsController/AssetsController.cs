@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
+using DAM.Backend.Data;
 using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace DAM.Backend.Controllers;
@@ -65,7 +67,6 @@ public class AssetsController : ApiController
         return await _assetService.GetImageIdPile(size, offset);
     }
 
-    
     [HttpGet("imageIdPileFromSearch")]
     public async Task<IActionResult> GetImageIdPileFromSearch([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchquery) 
     {
@@ -77,5 +78,16 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetImageByUUID([FromQuery] string uuid)
     {
 	    return await _assetService.GetImageByUUID(uuid);
+    }
+    
+    //Test method to delete all images
+    [HttpPost("delete-all")]
+    public async Task<IActionResult> DeleteAllImages()
+    {
+        var allImages = await Database.Instance.Images.ToListAsync();
+        Database.Instance.Images.RemoveRange(allImages);
+        await Database.Instance.SaveChangesAsync();
+
+        return Ok();
     }
 }
