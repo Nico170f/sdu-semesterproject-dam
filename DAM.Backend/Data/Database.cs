@@ -13,10 +13,6 @@ public sealed class Database : DbContext
     public DbSet<Product> Product { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<TagImageGroup> TagImageGroups { get; set; }
-    public DbSet<Group> Groups { get; set; }
-    public DbSet<ImageGroup> ImageGroups { get; set; }
-    
-
 
     private static Database? _instance = null;
 
