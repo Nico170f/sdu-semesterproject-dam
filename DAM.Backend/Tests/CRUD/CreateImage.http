@@ -7,8 +7,8 @@
     let imageContent = client.global.get("defaultContent");
 
     request.variables.set("clients", [ // test data
-        {"Content": imageContent[0],"ProductId": productIds[0], "IsShown": true, "Priority": 1},
-        {"Content": imageContent[0],"ProductId": productIds[0], "IsShown": true, "Priority": 2},
+        {"Content": imageContent[0],"ProductId": productIds[0], "IsShown": true, "Priority": 0},
+        {"Content": imageContent[1],"ProductId": productIds[1], "IsShown": true, "Priority": 0},
         
     ])
 %}
