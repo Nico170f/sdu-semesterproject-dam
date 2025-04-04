@@ -3,10 +3,14 @@ using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using System.Linq;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Formats;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Image = DAM.Backend.Data.Models.Image;
 
 namespace DAM.Backend.Services.ControllerServices;
 
@@ -78,16 +82,21 @@ public class AssetService : IAssetService
         image.IsShown = true;
         image.CreatedAt = DateTime.Now;
         image.UpdatedAt = DateTime.Now;
+        
+        (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+        image.Width = dimensions.Width;
+        image.Height = dimensions.Height;
 
-        bool imageCreated = await _database.Create(image);
-        if (!imageCreated)
+        // bool imageCreated = await _database.Create(image);
+        _database.Images.Add(image);
+        
+        int imageCreated = await _database.SaveChangesAsync();
+        if (imageCreated > 0)
         {
             return new BadRequestObjectResult("Failed to create image");
         }
 
-        //Todo: This has to be set based on the image content
-        image.Width = 0;
-        image.Height = 0;
+
 
         CreateImageResponse response = new CreateImageResponse(image);
         return new OkObjectResult(response);
@@ -128,53 +137,93 @@ public class AssetService : IAssetService
     //Does this work?
     public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDocument)
     {
-        if (!Guid.TryParse(imageId, out Guid imageGuid))
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
+        if(!IsValidId(imageId)) return new BadRequestObjectResult("Invalid UUID format");
+
+        Image? image = await _database.Images
+            .Where(i => i.UUID.ToUpper() == imageId.ToUpper())
+            .FirstOrDefaultAsync();
         
-        var image = await _database.Images.FindAsync(imageId);
+        int beforePatchPriority = image.Priority;
+        
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
 
-
-
-        var productImages = await _database.Images
-            .Where(i => i.Product != null && i.Product.UUID == image.Product.UUID)
-            .OrderBy(i => i.Priority)
-            .ToListAsync();
-
-        var imagePriority =
-            patchDocument.Operations.FirstOrDefault(op =>
-                op.path.Equals("/priority", StringComparison .OrdinalIgnoreCase));
-        int.TryParse(imagePriority.value.ToString(), out int newPriority);
-            
-        if (newPriority != image.Priority && productImages[newPriority] != null)
+        patchDocument.ApplyTo(image);
+        int afterPatchPriority = image.Priority;
+        
+        if (beforePatchPriority != afterPatchPriority && image.Product != null)
         {
-            productImages.Insert(newPriority, image);
             
-            for (int i = 0; i < productImages.Count; i++)
+            Product? product = await _database.Product
+                .Where(p => p.UUID.ToUpper() == image.Product.UUID.ToUpper())
+                .FirstOrDefaultAsync();
+            
+            List<Image> productImages = await _database.Images
+                .Where(img => img.Product != null && img.Product.UUID.ToUpper() == product.UUID.ToUpper())
+                .OrderBy(img => img.Priority)
+                .ToListAsync();
+
+            productImages.Insert(image.Priority, image);
+            for (int i = image.Priority; i < productImages.Count; i++)
             {
                 productImages[i].Priority = i;
             }
+
         }
         
-        // Apply the patch document to the entity
-        patchDocument.ApplyTo(image);
-    
-        // Update timestamp
-        image.UpdatedAt = DateTime.Now;
 
-        // Save changes to database
-        var result = await _database.Update(image);
-        if (!result)
+        bool updateResult = await _database.Update(image);
+        if (!updateResult)
         {
             return new BadRequestObjectResult("Failed to update image");
         }
 
         return new OkObjectResult("Image updated successfully");
+        
+        
+        
+        
+        
+        
+        throw new NotImplementedException();
+        
+
+        // var productImages = await _database.Images
+        //     .Where(i => i.Product != null && i.Product.UUID == image.Product.UUID)
+        //     .OrderBy(i => i.Priority)
+        //     .ToListAsync();
+        //
+        // var imagePriority =
+        //     patchDocument.Operations.FirstOrDefault(op =>
+        //         op.path.Equals("/priority", StringComparison .OrdinalIgnoreCase));
+        // int.TryParse(imagePriority.value.ToString(), out int newPriority);
+        //     
+        // if (newPriority != image.Priority && productImages[newPriority] != null)
+        // {
+        //     productImages.Insert(newPriority, image);
+        //     
+        //     for (int i = 0; i < productImages.Count; i++)
+        //     {
+        //         productImages[i].Priority = i;
+        //     }
+        // }
+        
+        // // Apply the patch document to the entity
+        // patchDocument.ApplyTo(image);
+        //
+        // // Update timestamp
+        // image.UpdatedAt = DateTime.Now;
+        //
+        // // Save changes to database
+        // var result = await _database.Update(image);
+        // if (!result)
+        // {
+        //     return new BadRequestObjectResult("Failed to update image");
+        // }
+        //
+        // return new OkObjectResult("Image updated successfully");
     }
 
     public async Task<IActionResult> DeleteImage(string imageId)
@@ -227,20 +276,19 @@ public class AssetService : IAssetService
         return new OkObjectResult(imageIds);
     }
 
-public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
-{
-    List<string> imageIds = await _database.Images
-        .Where(img => img.Product != null)
-        .Where(img => img.Product!.Name.Contains(searchquery)) // Filter by search query
-        .OrderBy(img => img.Product!.Name) // Order by name
-        .Skip(offset) // Skip offset
-        .Take(size) // Take only the required size
-        .Select(img => img.UUID) // Select UUID instead of name
-        .ToListAsync();
+    public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
+    {
+        List<string> imageIds = await _database.Images
+            .Where(img => img.Product != null)
+            .Where(img => img.Product!.Name.Contains(searchquery)) // Filter by search query
+            .OrderBy(img => img.Product!.Name) // Order by name
+            .Skip(offset) // Skip offset
+            .Take(size) // Take only the required size
+            .Select(img => img.UUID) // Select UUID instead of name
+            .ToListAsync();
 
-    return new OkObjectResult(imageIds);
+        return new OkObjectResult(imageIds);
     }
-
 
     public async Task<IActionResult> GetImageByUUID(string uuid)
     {
@@ -259,6 +307,22 @@ public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, 
         
         byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
         return new FileContentResult(imageBytes, imageType);   
+    }
+    
+    private bool IsValidId(string id)
+    {
+        return Guid.TryParse(id, out Guid _);
+    }
+    
+    public(int Width, int Height) GetImageDimensions(string base64Image)
+    {
+        // Strip data URL prefix if it exists
+        var base64Data = base64Image.Contains(",") ? base64Image.Split(',')[1] : base64Image;
+        byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+        using var ms = new MemoryStream(imageBytes);
+        using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(ms); // Load as RGBA pixel format
+        return (image.Width, image.Height);
     }
 }
 
