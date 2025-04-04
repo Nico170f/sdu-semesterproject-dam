@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DAM.Backend.Controllers;
 
-public class UpdateImageRequest
+public class UpdateImageRequest : CreateImageRequest
 {
-
+    
 }

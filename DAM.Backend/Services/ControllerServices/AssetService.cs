@@ -3,6 +3,8 @@ using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,31 +19,43 @@ public class AssetService : IAssetService
     {
         _configuration = configuration;
     }
+    
 
+    //Method for returning all assets for a product by productId
     public async Task<IActionResult> GetProductAssets(string productId)
     {
         return new OkObjectResult("Produkt ID: " + productId);
     }
 
+    //Method for returning a single image by productId and priority
     public async Task<IActionResult> GetImage(string productId, string priority)
     {
 
-        List<Image> images = await Database.Instance.Images.ToListAsync();
-        Image? image = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
-        
-        if (image == null)
+        Image? finalImage = null;
+
+        try
         {
-            image = new Image();
-            image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+            List<Image> images = Database.Instance.Images.ToList();
+            finalImage = images.FirstOrDefault(i => i.Product != null && i.Product.UUID == productId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            if (finalImage == null)
+            {
+                Console.WriteLine("Image was not found");
+                finalImage = GetDefaultImage();
+            }
         }
 
-        var imageParts = image.Content.Split(";base64,");
-        var imageType = imageParts[0].Substring(5);
-        
-        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);   
+        return ConvertImageToFileContent(finalImage);
+
     }
 
+    //Method for creating a new image
     public async Task<IActionResult> CreateImage(CreateImageRequest requestParams)
     {
         if (!Guid.TryParse($"{requestParams.ProductId}", out Guid productGuid))
@@ -55,7 +69,7 @@ public class AssetService : IAssetService
             Console.WriteLine(p.UUID);
         }
 
-        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParams.ProductId);
+        Product? product = Database.Instance.Product.ToList().Find(p => p.UUID == requestParams.ProductId.ToUpper());
         if (product == null)
         {
             return new NotFoundObjectResult("No product found by that UUID");
@@ -87,19 +101,103 @@ public class AssetService : IAssetService
         return new OkObjectResult(response);
     }
 
-    public Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
+    public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
     {
-        throw new NotImplementedException();
+        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image found by that UUID");
+        }
+        
+        try
+        {
+            image.Content = requestParametre.Content;
+            image.IsShown = requestParametre.IsShown;
+            image.Width = requestParametre.Width ?? 0;
+            image.Height = requestParametre.Height ?? 0;
+            image.Priority = requestParametre.Priority ?? 0;
+            image.UpdatedAt = DateTime.Now;
+        }
+        catch (Exception e)
+        {
+            return new BadRequestObjectResult("Failed to update image");
+        }
+
+        return new OkObjectResult("Image updated");
     }
 
-    public Task<IActionResult> PatchImage(string imageId, PatchImageRequest requestParametre)
+    public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDocument)
     {
-        throw new NotImplementedException();
+        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+        
+        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image found by that UUID");
+        }
+        
+        
+        // Apply the patch document to the entity
+        patchDocument.ApplyTo(image);
+    
+        // Update timestamp
+        image.UpdatedAt = DateTime.Now;
+
+        // Save changes to database
+        var result = await Database.Instance.Update(image);
+        if (!result)
+        {
+            return new BadRequestObjectResult("Failed to update image");
+        }
+
+        return new OkObjectResult("Image updated successfully");
     }
 
-    public Task<IActionResult> DeleteImage(string imageId)
+    public async Task<IActionResult> DeleteImage(string imageId)
     {
-        throw new NotImplementedException();
+        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var image = await Database.Instance.Images.FindAsync(imageGuid);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image found by that UUID");
+        }
+
+        var result = await Database.Instance.Delete(image);
+        if (!result)
+        {
+            return new BadRequestObjectResult("Failed to delete image");
+        }
+
+        return new OkObjectResult("Image deleted successfully");
+    }
+
+
+    private Image GetDefaultImage()
+    {
+        Image image = new Image();
+        image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+        return image;
+    }
+
+    private FileContentResult ConvertImageToFileContent(Image finalImage)
+    { 
+        var imageParts = finalImage.Content.Split(";base64,");
+        var imageType = imageParts[0].Substring(5);
+        
+        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
+        return new FileContentResult(imageBytes, imageType);
     }
 
     public async Task<IActionResult> GetImageIdPile(int size, int offset) {
