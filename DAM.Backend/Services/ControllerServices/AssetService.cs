@@ -280,57 +280,7 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
 
         }
         await _database.SaveChangesAsync();
-
-        // bool updateResult = await _database.Update(image);
-        // if (!updateResult)
-        // {
-        //     return new BadRequestObjectResult("Failed to update image");
-        // }
-
         return new OkObjectResult("Image updated successfully");
-        
-        
-        
-        
-        
-        
-        // throw new NotImplementedException();
-        
-
-        // var productImages = await _database.Images
-        //     .Where(i => i.Product != null && i.Product.UUID == image.Product.UUID)
-        //     .OrderBy(i => i.Priority)
-        //     .ToListAsync();
-        //
-        // var imagePriority =
-        //     patchDocument.Operations.FirstOrDefault(op =>
-        //         op.path.Equals("/priority", StringComparison .OrdinalIgnoreCase));
-        // int.TryParse(imagePriority.value.ToString(), out int newPriority);
-        //     
-        // if (newPriority != image.Priority && productImages[newPriority] != null)
-        // {
-        //     productImages.Insert(newPriority, image);
-        //     
-        //     for (int i = 0; i < productImages.Count; i++)
-        //     {
-        //         productImages[i].Priority = i;
-        //     }
-        // }
-        
-        // // Apply the patch document to the entity
-        // patchDocument.ApplyTo(image);
-        //
-        // // Update timestamp
-        // image.UpdatedAt = DateTime.Now;
-        //
-        // // Save changes to database
-        // var result = await _database.Update(image);
-        // if (!result)
-        // {
-        //     return new BadRequestObjectResult("Failed to update image");
-        // }
-        //
-        // return new OkObjectResult("Image updated successfully");
     }
 
     public async Task<IActionResult> DeleteImage(string imageId)
@@ -355,12 +305,7 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
         return new OkObjectResult("Image deleted successfully");
     }
 
-    private Image GetDefaultImage()
-    {
-        Image image = new Image();
-        image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
-        return image;
-    }
+    
 
     private FileContentResult ConvertImageToFileContent(Image finalImage)
     { 
@@ -399,8 +344,6 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
 
     public async Task<IActionResult> GetImageByUUID(string uuid)
     {
-		// Image? image = await _database.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
-		
 		Image? image = await _database.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
         
         if (image == null)
@@ -421,15 +364,21 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
         return Guid.TryParse(id, out Guid _);
     }
     
-    public(int Width, int Height) GetImageDimensions(string base64Image)
+    private (int Width, int Height) GetImageDimensions(string base64Image)
     {
-        // Strip data URL prefix if it exists
         var base64Data = base64Image.Contains(",") ? base64Image.Split(',')[1] : base64Image;
         byte[] imageBytes = Convert.FromBase64String(base64Data);
 
         using var ms = new MemoryStream(imageBytes);
-        using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(ms); // Load as RGBA pixel format
+        using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(ms);
         return (image.Width, image.Height);
+    }
+    
+    private Image GetDefaultImage()
+    {
+        Image image = new Image();
+        image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+        return image;
     }
 }
 
