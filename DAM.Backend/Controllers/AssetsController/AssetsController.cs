@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using DAM.Backend.Controllers.API;
 using DAM.Backend.Data;
 using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
@@ -22,11 +23,19 @@ public class AssetsController : ApiController
         _assetService = assetService;
     }
     
-    [HttpGet("{productId}")]
+    [HttpGet("{productId}/all")]
     //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAssets(string productId)
+    public async Task<IActionResult> GetProductAssetsIds(string productId)
     {
-        return await _assetService.GetProductAssets(productId);
+        return await _assetService.GetProductAssetsIds(productId);
+    }
+
+    [HttpGet("{productId}/amount")]
+
+    //[AllowAnonymous]
+    public async Task<IActionResult> GetProductAssetsAmount(string productId)
+    {
+        return await _assetService.GetProductAssetAmount(productId);
     }
 
     [HttpGet("{productId}/{priority}")]

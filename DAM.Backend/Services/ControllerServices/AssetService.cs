@@ -1,16 +1,13 @@
-using DAM.Backend.Controllers;
+using DAM.Backend.Controllers.API;
 using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
-using System.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Formats;
-using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.JsonPatch;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Image = DAM.Backend.Data.Models.Image;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace DAM.Backend.Services.ControllerServices;
 
@@ -27,44 +24,83 @@ public class AssetService : IAssetService
     }
 
     //Method for returning all assets for a product by productId
-    public async Task<IActionResult> GetProductAssets(string productId)
+    public async Task<IActionResult> GetProductAssetsIds(string productId)
     {
-        return new OkObjectResult("Produkt ID: " + productId);
+        Guid? productUUID = ParseStringGuid(productId);
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid product uuid");
+        }
+
+        List<Guid> imageIds = await _database.ProductImages
+            .Where(i => i.ProductUUID == productUUID)
+            .Select(i => i.ImageUUID)
+            .ToListAsync();
+
+        GetProductAssetsIdsResponse response = new GetProductAssetsIdsResponse(imageIds);
+        return new OkObjectResult(response);
     }
+
+
+    public async Task<IActionResult> GetProductAssetAmount(string productId)
+    {
+        Guid? productUUID = ParseStringGuid(productId);
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid product uuid");
+        }
+
+        int imageCount = await _database.ProductImages
+            .Where(i => i.ProductUUID == productUUID)
+            .CountAsync();
+
+        GetProductAssetAmountResponse response = new GetProductAssetAmountResponse(imageCount);
+        return new OkObjectResult(response);
+    }
+
+
 
     //Method for returning a single image by productId and priority
     public async Task<IActionResult> GetImage(string productId, string priority)
     {
 
-        Image? finalImage = null;
+        int? imagePriority = GetImagePriority(priority);
+        Guid? productUUID = ParseStringGuid(productId);
+
+        if (imagePriority == null || productUUID == null)
+        {
+            return new BadRequestObjectResult($"Invalid {(imagePriority == null ? "priority": "product uuid")}");
+        }
         
 
-        try
-        {
-            int priorityNum = int.Parse(priority);
-            
+        Image? finalImage = null;
+        
+        try {
+            ProductImage? productImage = await _database.ProductImages
+                //.Include()
+                .Where(i => i.ProductUUID == productUUID && i.Priority == imagePriority)
+                .FirstOrDefaultAsync();
+
+            if (productImage == null) throw new Exception("No image found by that priority");
+
             finalImage = await _database.Images
-                .Include(i => i.Product)
-                .Where(i => i.Product != null && 
-                            i.Product.UUID.ToUpper() == productId.ToUpper() && 
-                            i.Priority == priorityNum)
+                .Where(i => i.UUID == productImage.ImageUUID)
                 .FirstOrDefaultAsync();
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
         }
-        finally
+        finally 
         {
-            if (finalImage == null)
+            if(finalImage == null)
             {
-                Console.WriteLine("Image was not found");
                 finalImage = GetDefaultImage();
             }
         }
 
-        return ConvertImageToFileContent(finalImage);
 
+        return ConvertImageToFileContent(finalImage);
     }
 
     //Method for creating a new image
@@ -76,10 +112,8 @@ public class AssetService : IAssetService
         }
         
         Image image = new Image();
-        image.UUID = Guid.NewGuid().ToString();
+        image.UUID = Guid.NewGuid();
         image.Content = requestParams.Content;
-        image.Priority = 0;
-        image.IsShown = true;
         image.CreatedAt = DateTime.Now;
         image.UpdatedAt = DateTime.Now;
         
@@ -87,7 +121,6 @@ public class AssetService : IAssetService
         image.Width = dimensions.Width;
         image.Height = dimensions.Height;
 
-        // bool imageCreated = await _database.Create(image);
         _database.Images.Add(image);
         
         int imageCreated = await _database.SaveChangesAsync();
@@ -96,208 +129,156 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Failed to create image");
         }
 
-
-
         CreateImageResponse response = new CreateImageResponse(image);
         return new OkObjectResult(response);
     }
 
     public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
     {
-        // if (!Guid.TryParse(imageId, out Guid imageGuid))
-        // {
-        //     return new BadRequestObjectResult("Invalid UUID format");
-        // }
-        //
-        // var image = await _database.Images.FindAsync(imageGuid);
-        // if (image == null)
-        // {
-        //     return new NotFoundObjectResult("No image found by that UUID");
-        // }
-        //
-        // try
-        // {
-        //     image.Content = requestParametre.Content;
-        //     image.IsShown = requestParametre.IsShown;
-        //     image.Width = requestParametre.Width ?? 0;
-        //     image.Height = requestParametre.Height ?? 0;
-        //     image.Priority = requestParametre.Priority ?? 0;
-        //     image.UpdatedAt = DateTime.Now;
-        // }
-        // catch (Exception e)
-        // {
-        //     return new BadRequestObjectResult("Failed to update image");
-        // }
-        //
-        // return new OkObjectResult("Image updated");
-        return null;
-    }
-
-    
-    
-    
-public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDoc)
-{
-    if (patchDoc == null)
-    {
-        return new BadRequestObjectResult("Patch document cannot be null");
-    }
-
-    var image = await _database.Images
-        .Include(i => i.Product)
-        .FirstOrDefaultAsync(i => i.UUID == imageId);
-
-    if (image == null)
-    {
-        return new NotFoundObjectResult($"Image with ID {imageId} not found");
-    }
-
-    // Store original priority for comparison
-    int originalPriority = image.Priority;
-    bool priorityChanged = false;
-    int newPriority = originalPriority;
-
-    // Check if priority is being updated
-    var priorityOperation = patchDoc.Operations.FirstOrDefault(op => 
-        op.path.Equals("/priority", StringComparison.OrdinalIgnoreCase) && 
-        op.op.Equals("replace", StringComparison.OrdinalIgnoreCase));
-    
-    if (priorityOperation != null && priorityOperation.value != null)
-    {
-        priorityChanged = true;
-        newPriority = Convert.ToInt32(priorityOperation.value);
-    }
-    
-    // Handle special case for ProductUUID path
-    foreach (var operation in patchDoc.Operations.ToList())
-    {
-        if (operation.path.Equals("/ProductUUID", StringComparison.OrdinalIgnoreCase) 
-            && operation.op.Equals("replace", StringComparison.OrdinalIgnoreCase))
+        Guid? imageUUID = ParseStringGuid(imageId);
+        if (imageUUID == null)
         {
-            string productUuid = operation.value?.ToString();
-        
-            // Remove the original ProductUUID operation
-            patchDoc.Operations.Remove(operation);
-        
-            if (string.IsNullOrEmpty(productUuid))
-            {
-                image.Product = null;
-            }
-            else
-            {
-                var product = await _database.Product.FirstOrDefaultAsync(p => p.UUID == productUuid);
-                if (product == null)
-                {
-                    return new BadRequestObjectResult($"Product with ID {productUuid} not found");
-                }
-                image.Product = product;
-            }
+            return new BadRequestObjectResult("Invalid UUID format");
         }
-    }
-
-    // Apply patch operations
-    patchDoc.ApplyTo(image);
-    
-    // Handle priority changes if needed
-    if (priorityChanged && image.Product != null)
-    {
-        // Get all other images for the same product
-        var otherImages = await _database.Images
-            .Where(img => img.Product != null && 
-                          img.Product.UUID.ToUpper() == image.Product.UUID.ToUpper() && 
-                          img.UUID != image.UUID)
-            .OrderBy(img => img.Priority)
-            .ToListAsync();
         
-        // Insert image at new priority and reorder all images
-        var allImages = new List<Image>(otherImages);
-        int insertPosition = Math.Min(newPriority, allImages.Count);
-        allImages.Insert(insertPosition, image);
-        
-        // Reassign priorities sequentially
-        for (int i = 0; i < allImages.Count; i++)
-        {
-            allImages[i].Priority = i;
-        }
-    }
-    
-    // Update timestamp
-    image.UpdatedAt = DateTime.UtcNow;
-    
-    // Save changes
-    bool updateResult = await _database.SaveChangesAsync() > 0;
-    
-    if (!updateResult)
-    {
-        return new StatusCodeResult(500);
-    }
-    
-    return new OkObjectResult(image);
-}
-    
-    
-    
-    //Does this work?
-    public async Task<IActionResult> PatchImage2(string imageId, JsonPatchDocument<Image> patchDocument)
-    {
-        if(!IsValidId(imageId)) return new BadRequestObjectResult("Invalid UUID format");
-
         Image? image = await _database.Images
-            .Where(i => i.UUID.ToUpper() == imageId.ToUpper())
-            .FirstOrDefaultAsync();
-        
+            .FirstOrDefaultAsync(i => i.UUID == imageUUID);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
         
-        int beforePatchPriority = image.Priority;
-        patchDocument.ApplyTo(image);
-        
-        image.UpdatedAt = DateTime.Now;
-        int afterPatchPriority = image.Priority;
-        
-        if (beforePatchPriority != afterPatchPriority && image.Product != null)
-        {
-            
-            Product? product = await _database.Product
-                .Where(p => p.UUID.ToUpper() == image.Product.UUID.ToUpper())
-                .FirstOrDefaultAsync();
-            
-            var otherImages = await _database.Images
-                .Where(img => img.Product != null && 
-                              img.Product.UUID.ToUpper() == image.Product.UUID.ToUpper() && 
-                              img.UUID != image.UUID)  // Exclude current image
-                .OrderBy(img => img.Priority)
-                .ToListAsync();
 
-            otherImages.Insert(Math.Min(afterPatchPriority, otherImages.Count), image);
-        
-            for (int i = 0; i < otherImages.Count; i++)
+            image.Content = requestParametre.Content;
+            image.UpdatedAt = DateTime.Now;
+
+            (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+            image.Width = dimensions.Width;
+            image.Height = dimensions.Height;
+
+            bool imageUpdated = await _database.Update(image);
+            if (!imageUpdated)
             {
-                otherImages[i].Priority = i;
+                return new BadRequestObjectResult("Failed to update image");
             }
 
-        }
-        await _database.SaveChangesAsync();
-        return new OkObjectResult("Image updated successfully");
+            return new OkObjectResult("Image updated successfully");
     }
 
-    public async Task<IActionResult> DeleteImage(string imageId)
+    
+    
+    
+
+    public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDoc)
     {
-        if (!Guid.TryParse(imageId, out Guid imageGuid))
+        if (patchDoc == null){
+            return new BadRequestObjectResult("Patch document cannot be null");
+        }
+        
+        Guid? imageUUID = ParseStringGuid(imageId);
+        if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        var image = await _database.Images.FindAsync(imageGuid);
+        Image? image = await _database.Images
+            .FirstOrDefaultAsync(i => i.UUID == imageUUID);
+
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
 
-        var result = await _database.Delete(image);
-        if (!result)
+        patchDoc.ApplyTo(image);
+        image.UpdatedAt = DateTime.Now;
+
+        (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+        image.Width = dimensions.Width;
+        image.Height = dimensions.Height;
+
+        bool updateResult = await _database.SaveChangesAsync() > 0;
+        if (!updateResult)
+        {
+            return new BadRequestObjectResult("Failed to update image");
+        }
+
+        return new OkObjectResult("Image updated successfully");
+    }
+    public async Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDoc)
+    {
+        if (patchDoc == null)
+        {
+            return new BadRequestObjectResult("Patch document cannot be null");
+        }
+
+
+        Guid? imageUUID = ParseStringGuid(imageId);
+        Guid? productUUID = ParseStringGuid(productId);
+        if (imageUUID == null || productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        ProductImage? image = await _database.ProductImages
+            .Include(pi => pi.ProductUUID)
+            .Include(pi => pi.ImageUUID)
+            .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+
+        if (image == null)
+        {
+            return new NotFoundObjectResult($"Image with ID {imageId} not found");
+        }
+
+        int originalPriority = image.Priority;
+        patchDoc.ApplyTo(image);
+
+        if(image.Priority != originalPriority)
+        {
+            // Get all other images for the same product
+            var otherImages = await _database.ProductImages
+                .Where(pi => pi.ProductUUID == productUUID && pi.ImageUUID != imageUUID)
+                .OrderBy(pi => pi.Priority)
+                .ToListAsync();
+
+            // Insert image at new priority and reorder all images
+            var allImages = new List<ProductImage>(otherImages);
+            int insertPosition = Math.Min(image.Priority, allImages.Count);
+            allImages.Insert(insertPosition, image);
+
+            // Reassign priorities sequentially
+            for (int i = 0; i < allImages.Count; i++)
+            {
+                allImages[i].Priority = i;
+            }
+
+            bool updateResult = await _database.SaveChangesAsync() > 0;
+            if (!updateResult)
+            {
+                return new ConflictObjectResult("Failed to update image priorities");
+            }
+        }
+
+        return new OkObjectResult("Image updated successfully");
+    }
+    
+
+    public async Task<IActionResult> DeleteImage(string imageId)
+    {
+
+        Guid? imageUUID = ParseStringGuid(imageId);
+        if (imageUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var image = await _database.Images.FindAsync(imageUUID);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image found by that UUID");
+        }
+
+        var deleted = await _database.Delete(image);
+        if(!deleted)
         {
             return new BadRequestObjectResult("Failed to delete image");
         }
@@ -305,21 +286,11 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
         return new OkObjectResult("Image deleted successfully");
     }
 
-    
-
-    private FileContentResult ConvertImageToFileContent(Image finalImage)
-    { 
-        var imageParts = finalImage.Content.Split(";base64,");
-        var imageType = imageParts[0].Substring(5);
-        
-        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);
-    }
 
     public async Task<IActionResult> GetImageIdPile(int size, int offset) {
         int currentRowNumber = offset;
-        List<string> imageIds = await _database.Images
-        .Select(img => img.UUID)
+        List<Guid> imageIds = await _database.ProductImages
+        .Select(img => img.ImageUUID)
         .OrderBy(uuid => uuid)
         .Skip(offset)
         .Take(size)
@@ -330,33 +301,49 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
 
     public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
     {
-        List<string> imageIds = await _database.Images
-            .Where(img => img.Product != null)
-            .Where(img => img.Product!.Name.Contains(searchquery)) // Filter by search query
-            .OrderBy(img => img.Product!.Name) // Order by name
-            .Skip(offset) // Skip offset
-            .Take(size) // Take only the required size
-            .Select(img => img.UUID) // Select UUID instead of name
+        List<Guid> imageIds = await _database.ProductImages
+            .Join(_database.Products,
+                pi => pi.ProductUUID,
+                p => p.UUID,
+                (pi, p) => new { ProductImage = pi, Product = p })
+            .Where(joined => joined.Product.Name.Contains(searchquery))
+            .OrderBy(joined => joined.Product.Name)
+            .Skip(offset)
+            .Take(size)
+            .Select(joined => joined.ProductImage.ImageUUID)
             .ToListAsync();
-
+            
         return new OkObjectResult(imageIds);
     }
+    
 
     public async Task<IActionResult> GetImageByUUID(string uuid)
     {
-		Image? image = await _database.Images.FirstOrDefaultAsync(i => i.UUID == uuid);
-        
-        if (image == null)
+        Image? finalImage = null;
+        Guid? imageUUID = ParseStringGuid(uuid);
+        if (imageUUID != null)
         {
-            image = new Image();
-            image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+            finalImage = await _database.Images
+                .FirstOrDefaultAsync(i => i.UUID == imageUUID);
         }
 
-        var imageParts = image.Content.Split(";base64,");
+        if (finalImage == null)
+        {
+            finalImage = GetDefaultImage();
+        }
+
+        FileContentResult fileContentResult = ConvertImageToFileContent(finalImage);
+        return fileContentResult;
+    }
+
+
+    private FileContentResult ConvertImageToFileContent(Image finalImage)
+    { 
+        var imageParts = finalImage.Content.Split(";base64,");
         var imageType = imageParts[0].Substring(5);
         
         byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);   
+        return new FileContentResult(imageBytes, imageType);
     }
     
     private bool IsValidId(string id)
@@ -379,6 +366,34 @@ public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Im
         Image image = new Image();
         image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
         return image;
+    }
+
+    private int? GetImagePriority(string priorityString)
+    {
+        
+        bool isParsed = int.TryParse(priorityString, out int priority);
+        if(!isParsed)
+        {
+            return null;
+        }
+
+        return priority;
+    }
+
+
+    private Guid? ParseStringGuid(string guidString)
+    {
+        if (string.IsNullOrEmpty(guidString))
+        {
+            return null;
+        }
+
+        if (Guid.TryParse(guidString, out Guid guid))
+        {
+            return guid;
+        }
+
+        return null;
     }
 }
 

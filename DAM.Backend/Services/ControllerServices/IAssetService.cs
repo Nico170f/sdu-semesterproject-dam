@@ -1,4 +1,4 @@
-using DAM.Backend.Controllers;
+using DAM.Backend.Controllers.API;
 using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +8,10 @@ namespace DAM.Backend.Services.ControllerServices;
 
 public interface IAssetService
 {
-    Task<IActionResult> GetProductAssets(string productId);
+    Task<IActionResult> GetProductAssetsIds(string productId);
+
+    Task<IActionResult> GetProductAssetAmount(string productId);
+
     Task<IActionResult> GetImage(string productId, string priority);
     Task<IActionResult> CreateImage(CreateImageRequest requestParametre);
     Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre);

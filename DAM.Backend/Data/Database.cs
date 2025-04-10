@@ -10,11 +10,10 @@ namespace DAM.Backend.Data;
 public sealed class Database : DbContext
 {
     public DbSet<Image> Images { get; set; }
-    public DbSet<Product> Product { get; set; }
+    public DbSet<Product> Products { get; set; }
     public DbSet<Tag> Tags { get; set; }
-    public DbSet<TagImageGroup> TagImageGroups { get; set; }
-	
-	
+    public DbSet<ProductImage> ProductImages { get; set; }	
+	public DbSet<ImageTags> ImageTags { get; set; }
 	public Database(DbContextOptions<Database> options) : base(options)
 	{
 		this.Database.EnsureCreated();
@@ -46,6 +45,107 @@ public sealed class Database : DbContext
         {
             options.UseSqlite($"Data Source=" + GetDatabasePath());
         }
+
+      
+        
+    }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Configure Image model
+        modelBuilder.Entity<Image>()
+            .Property(i => i.UUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        
+        // Configure Tag model
+        modelBuilder.Entity<Tag>()
+            .Property(i => i.UUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        // Configure Product model
+        modelBuilder.Entity<Product>()
+            .Property(i => i.UUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        
+        
+        // Configure ImageTags model
+        modelBuilder.Entity<ImageTags>()
+            .Property(i => i.ImageUUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        modelBuilder.Entity<ImageTags>()
+            .Property(i => i.TagUUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        modelBuilder.Entity<ImageTags>()
+            .HasKey(it => new { it.ImageUUID, it.TagUUID });
+
+        modelBuilder.Entity<ImageTags>()
+            .HasOne<Image>()
+            .WithMany()
+            .HasForeignKey(it => it.ImageUUID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ImageTags>()
+            .HasOne<Tag>()
+            .WithMany()
+            .HasForeignKey(it => it.TagUUID)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        
+        
+        
+        
+        
+        // Configure ImageTags ProductImages
+        modelBuilder.Entity<ProductImage>()
+            .Property(i => i.ProductUUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        modelBuilder.Entity<ProductImage>()
+            .Property(i => i.ImageUUID)
+            .HasConversion(
+                v => v.ToString(),
+                v => Guid.Parse(v)
+            );
+        
+        modelBuilder.Entity<ProductImage>()
+            .HasKey(pi => new { pi.ProductUUID, pi.ImageUUID });
+        
+        modelBuilder.Entity<ProductImage>()
+            .HasOne<Product>()
+            .WithMany()
+            .HasForeignKey(pi => pi.ProductUUID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProductImage>()
+            .HasOne<Image>()
+            .WithMany()
+            .HasForeignKey(pi => pi.ImageUUID)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        
+        base.OnModelCreating(modelBuilder);
     }
 	
     // Create

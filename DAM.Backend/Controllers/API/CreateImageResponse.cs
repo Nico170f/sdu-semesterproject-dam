@@ -1,6 +1,6 @@
 using DAM.Backend.Data.Models;
 
-namespace DAM.Backend.Controllers;
+namespace DAM.Backend.Controllers.API;
 
 public class CreateImageResponse
 {
@@ -8,6 +8,6 @@ public class CreateImageResponse
 
     public CreateImageResponse(Image image)
     {
-        ImageId = image.UUID;
+        ImageId = image.UUID.ToString();
     }
 }

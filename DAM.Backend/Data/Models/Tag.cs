@@ -4,15 +4,14 @@ namespace DAM.Backend.Data.Models;
 
 public class Tag
 {
-    [Key]
-    public int TagID { get; set; }
+    [Key] public Guid UUID { get; set; }
     public string Name { get; set; }
     public bool IsAddedByUser { get; set; }
 
-    public Tag(string name, bool isAddedByUser)
-    {
-        this.Name = name;
-        this.IsAddedByUser = isAddedByUser;
-    }
+    // public Tag(string name, bool isAddedByUser)
+    // {
+    //     this.Name = name;
+    //     this.IsAddedByUser = isAddedByUser;
+    // }
 
 }
