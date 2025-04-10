@@ -58,10 +58,25 @@ public class AssetsController : ApiController
     }
     
     [HttpPatch("{imageId}")]
-    public async Task<IActionResult> PatchUpdateImage(string imageId, [FromBody] JsonPatchDocument<Image> patchDoc)
+    public async Task<IActionResult> PatchImage(string imageId, [FromBody] JsonPatchDocument<Image> patchDoc)
     {
         return await _assetService.PatchImage(imageId, patchDoc);
     }
+    
+    
+    [HttpPatch("{productId}/{imageId}")]
+    public async Task<IActionResult> PatchProductImage(string productId, string imageId, [FromBody] JsonPatchDocument<ProductImage> patchDoc)
+    {
+        return await _assetService.PatchProductImage(productId, imageId, patchDoc);
+    }
+    
+    
+    [HttpDelete("{productId}/{imageId}")]
+    public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
+    {
+        return await _assetService.DeleteProductImage(productId, imageId);
+    }
+    
     
     [HttpDelete("{imageId}")]
     public async Task<IActionResult> DeleteImage(string imageId)
@@ -88,6 +103,10 @@ public class AssetsController : ApiController
     {
 	    return await _assetService.GetImageByUUID(uuid);
     }
+    
+    public 
+    
+    
     
     //Test method to delete all images
     [HttpPost("delete-all")]

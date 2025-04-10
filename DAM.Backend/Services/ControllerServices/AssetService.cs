@@ -149,26 +149,23 @@ public class AssetService : IAssetService
         }
         
 
-            image.Content = requestParametre.Content;
-            image.UpdatedAt = DateTime.Now;
+        image.Content = requestParametre.Content;
+        image.UpdatedAt = DateTime.Now;
 
-            (int Width, int Height) dimensions = GetImageDimensions(image.Content);
-            image.Width = dimensions.Width;
-            image.Height = dimensions.Height;
+        (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+        image.Width = dimensions.Width;
+        image.Height = dimensions.Height;
 
-            bool imageUpdated = await _database.Update(image);
-            if (!imageUpdated)
-            {
-                return new BadRequestObjectResult("Failed to update image");
-            }
+        bool imageUpdated = await _database.Update(image);
+        if (!imageUpdated)
+        {
+            return new BadRequestObjectResult("Failed to update image");
+        }
 
-            return new OkObjectResult("Image updated successfully");
+        return new OkObjectResult("Image updated successfully");
     }
 
     
-    
-    
-
     public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDoc)
     {
         if (patchDoc == null){
@@ -204,9 +201,12 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image updated successfully");
     }
-    public async Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDoc)
+    
+    
+    
+    public async Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDocument)
     {
-        if (patchDoc == null)
+        if (patchDocument == null)
         {
             return new BadRequestObjectResult("Patch document cannot be null");
         }
@@ -230,7 +230,7 @@ public class AssetService : IAssetService
         }
 
         int originalPriority = image.Priority;
-        patchDoc.ApplyTo(image);
+        patchDocument.ApplyTo(image);
 
         if(image.Priority != originalPriority)
         {
@@ -260,7 +260,40 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image updated successfully");
     }
-    
+
+
+    public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
+    {
+        Guid? imageUUID = ParseStringGuid(imageId);
+        Guid? productUUID = ParseStringGuid(productId);
+        if (imageUUID == null || productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        ProductImage? image = await _database.ProductImages
+            .FirstOrDefaultAsync(i => i.ImageUUID == imageUUID && i.ProductUUID == productUUID);
+        if (image == null)
+        {
+            return new NotFoundObjectResult("No image found by that UUID");
+        }
+
+        var deleted = await _database.Delete(image);
+        if(!deleted)
+        {
+            return new BadRequestObjectResult("Failed to delete image");
+        }
+
+        return new OkObjectResult("Image deleted successfully");
+    }
+
+    public async Task<IActionResult> AddProductImage(AddProductImageRequest request)
+    {
+        //Add a new product image with the product id and image id
+
+        throw new NotImplementedException("");
+    }
+
 
     public async Task<IActionResult> DeleteImage(string imageId)
     {
