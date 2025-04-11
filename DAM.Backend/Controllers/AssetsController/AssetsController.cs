@@ -104,9 +104,6 @@ public class AssetsController : ApiController
 	    return await _assetService.GetImageByUUID(uuid);
     }
     
-    public 
-    
-    
     
     //Test method to delete all images
     [HttpPost("delete-all")]

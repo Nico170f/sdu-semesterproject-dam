@@ -322,8 +322,8 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> GetImageIdPile(int size, int offset) {
         int currentRowNumber = offset;
-        List<Guid> imageIds = await _database.ProductImages
-        .Select(img => img.ImageUUID)
+        List<Guid> imageIds = await _database.Images
+        .Select(img => img.UUID)
         .OrderBy(uuid => uuid)
         .Skip(offset)
         .Take(size)
