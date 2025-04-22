@@ -222,10 +222,8 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        ProductImage? image = await _database.ProductImages
-            .Include(pi => pi.ProductUUID)
-            .Include(pi => pi.ImageUUID)
-            .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+		ProductImage? image = await _database.ProductImages
+		.FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
 
         if (image == null)
         {
