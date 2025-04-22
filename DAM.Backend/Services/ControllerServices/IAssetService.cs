@@ -12,7 +12,7 @@ public interface IAssetService
 
     Task<IActionResult> GetProductAssetAmount(string productId);
 
-    Task<IActionResult> GetImage(string productId, string priority);
+    Task<IActionResult> GetProductImage(string productId, string priority);
     Task<IActionResult> CreateImage(CreateImageRequest requestParametre);
     Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre);
     Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDocument);

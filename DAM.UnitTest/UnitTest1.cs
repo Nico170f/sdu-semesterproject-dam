@@ -67,7 +67,7 @@ public class Tests
     [Test]
     public async Task TestGetImage()
     {
-        IActionResult actionResult = await _assetService.GetImage("nonexistentId", "1");
+        IActionResult actionResult = await _assetService.GetProductImage("nonexistentId", "1");
 
         var fileResult = Assert.IsType<FileContentResult>(actionResult);
         Assert.Equal("image/png", fileResult.ContentType);

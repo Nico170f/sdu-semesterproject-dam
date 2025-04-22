@@ -61,7 +61,7 @@ public class AssetService : IAssetService
 
 
     //Method for returning a single image by productId and priority
-    public async Task<IActionResult> GetImage(string productId, string priority)
+    public async Task<IActionResult> GetProductImage(string productId, string priority)
     {
 
         int? imagePriority = GetImagePriority(priority);
@@ -111,12 +111,14 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Image content is too short");
         }
         
-        Image image = new Image();
-        image.UUID = Guid.NewGuid();
-        image.Content = requestParams.Content;
-        image.CreatedAt = DateTime.Now;
-        image.UpdatedAt = DateTime.Now;
-        
+        Image image = new Image
+        {
+            UUID = Guid.NewGuid(),
+            Content = requestParams.Content,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
         (int Width, int Height) dimensions = GetImageDimensions(image.Content);
         image.Width = dimensions.Width;
         image.Height = dimensions.Height;
@@ -403,7 +405,6 @@ public class AssetService : IAssetService
 
     private int? GetImagePriority(string priorityString)
     {
-        
         bool isParsed = int.TryParse(priorityString, out int priority);
         if(!isParsed)
         {

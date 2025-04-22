@@ -31,6 +31,7 @@ public class AssetsController : ApiController
     //[AllowAnonymous]
     public async Task<IActionResult> GetProductAssetsIds(string productId)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.GetProductAssetsIds(productId);
     }
 
@@ -41,6 +42,7 @@ public class AssetsController : ApiController
     //[AllowAnonymous]
     public async Task<IActionResult> GetProductAssetsAmount(string productId)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.GetProductAssetAmount(productId);
     }
 
@@ -51,7 +53,8 @@ public class AssetsController : ApiController
     //[AllowAnonymous]
     public async Task<IActionResult> GetImageFromProduct(string productId, string priority)
     {
-        return await _assetService.GetImage(productId, priority);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.GetProductImage(productId, priority);
     }
     
     /*
@@ -60,6 +63,7 @@ public class AssetsController : ApiController
     [HttpPost()]
     public async Task<IActionResult> PostCreateImage([FromBody] CreateImageRequest requestParams)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.CreateImage(requestParams);
     }
     
@@ -69,6 +73,7 @@ public class AssetsController : ApiController
     [HttpPut("{imageId}")]
     public async Task<IActionResult> PutUpdateImage(string imageId, [FromBody] UpdateImageRequest requestParams)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.UpdateImage(imageId, requestParams);
     }
     
@@ -78,6 +83,7 @@ public class AssetsController : ApiController
     [HttpPatch("{imageId}")]
     public async Task<IActionResult> PatchImage(string imageId, [FromBody] JsonPatchDocument<Image> patchDoc)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.PatchImage(imageId, patchDoc);
     }
     
@@ -87,6 +93,7 @@ public class AssetsController : ApiController
     [HttpPatch("{productId}/{imageId}")]
     public async Task<IActionResult> PatchProductImage(string productId, string imageId, [FromBody] JsonPatchDocument<ProductImage> patchDoc)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.PatchProductImage(productId, imageId, patchDoc);
     }
     
@@ -96,6 +103,7 @@ public class AssetsController : ApiController
     [HttpDelete("{productId}/{imageId}")]
     public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.DeleteProductImage(productId, imageId);
     }
     
@@ -105,6 +113,7 @@ public class AssetsController : ApiController
     [HttpDelete("{imageId}")]
     public async Task<IActionResult> DeleteImage(string imageId)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.DeleteImage(imageId);
     }
 
@@ -115,6 +124,7 @@ public class AssetsController : ApiController
     [HttpGet("imageIdPile")]
     public async Task<IActionResult> GetImageIdPile([FromQuery] int size, [FromQuery] int page) 
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         int offset = page*size;
         return await _assetService.GetImageIdPile(size, offset);
     }
@@ -126,6 +136,7 @@ public class AssetsController : ApiController
     [HttpGet("imageIdPileFromSearch")]
     public async Task<IActionResult> GetImageIdPileFromSearch([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchquery) 
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         int offset = page*size;
         return await _assetService.GetImageIdPileFromSearch(size, offset, searchquery);
     }
@@ -137,6 +148,7 @@ public class AssetsController : ApiController
     [HttpGet("getImageByUUID")]
     public async Task<IActionResult> GetImageByUUID([FromQuery] string uuid)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 	    return await _assetService.GetImageByUUID(uuid);
     }
     
