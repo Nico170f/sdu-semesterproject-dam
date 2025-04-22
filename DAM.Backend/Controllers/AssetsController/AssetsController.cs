@@ -23,6 +23,10 @@ public class AssetsController : ApiController
         _assetService = assetService;
     }
     
+    
+    /*
+     * Retrieves all asset IDs associated with a specific product.
+     */
     [HttpGet("{productId}/all")]
     //[AllowAnonymous]
     public async Task<IActionResult> GetProductAssetsIds(string productId)
@@ -30,14 +34,19 @@ public class AssetsController : ApiController
         return await _assetService.GetProductAssetsIds(productId);
     }
 
+    /*
+     * Gets the total number of assets for a specific product.
+     */
     [HttpGet("{productId}/amount")]
-
     //[AllowAnonymous]
     public async Task<IActionResult> GetProductAssetsAmount(string productId)
     {
         return await _assetService.GetProductAssetAmount(productId);
     }
 
+    /*
+     * Retrieves an image from a product based on priority level.
+     */
     [HttpGet("{productId}/{priority}")]
     //[AllowAnonymous]
     public async Task<IActionResult> GetImageFromProduct(string productId, string priority)
@@ -45,45 +54,64 @@ public class AssetsController : ApiController
         return await _assetService.GetImage(productId, priority);
     }
     
-    [HttpPost("add")]
+    /*
+     * Creates a new image from a provided request body.
+     */
+    [HttpPost()]
     public async Task<IActionResult> PostCreateImage([FromBody] CreateImageRequest requestParams)
     {
         return await _assetService.CreateImage(requestParams);
     }
     
+    /*
+     * Updates an existing image with the specified ID.
+     */
     [HttpPut("{imageId}")]
     public async Task<IActionResult> PutUpdateImage(string imageId, [FromBody] UpdateImageRequest requestParams)
     {
         return await _assetService.UpdateImage(imageId, requestParams);
     }
     
+    /*
+     * Partially updates an image using JSON Patch document.
+     */
     [HttpPatch("{imageId}")]
     public async Task<IActionResult> PatchImage(string imageId, [FromBody] JsonPatchDocument<Image> patchDoc)
     {
         return await _assetService.PatchImage(imageId, patchDoc);
     }
     
-    
+    /*
+     * Partially updates a product-image relationship using JSON Patch.
+     */
     [HttpPatch("{productId}/{imageId}")]
     public async Task<IActionResult> PatchProductImage(string productId, string imageId, [FromBody] JsonPatchDocument<ProductImage> patchDoc)
     {
         return await _assetService.PatchProductImage(productId, imageId, patchDoc);
     }
     
-    
+    /*
+     * Removes an image from a specific product.
+     */
     [HttpDelete("{productId}/{imageId}")]
     public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
     {
         return await _assetService.DeleteProductImage(productId, imageId);
     }
     
-    
+    /*
+     * Deletes an image by its ID.
+     */
     [HttpDelete("{imageId}")]
     public async Task<IActionResult> DeleteImage(string imageId)
     {
         return await _assetService.DeleteImage(imageId);
     }
 
+    
+    /*
+     * Returns a paginated list of image IDs.
+     */
     [HttpGet("imageIdPile")]
     public async Task<IActionResult> GetImageIdPile([FromQuery] int size, [FromQuery] int page) 
     {
@@ -91,6 +119,10 @@ public class AssetsController : ApiController
         return await _assetService.GetImageIdPile(size, offset);
     }
 
+    
+    /*
+     * Returns a paginated list of image IDs filtered by search query.
+     */
     [HttpGet("imageIdPileFromSearch")]
     public async Task<IActionResult> GetImageIdPileFromSearch([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchquery) 
     {
@@ -98,6 +130,10 @@ public class AssetsController : ApiController
         return await _assetService.GetImageIdPileFromSearch(size, offset, searchquery);
     }
 
+    
+    /*
+     * Retrieves an image by its UUID.
+     */
     [HttpGet("getImageByUUID")]
     public async Task<IActionResult> GetImageByUUID([FromQuery] string uuid)
     {
@@ -105,7 +141,10 @@ public class AssetsController : ApiController
     }
     
     
-    //Test method to delete all images
+    
+    /*
+     * Testing endpoint to delete all images (currently disabled).
+     */
     [HttpPost("delete-all")]
     public async Task<IActionResult> DeleteAllImages()
     {
