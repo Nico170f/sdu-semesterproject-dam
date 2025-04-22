@@ -19,11 +19,13 @@ public interface IAssetService
     Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDocument);
     
     Task<IActionResult> DeleteProductImage(string productId, string imageId);
-    Task<IActionResult> AddProductImage(AddProductImageRequest request);
+    Task<IActionResult> AddProductImage(string productId, AddProductImageRequest request);
+    Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request);
 
     Task<IActionResult> DeleteImage(string imageId);
     Task<IActionResult> GetImageIdPile(int size, int offset);
     Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery);
     Task<IActionResult> GetImageByUUID(string uuid);
+    Task<IActionResult> GetProductGallery(string productId);
 
 }

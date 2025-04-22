@@ -1,7 +1,6 @@
 namespace DAM.Backend.Controllers.API;
 
-public class AddProductImageRequest
+public class RemoveProductImageRequest
 {
     public string ImageId { get; set; }
-    public string Priority { get; set; }
 }

@@ -67,6 +67,20 @@ public class AssetsController : ApiController
         return await _assetService.CreateImage(requestParams);
     }
     
+    [HttpPost("{productId}/add")]
+    public async Task<IActionResult> AddImageToProduct(string productId, [FromBody] AddProductImageRequest requestParams)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.AddProductImage(productId, requestParams);
+    }
+    
+    [HttpPost("{productId}/remove")]
+    public async Task<IActionResult> RemoveImageFromProduct(string productId, [FromBody] RemoveProductImageRequest requestParams)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.RemoveProductImage(productId, requestParams);
+    }
+    
     /*
      * Updates an existing image with the specified ID.
      */
@@ -152,6 +166,13 @@ public class AssetsController : ApiController
 	    return await _assetService.GetImageByUUID(uuid);
     }
     
+
+    [HttpGet("{productId}/gallery")]
+    public async Task<IActionResult> GetProductGallery(string productId)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _assetService.GetProductGallery(productId);
+    }
     
     
     /*
