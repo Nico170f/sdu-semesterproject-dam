@@ -497,7 +497,10 @@ public class AssetService : IAssetService
         .Where(it => it.ImageUUID == imageUUID)
         .ToListAsync();
         
-        if (image)
+        if (imageTags == null || imageTags.Count == 0)
+        {
+            return new NotFoundObjectResult("No tags found fo")
+        }
         
         return new OkObjectResult();
     }
