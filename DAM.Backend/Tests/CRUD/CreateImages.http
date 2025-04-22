@@ -1,0 +1,58 @@
+@route = assets
+
+### Create a list of images
+< {%
+
+    // let productIds = client.global.get("defaultProductIds");
+    let imageContent = client.global.get("defaultContent");
+    
+    let test = [];
+    for (let i = 0; i < imageContent.length; i++) {
+        test.push({
+            "Content": imageContent[i],
+        });
+    }
+    
+    // console.log(test)
+    
+    request.variables.set("imageContent", test);
+    
+    // let newImageUuids = [];
+    // client.global.set("imageUuids", newImageUuids);
+    
+    // let images = [];
+    // imageContent.forEach((img) => {
+    //    
+    // })
+
+    // request.variables.set("clients", [ // test data
+    //     {"Content": imageContent[0],"ProductId": productIds[0], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[1],"ProductId": productIds[1], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[1],"ProductId": productIds[2], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[0],"ProductId": productIds[3], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[1],"ProductId": productIds[4], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[0],"ProductId": productIds[5], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[0],"ProductId": productIds[6], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[1],"ProductId": productIds[7], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[0],"ProductId": productIds[8], "IsShown": true, "Priority": 0},
+    //     {"Content": imageContent[1],"ProductId": productIds[9], "IsShown": true, "Priority": 0},
+    // ])
+%}
+
+POST {{baseUrl}}/{{route}}
+Content-Type: application/json
+
+{
+  "Content": "{{$.imageContent..Content}}"
+}
+
+> {%
+
+    client.global.get("imageUuids").push(jsonPath(response.body, "$.json.uuid"));
+
+    // let current = request.variables.get("clients")[request.iteration()]
+    // client.test(`Account ${current.lastName} has initial balance ${current.balance}`, () => {
+    //     let responseBalance = jsonPath(response.body, "$.json.balance")
+    //     client.assert(responseBalance == current.balance)
+    // })
+%}
