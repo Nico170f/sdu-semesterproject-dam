@@ -398,6 +398,17 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Failed to delete image");
         }
 
+        var productImages = await _database.ProductImages
+            .Where(pi => pi.ImageUUID == imageUUID)
+            .ToListAsync();
+        if (productImages.Count > 0)
+        {
+            foreach (var productImage in productImages)
+            {
+                await _database.Delete(productImage);
+            }
+        }
+
         return new OkObjectResult("Image deleted successfully");
     }
 
@@ -472,6 +483,30 @@ public class AssetService : IAssetService
 
         FileContentResult fileContentResult = ConvertImageToFileContent(finalImage);
         return fileContentResult;
+    }
+    
+    public async Task<IActionResult> GetImageTag(string imageId)
+    {
+        Guid? imageUUID = ParseStringGuid(imageId);
+        if(imageUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+        
+        var imageTags = await _database.ImageTags
+        .Where(it => it.ImageUUID == imageUUID)
+        .ToListAsync();
+        
+        if (image)
+        
+        return new OkObjectResult();
+    }
+
+    public async Task<IActionResult> GetTags()
+    {
+        List<Tag> tagList = await _database.Tags.ToListAsync();
+        
+        return new OkObjectResult(tagList);
     }
 
 
