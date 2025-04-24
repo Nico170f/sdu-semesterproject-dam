@@ -172,12 +172,43 @@ public class AssetsController : ApiController
 	    return await _assetService.GetProductGallery(productId);
     }
     
+    [HttpPost("/addProduct")]
+    public async Task<IActionResult> AddMockProduct([FromBody] CreateMockProductRequest requestParams)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.CreateMockProduct(requestParams);
+    }
+    
+    
+    [HttpGet("/getProduct")]
+    public async Task<IActionResult> GetProduct(string productId)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.GetProduct(productId);
+    }
     
     /*
      * Testing endpoint to delete all images (currently disabled).
      */
     [HttpPost("delete-all")]
     public async Task<IActionResult> DeleteAllImages()
+    {
+        // var allImages = await Database.Instance.Images.ToListAsync();
+        // Database.Instance.Images.RemoveRange(allImages);
+        // await Database.Instance.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpGet("get-all")]
+    public async Task<IActionResult> GetAllImageUUIDs ()
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _assetService.GetAllImageUUIDs();
+    }
+    
+    [HttpPost("delete-all-products")]
+    public async Task<IActionResult> DeleteAllProducts()
     {
         // var allImages = await Database.Instance.Images.ToListAsync();
         // Database.Instance.Images.RemoveRange(allImages);

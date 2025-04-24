@@ -12,6 +12,8 @@ using DAM.Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory;
 using DAM.Backend.Controllers.API;
+using DAM.Backend.Data.Models;
+using Newtonsoft.Json;
 
 namespace DAM.UnitTest;
 
@@ -51,17 +53,25 @@ public class Tests
     }
 
     [Test]
-    public async Task TestGetProductAssets()
+    public async Task TestGetProduct()
     {
-        // Call to add products to _db missing
-        
-        IActionResult actionResult = await _assetService.GetProductAssetsIds("test");
-        
+        await _assetService.CreateMockProduct(new CreateMockProductRequest()
+        {
+            Name = "AMD Ryzen 7 7800x3d"
+        });
+
+        Product product = _db.Products.Select(i => i).Where(i => i.Name.Equals("AMD Ryzen 7 7800x3d")).FirstOrDefault();
+
+        IActionResult actionResult = await _assetService.GetProduct(product.UUID.ToString());
+
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
-        string result = okResult.Value?.ToString();
+        string result = JsonConvert.SerializeObject(okResult.Value);
+        Console.WriteLine("result is: " + result);
+
+        GetProductResponse? res = JsonConvert.DeserializeObject<GetProductResponse>(result);        
         
-        Assert.Equal("Product ID: test", result);
+        Assert.Equal(product.Name, res.Name);
     }
 
     [Test]
@@ -72,7 +82,6 @@ public class Tests
         var fileResult = Assert.IsType<FileContentResult>(actionResult);
         Assert.Equal("image/png", fileResult.ContentType);
     }
-    
 
     [Test]
     public async Task TestCreateImage()

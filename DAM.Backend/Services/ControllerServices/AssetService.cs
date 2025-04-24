@@ -99,9 +99,8 @@ public class AssetService : IAssetService
                 finalImage = GetDefaultImage();
             }
         }
+        return ConvertImageToFileContent(finalImage);
 
-
-        return HelperService.ConvertImageToFileContent(finalImage);
     }
 
     //Method for creating a new image
@@ -475,11 +474,43 @@ public class AssetService : IAssetService
             finalImage = GetDefaultImage();
         }
 
-        FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
+        FileContentResult fileContentResult = HelperService.(finalImage);
         return fileContentResult;
     }
+
+    // Emil was here
+    public async Task<IActionResult> GetAllImageUUIDs ()
+    {
+	    List<Guid> uuids = await _database.Images.Select(img => img.UUID).ToListAsync();
+
+	    return new OkObjectResult(uuids);
+    }
+
+    private FileContentResult ConvertImageToFileContent(Image finalImage)
+    { 
+        var imageParts = finalImage.Content.Split(";base64,");
+        var imageType = imageParts[0].Substring(5);
+        
+        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
+        return new FileContentResult(imageBytes, imageType);
+    }
     
-    public Image GetDefaultImage()
+    private bool IsValidId(string id)
+    {
+        return Guid.TryParse(id, out Guid _);
+    }
+    
+    private (int Width, int Height) GetImageDimensions(string base64Image)
+    {
+        var base64Data = base64Image.Contains(",") ? base64Image.Split(',')[1] : base64Image;
+        byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+        using var ms = new MemoryStream(imageBytes);
+        using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(ms);
+        return (image.Width, image.Height);
+    }
+    
+    private Image GetDefaultImage()
     {
         Image image = new Image();
         image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
