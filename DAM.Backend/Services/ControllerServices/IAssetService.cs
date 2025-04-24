@@ -23,6 +23,8 @@ public interface IAssetService
     Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery);
     Task<IActionResult> GetImageByUUID(string uuid);
     Task<IActionResult> GetProductGallery(string productId);
+    Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParametre);
+    Task<IActionResult> GetProduct(string productId);
     Task<IActionResult> GetImageTag(string imageId);
     Task<IActionResult> GetTags();
     Task<IActionResult> GetAllImageUUIDs ();
