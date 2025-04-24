@@ -206,6 +206,14 @@ public class AssetsController : ApiController
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
 	    return await _assetService.GetAllImageUUIDs();
     }
+
+    [HttpGet("getProductsFromPIM")]
+    public async Task<IActionResult> GetProductsFromPIM()
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.GetProductsFromPIM();
+    }
+
     
     [HttpDelete("delete-all-products")]
     public async Task<IActionResult> DeleteAllProducts()

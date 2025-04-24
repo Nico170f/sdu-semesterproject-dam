@@ -73,6 +73,22 @@ public class Tests
         
         Assert.Equal(product.Name, res.Name);
     }
+    
+    [Test]
+    public async Task TestGetProductsFromPIM()
+    {
+        IActionResult actionResult = await _assetService.GetProductsFromPIM();
+        
+        var okResult = Assert.IsType<OkObjectResult>(actionResult);
+        
+        string result = JsonConvert.SerializeObject(okResult.Value);
+        
+        Console.WriteLine("result is: " + result);
+
+        List<Product> products = JsonConvert.DeserializeObject<List<Product>>(result)!;        
+        
+        Assert.Empty(products);
+    }
 
     [Test]
     public async Task TestGetImage()

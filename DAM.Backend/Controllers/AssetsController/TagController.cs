@@ -28,9 +28,9 @@ public class TagController : ApiController
     }
 
     [HttpPost("{imageId}/add")]
-    public async Task<IActionResult> AddTagsToImage(string imageId, [FromBody] AddTagsToImageRequest requestParams)
+    public async Task<IActionResult> AddTagsToImage(string imageId, string tag)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.AddTagsToImage(imageId, requestParams);
+        return await _tagService.AddTagsToImage(imageId, tag);
     }
 }

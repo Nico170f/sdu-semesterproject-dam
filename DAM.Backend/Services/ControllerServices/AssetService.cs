@@ -9,6 +9,10 @@ using Microsoft.EntityFrameworkCore;
 using Image = DAM.Backend.Data.Models.Image;
 using Microsoft.AspNetCore.Http.HttpResults;
 using DAM.Backend.Services;
+using System.Text.Json;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+
 namespace DAM.Backend.Services.ControllerServices;
 
 public class AssetService : IAssetService
@@ -548,6 +552,39 @@ public class AssetService : IAssetService
         image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
         return image;
     }
+    public async Task<IActionResult> GetProductsFromPIM()
+    {
+        using var client = new HttpClient();
+
+        try
+        {
+            // Replace this URL with your actual PIM API endpoint
+            string pimApiUrl = "http://localhost:5084/api/products/list?page=99999";
+
+            HttpResponseMessage response = await client.GetAsync(pimApiUrl);
+        
+            if (!response.IsSuccessStatusCode)
+            {
+                return new BadRequestObjectResult("Failed to fetch products from PIM.");
+            }
+            
+            string result = JsonConvert.SerializeObject(response.Content);
+            
+            // Deserialize JSON into a list of Product objects
+            var products = JsonSerializer.Deserialize<List<Product>>(result, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return new OkObjectResult(products);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return new BadRequestObjectResult("Failed to fetch products from PIM.");
+        }
+    }
+
 }
 
 
