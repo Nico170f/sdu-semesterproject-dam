@@ -565,7 +565,7 @@ public class AssetService : IAssetService
         
             if (!response.IsSuccessStatusCode)
             {
-                return new BadRequestObjectResult("Failed to fetch products from PIM.");
+                return new BadRequestObjectResult("Failed to fetch all products from PIM.");
             }
             
             string result = JsonConvert.SerializeObject(response.Content);
@@ -586,6 +586,3 @@ public class AssetService : IAssetService
     }
 
 }
-
-
-
