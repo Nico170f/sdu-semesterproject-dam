@@ -508,6 +508,13 @@ public class AssetService : IAssetService
         return new OkObjectResult(tagList);
     }
 
+    // Emil was here
+    public async Task<IActionResult> GetAllImageUUIDs ()
+    {
+	    List<Guid> uuids = await _database.Images.Select(img => img.UUID).ToListAsync();
+
+	    return new OkObjectResult(uuids);
+    }
 
     private FileContentResult ConvertImageToFileContent(Image finalImage)
     { 

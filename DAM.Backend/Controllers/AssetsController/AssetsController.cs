@@ -201,6 +201,13 @@ public class AssetsController : ApiController
 
         return Ok();
     }
+
+    [HttpGet("get-all")]
+    public async Task<IActionResult> GetAllImageUUIDs ()
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _assetService.GetAllImageUUIDs();
+    }
     
     [HttpPost("delete-all-products")]
     public async Task<IActionResult> DeleteAllProducts()
