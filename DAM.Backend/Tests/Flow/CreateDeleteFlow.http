@@ -1,0 +1,11 @@
+import ../GlobalVariables.http
+import ../CRUD/CreateImage.http
+import ../CRUD/DeleteImage.http
+
+### Create image with specific ID
+run #CreateImageWithSpecificContent
+
+//todo: Check if the newly created image exists
+
+### Delete the Image again
+run #DeleteImageWithSpecificId

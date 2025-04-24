@@ -1,0 +1,36 @@
+import ../GlobalVariables.http
+run #Set Global Variables
+
+### CreateAnImage
+< {%
+    let randomString = client.global.get("defaultContent");
+    let randomIndex = Math.floor(Math.random() * randomString.length);
+    let imageContent = randomString[randomIndex];
+    request.variables.set("imageContent", imageContent);
+%}
+POST {{baseUrl}}/{{assetsPath}}
+Content-Type: application/json
+
+{
+  "Content": "{{imageContent}}"
+}
+
+
+### CreateImageWithSpecificContent
+POST {{baseUrl}}/{{assetsPath}}
+Content-Type: application/json
+
+{
+  "Content": "{{defaultContent[0]}}"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    
+    if(response.status === 200) {
+        console.log(response.body.imageId)
+        client.global.set('flow-createdImageId', response.body.imageId);
+    }
+%}

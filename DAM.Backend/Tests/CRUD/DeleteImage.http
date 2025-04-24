@@ -1,0 +1,27 @@
+### DeleteImage
+DELETE {{baseUrl}}/{{assetsPath}}/ID
+Content-Type: application/json
+
+
+### DeleteImageWithSpecificId
+< {%
+    let savedFlowId = client.global.get("flow-createdImageId");
+    request.variables.set("flowImageId", savedFlowId);
+%}
+DELETE {{baseUrl}}/{{assetsPath}}/{{flowImageId}}
+Content-Type: application/json
+
+
+### Flow_DeleteInvalidImage
+DELETE {{baseUrl}}/{{assetsPath}}/5bf9870f-1f2e-4067-af0a-361dffed1961
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 404, "Response status is not 404");
+    });
+       
+    client.test("Response body contains correct error message", function () {
+        console.log(response);
+        client.assert(response.body === "No image found by that UUID", "Error message is not as expected");
+    });
+%}

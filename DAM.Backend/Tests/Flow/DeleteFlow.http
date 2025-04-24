@@ -1,0 +1,16 @@
+import ../GlobalVariables.http
+import ../CRUD/CreateImage.http
+import ../CRUD/DeleteImage.http
+import ../CRUD/PatchImage.http
+run #Set Global Variables
+
+### Try delete non-existing image
+run #Flow_DeleteInvalidImage
+
+
+### Create image with specific ID
+run #CreateImageWithSpecificContent
+
+
+### Delete the Image again
+run #DeleteImageWithSpecificId

@@ -1,4 +1,4 @@
-import ../CRUD/CreateImage.http
-
-run #CreateImage
+#import ../CRUD/CreateImage.http
+#
+#run #CreateImage
 

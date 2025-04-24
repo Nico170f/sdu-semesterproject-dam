@@ -1,0 +1,20 @@
+
+
+### Flow_GetImage
+< {%
+    let savedFlowId = client.global.get("flow-createdImageId");
+    request.variables.set("flowImageId", savedFlowId);
+%}
+
+GET {{baseUrl}}/{{assetsPath}}/getImageByUUID?uuid={{flowImageId}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+
+    client.test("Content-Type is image", function() {
+        client.assert(response.contentType.mimeType.includes("image"),
+            "Response is not an image: " + response.contentType.mimeType);
+    });
+%}
