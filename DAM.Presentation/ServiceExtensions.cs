@@ -10,6 +10,8 @@ namespace DAM.Presentation {
         {
             // Add services to the container.
 
+            //builder.Services.AddScoped<ImageService>();
+            
             return builder;            
         }
     }
