@@ -505,6 +505,15 @@ public class AssetService : IAssetService
         CreateMockProductResponse response = new CreateMockProductResponse(mockProduct);
         return new OkObjectResult(response);
     }
+
+    public async Task<IActionResult> DeleteAllProducts()
+    {
+        var products = await _database.Products.ToListAsync();
+        var deleted = await _database.Delete(products);
+        int numDeleted = await _database.SaveChangesAsync();
+        
+        return new OkObjectResult(deleted);
+    }
     
     public async Task<IActionResult> GetProduct(string productId)
     {
@@ -518,8 +527,7 @@ public class AssetService : IAssetService
         Product? product = null;
         
         try {
-            product = await _database.Products
-                //.Include()
+            product = await _database.Products.Select(i => i)
                 .Where(i => i.UUID == productUUID)
                 .FirstOrDefaultAsync();
 

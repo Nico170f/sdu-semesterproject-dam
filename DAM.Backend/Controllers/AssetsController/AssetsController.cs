@@ -207,13 +207,10 @@ public class AssetsController : ApiController
 	    return await _assetService.GetAllImageUUIDs();
     }
     
-    [HttpPost("delete-all-products")]
+    [HttpDelete("delete-all-products")]
     public async Task<IActionResult> DeleteAllProducts()
     {
-        // var allImages = await Database.Instance.Images.ToListAsync();
-        // Database.Instance.Images.RemoveRange(allImages);
-        // await Database.Instance.SaveChangesAsync();
-
-        return Ok();
+        if(!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.DeleteAllProducts();
     }
 }
