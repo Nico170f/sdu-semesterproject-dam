@@ -99,8 +99,6 @@ public class AssetService : IAssetService
                 finalImage = GetDefaultImage();
             }
         }
-
-
         return ConvertImageToFileContent(finalImage);
     }
 
@@ -497,10 +495,10 @@ public class AssetService : IAssetService
         
         if (imageTags == null || imageTags.Count == 0)
         {
-            return new NotFoundObjectResult("No tags found fo")
+            return new NotFoundObjectResult("No tags found");
         }
         
-        return new OkObjectResult();
+        return new OkObjectResult(imageTags);
     }
 
     public async Task<IActionResult> GetTags()
@@ -551,6 +549,55 @@ public class AssetService : IAssetService
         }
 
         return priority;
+    }
+    public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParams)
+    {
+        Product mockProduct = new Product
+        {
+            UUID = Guid.NewGuid(),
+            Name = requestParams.Name
+        };
+
+        _database.Products.Add(mockProduct);
+        
+        int productCreated = await _database.SaveChangesAsync();
+        if (productCreated <= 0)
+        {
+            return new BadRequestObjectResult("Failed to create product");
+        }
+
+        CreateMockProductResponse response = new CreateMockProductResponse(mockProduct);
+        return new OkObjectResult(response);
+    }
+    
+    // Gets the product from the product ID
+    public async Task<IActionResult> GetProduct(string productId)
+    {
+        Guid? productUUID = ParseStringGuid(productId);
+
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult($"Invalid product uuid");
+        }
+
+        Product? product = null;
+        
+        try {
+            product = await _database.Products
+                //.Include()
+                .Where(i => i.UUID == productUUID)
+                .FirstOrDefaultAsync();
+
+            if (product == null) throw new Exception("No image found by that priority");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
+        GetProductResponse response = new GetProductResponse(product.Name, product.UUID);
+        
+        return new OkObjectResult(response);
     }
 
 
