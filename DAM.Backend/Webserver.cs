@@ -95,8 +95,7 @@ public sealed class Webserver
         });
 		
 		// builder.Services.AddTransient<DbContext, Database>();
-            
+        
         builder.Services.AddDbContext<Database>();
     }
-    
 }
