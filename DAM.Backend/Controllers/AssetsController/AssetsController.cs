@@ -16,9 +16,7 @@ public class AssetsController : ApiController
 {
     private readonly IAssetService _assetService;
 
-    public AssetsController(
-        IAssetService assetService
-    )
+    public AssetsController(IAssetService assetService)
     {
         _assetService = assetService;
     }

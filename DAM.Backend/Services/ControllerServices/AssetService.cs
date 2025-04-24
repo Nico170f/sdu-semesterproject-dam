@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using Image = DAM.Backend.Data.Models.Image;
 using Microsoft.AspNetCore.Http.HttpResults;
-
+using DAM.Backend.Services;
 namespace DAM.Backend.Services.ControllerServices;
 
 public class AssetService : IAssetService
@@ -26,7 +26,7 @@ public class AssetService : IAssetService
     //Method for returning all assets for a product by productId
     public async Task<IActionResult> GetProductAssetsIds(string productId)
     {
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (productUUID == null)
         {
             return new BadRequestObjectResult("Invalid product uuid");
@@ -45,7 +45,7 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> GetProductAssetAmount(string productId)
     {
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (productUUID == null)
         {
             return new BadRequestObjectResult("Invalid product uuid");
@@ -65,8 +65,8 @@ public class AssetService : IAssetService
     public async Task<IActionResult> GetProductImage(string productId, string priority)
     {
 
-        int? imagePriority = GetImagePriority(priority);
-        Guid? productUUID = ParseStringGuid(productId);
+        int? imagePriority = HelperService.GetImagePriority(priority);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
 
         if (imagePriority == null || productUUID == null)
         {
@@ -101,7 +101,7 @@ public class AssetService : IAssetService
         }
 
 
-        return ConvertImageToFileContent(finalImage);
+        return HelperService.ConvertImageToFileContent(finalImage);
     }
 
     //Method for creating a new image
@@ -120,7 +120,7 @@ public class AssetService : IAssetService
             UpdatedAt = DateTime.Now
         };
 
-        (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+        (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
         image.Width = dimensions.Width;
         image.Height = dimensions.Height;
 
@@ -136,9 +136,9 @@ public class AssetService : IAssetService
         return new OkObjectResult(response);
     }
 
-    public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre)
+    public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParams)
     {
-        Guid? imageUUID = ParseStringGuid(imageId);
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -152,10 +152,10 @@ public class AssetService : IAssetService
         }
         
 
-        image.Content = requestParametre.Content;
+        image.Content = requestParams.Content;
         image.UpdatedAt = DateTime.Now;
 
-        (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+        (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
         image.Width = dimensions.Width;
         image.Height = dimensions.Height;
 
@@ -175,7 +175,7 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Patch document cannot be null");
         }
         
-        Guid? imageUUID = ParseStringGuid(imageId);
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -192,7 +192,7 @@ public class AssetService : IAssetService
         patchDoc.ApplyTo(image);
         image.UpdatedAt = DateTime.Now;
 
-        (int Width, int Height) dimensions = GetImageDimensions(image.Content);
+        (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
         image.Width = dimensions.Width;
         image.Height = dimensions.Height;
 
@@ -215,8 +215,8 @@ public class AssetService : IAssetService
         }
 
 
-        Guid? imageUUID = ParseStringGuid(imageId);
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (imageUUID == null || productUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -265,8 +265,8 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
     {
-        Guid? imageUUID = ParseStringGuid(imageId);
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (imageUUID == null || productUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -290,8 +290,8 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> AddProductImage(string productId, AddProductImageRequest request)
     {
-        Guid? imageUUID = ParseStringGuid(request.ImageId);
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? imageUUID = HelperService.ParseStringGuid(request.ImageId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (imageUUID == null || productUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -318,7 +318,7 @@ public class AssetService : IAssetService
             return new ConflictObjectResult("Image is already associated with the product");
         }
         
-        var priority = GetImagePriority(request.Priority);
+        var priority = HelperService.GetImagePriority(request.Priority);
         if (priority == null)
         {
             return new BadRequestObjectResult("Invalid priority format");
@@ -343,8 +343,8 @@ public class AssetService : IAssetService
     
     public async Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request)
     {
-        Guid? imageUUID = ParseStringGuid(request.ImageId);
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? imageUUID = HelperService.ParseStringGuid(request.ImageId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (imageUUID == null || productUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -373,12 +373,11 @@ public class AssetService : IAssetService
         
         return new OkObjectResult("Image deleted succesfully");
     }
-
-
+    
     public async Task<IActionResult> DeleteImage(string imageId)
     {
 
-        Guid? imageUUID = ParseStringGuid(imageId);
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -409,11 +408,10 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image deleted successfully");
     }
-
-
+    
     public async Task<IActionResult> GetProductGallery(string productId)
     {
-        Guid? productUUID = ParseStringGuid(productId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (productUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -432,8 +430,7 @@ public class AssetService : IAssetService
         
         return new OkObjectResult(images);
     }
-
-
+    
     public async Task<IActionResult> GetImageIdPile(int size, int offset) {
         int currentRowNumber = offset;
         List<Guid> imageIds = await _database.Images
@@ -463,11 +460,10 @@ public class AssetService : IAssetService
         return new OkObjectResult(imageIds);
     }
     
-
     public async Task<IActionResult> GetImageByUUID(string uuid)
     {
         Image? finalImage = null;
-        Guid? imageUUID = ParseStringGuid(uuid);
+        Guid? imageUUID = HelperService.ParseStringGuid(uuid);
         if (imageUUID != null)
         {
             finalImage = await _database.Images
@@ -479,94 +475,15 @@ public class AssetService : IAssetService
             finalImage = GetDefaultImage();
         }
 
-        FileContentResult fileContentResult = ConvertImageToFileContent(finalImage);
+        FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
         return fileContentResult;
     }
     
-    public async Task<IActionResult> GetImageTag(string imageId)
-    {
-        Guid? imageUUID = ParseStringGuid(imageId);
-        if(imageUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-        
-        var imageTags = await _database.ImageTags
-        .Where(it => it.ImageUUID == imageUUID)
-        .ToListAsync();
-        
-        if (imageTags == null || imageTags.Count == 0)
-        {
-            return new NotFoundObjectResult("No tags found fo")
-        }
-        
-        return new OkObjectResult();
-    }
-
-    public async Task<IActionResult> GetTags()
-    {
-        List<Tag> tagList = await _database.Tags.ToListAsync();
-        
-        return new OkObjectResult(tagList);
-    }
-
-
-    private FileContentResult ConvertImageToFileContent(Image finalImage)
-    { 
-        var imageParts = finalImage.Content.Split(";base64,");
-        var imageType = imageParts[0].Substring(5);
-        
-        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);
-    }
-    
-    private bool IsValidId(string id)
-    {
-        return Guid.TryParse(id, out Guid _);
-    }
-    
-    private (int Width, int Height) GetImageDimensions(string base64Image)
-    {
-        var base64Data = base64Image.Contains(",") ? base64Image.Split(',')[1] : base64Image;
-        byte[] imageBytes = Convert.FromBase64String(base64Data);
-
-        using var ms = new MemoryStream(imageBytes);
-        using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(ms);
-        return (image.Width, image.Height);
-    }
-    
-    private Image GetDefaultImage()
+    public Image GetDefaultImage()
     {
         Image image = new Image();
         image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
         return image;
-    }
-
-    private int? GetImagePriority(string priorityString)
-    {
-        bool isParsed = int.TryParse(priorityString, out int priority);
-        if(!isParsed)
-        {
-            return null;
-        }
-
-        return priority;
-    }
-
-
-    private Guid? ParseStringGuid(string guidString)
-    {
-        if (string.IsNullOrEmpty(guidString))
-        {
-            return null;
-        }
-
-        if (Guid.TryParse(guidString, out Guid guid))
-        {
-            return guid;
-        }
-
-        return null;
     }
 }
 
