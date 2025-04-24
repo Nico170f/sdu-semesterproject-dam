@@ -25,7 +25,5 @@ public interface IAssetService
     Task<IActionResult> GetProductGallery(string productId);
     Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParametre);
     Task<IActionResult> GetProduct(string productId);
-    Task<IActionResult> GetImageTag(string imageId);
-    Task<IActionResult> GetTags();
     Task<IActionResult> GetAllImageUUIDs ();
 }
