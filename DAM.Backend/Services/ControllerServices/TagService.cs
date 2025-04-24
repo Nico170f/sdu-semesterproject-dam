@@ -38,8 +38,51 @@ public class TagService : ITagService
         return new OkObjectResult(tagList);
     }
 
-    public async Task<IActionResult> AddTagsToImage(string imageId, AddTagsToImageRequest requestParams)
+    public async Task<IActionResult> AddTagsToImage(string imageId, string tagId)
     {
-        throw new NotImplementedException();
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+        Guid? tagUUID = HelperService.ParseStringGuid(tagId);
+
+        if (imageUUID == null || tagUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        try
+        {
+            var image = await _database.Images.FindAsync(imageUUID);
+            if (image == null)
+            {
+                return new BadRequestObjectResult("Image not found");
+            }
+            
+            var tag = await _database.Tags.FindAsync(tagUUID);
+            if (tag == null)
+            {
+                return new NotFoundObjectResult("Tag not found");
+            }
+
+            var existingRelationship = await _database.ImageTags
+                .FirstAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
+            if (existingRelationship != null)
+            {
+                return new OkObjectResult("Tag is already associated with image");
+            }
+
+            var imageTag = new ImageTags()
+            {
+                ImageUUID = (Guid)imageUUID,
+                TagUUID = (Guid)tagUUID
+            };
+            
+            await _database.ImageTags.AddAsync(imageTag);
+            await _database.SaveChangesAsync();
+            
+            return new OkObjectResult("Tag associated with image completed");
+        }
+        catch
+        {
+            return new BadRequestObjectResult("Bacons mom");
+        }
     }
 }
