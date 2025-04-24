@@ -99,7 +99,7 @@ public class AssetService : IAssetService
                 finalImage = GetDefaultImage();
             }
         }
-        return ConvertImageToFileContent(finalImage);
+        return HelperService.ConvertImageToFileContent(finalImage);
 
     }
 
@@ -474,42 +474,66 @@ public class AssetService : IAssetService
             finalImage = GetDefaultImage();
         }
 
-        FileContentResult fileContentResult = HelperService.(finalImage);
+        FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
         return fileContentResult;
     }
 
-    // Emil was here
-    public async Task<IActionResult> GetAllImageUUIDs ()
+    
+    public async Task<IActionResult> GetAllImageUUIDs()
     {
 	    List<Guid> uuids = await _database.Images.Select(img => img.UUID).ToListAsync();
 
 	    return new OkObjectResult(uuids);
     }
+    
+    public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParams)
+    {
+        Product mockProduct = new Product
+        {
+            UUID = Guid.NewGuid(),
+            Name = requestParams.Name
+        };
 
-    private FileContentResult ConvertImageToFileContent(Image finalImage)
-    { 
-        var imageParts = finalImage.Content.Split(";base64,");
-        var imageType = imageParts[0].Substring(5);
+        _database.Products.Add(mockProduct);
         
-        byte[] imageBytes = Convert.FromBase64String(imageParts[1]);
-        return new FileContentResult(imageBytes, imageType);
-    }
-    
-    private bool IsValidId(string id)
-    {
-        return Guid.TryParse(id, out Guid _);
-    }
-    
-    private (int Width, int Height) GetImageDimensions(string base64Image)
-    {
-        var base64Data = base64Image.Contains(",") ? base64Image.Split(',')[1] : base64Image;
-        byte[] imageBytes = Convert.FromBase64String(base64Data);
+        int productCreated = await _database.SaveChangesAsync();
+        if (productCreated <= 0)
+        {
+            return new BadRequestObjectResult("Failed to create product");
+        }
 
-        using var ms = new MemoryStream(imageBytes);
-        using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(ms);
-        return (image.Width, image.Height);
+        CreateMockProductResponse response = new CreateMockProductResponse(mockProduct);
+        return new OkObjectResult(response);
     }
     
+    public async Task<IActionResult> GetProduct(string productId)
+    {
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult($"Invalid product uuid");
+        }
+
+        Product? product = null;
+        
+        try {
+            product = await _database.Products
+                //.Include()
+                .Where(i => i.UUID == productUUID)
+                .FirstOrDefaultAsync();
+
+            if (product == null) throw new Exception("No image found by that priority");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
+        GetProductResponse response = new GetProductResponse(product.Name, product.UUID);
+        
+        return new OkObjectResult(response);
+    }
     private Image GetDefaultImage()
     {
         Image image = new Image();
