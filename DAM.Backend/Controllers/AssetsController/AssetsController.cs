@@ -172,7 +172,7 @@ public class AssetsController : ApiController
 	    return await _assetService.GetProductGallery(productId);
     }
     
-    [HttpPost("/addProduct")]
+    [HttpPost("addProduct")]
     public async Task<IActionResult> AddMockProduct([FromBody] CreateMockProductRequest requestParams)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -180,7 +180,7 @@ public class AssetsController : ApiController
     }
     
     
-    [HttpGet("/getProduct")]
+    [HttpGet("getProduct")]
     public async Task<IActionResult> GetProduct(string productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
