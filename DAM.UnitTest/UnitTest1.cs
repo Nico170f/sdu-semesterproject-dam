@@ -53,7 +53,7 @@ public class Tests
     }
 
     [Test]
-    public async Task TestGetProduct()
+    public async Task TestCreateAndGetProduct()
     {
         await _assetService.CreateMockProduct(new CreateMockProductRequest()
         {
@@ -77,16 +77,21 @@ public class Tests
     [Test]
     public async Task TestGetProductsFromPIM()
     {
+        // Call your method
         IActionResult actionResult = await _assetService.GetProductsFromPIM();
-        
-        var okResult = Assert.IsType<OkObjectResult>(actionResult);
-        
-        string result = JsonConvert.SerializeObject(okResult.Value);
-        
-        Console.WriteLine("result is: " + result);
 
-        List<Product> products = JsonConvert.DeserializeObject<List<Product>>(result)!;        
-        
+        // Make sure it's the expected result type (e.g., OkObjectResult)
+        var okResult = actionResult as OkObjectResult;
+        Assert.NotNull(okResult); // Fail the test if the result isn't an OK
+
+        // Extract the actual data
+        var value = okResult!.Value;
+
+        // Convert the value to JSON and deserialize into Product list
+        string json = JsonConvert.SerializeObject(value);
+        List<Product> products = JsonConvert.DeserializeObject<List<Product>>(json)!;
+
+        // Make your assertion
         Assert.Empty(products);
     }
 

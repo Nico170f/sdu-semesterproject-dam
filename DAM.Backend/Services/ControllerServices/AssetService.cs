@@ -558,19 +558,19 @@ public class AssetService : IAssetService
 
         try
         {
-            // Replace this URL with your actual PIM API endpoint
             string pimApiUrl = "http://localhost:5084/api/products/list?page=99999";
 
             HttpResponseMessage response = await client.GetAsync(pimApiUrl);
-        
+
             if (!response.IsSuccessStatusCode)
             {
                 return new BadRequestObjectResult("Failed to fetch all products from PIM.");
             }
-            
-            string result = JsonConvert.SerializeObject(response.Content);
-            
-            // Deserialize JSON into a list of Product objects
+
+            // Read the actual content from the response
+            string result = await response.Content.ReadAsStringAsync();
+
+            // Deserialize the actual content
             var products = JsonSerializer.Deserialize<List<Product>>(result, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -584,5 +584,6 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Failed to fetch products from PIM.");
         }
     }
+
 
 }
