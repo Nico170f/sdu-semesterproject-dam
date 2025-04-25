@@ -1,14 +1,6 @@
 import ../GlobalVariables.http
 run #Set Global Variables
 
-### Create an image
-POST {{baseUrl}}/{{assetsPath}}
-Content-Type: application/json
-
-{
-  "Content": "image_base64_data"
-}
-
 ### PATCH request to update an image
 PATCH {{baseUrl}}/{{route}}/daa63271-80db-4ab5-9ca2-41cb7f61fab6
 Content-Type: application/json

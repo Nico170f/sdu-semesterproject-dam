@@ -1,14 +1,8 @@
-using System.Threading.Tasks;
 using DAM.Backend.Controllers.API;
-using DAM.Backend.Data;
 using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace DAM.Backend.Controllers;
 
@@ -112,12 +106,12 @@ public class AssetsController : ApiController
     /*
      * Removes an image from a specific product.
      */
-    [HttpDelete("{productId}/{imageId}")]
-    public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.DeleteProductImage(productId, imageId);
-    }
+    // [HttpDelete("{productId}/{imageId}")]
+    // public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
+    // {
+    //     if (!ModelState.IsValid) return BadRequest(ModelState);
+    //     return await _assetService.RemoveProd(productId, imageId);
+    // }
     
     /*
      * Deletes an image by its ID.

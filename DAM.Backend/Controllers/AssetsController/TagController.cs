@@ -1,6 +1,7 @@
 using DAM.Backend.Controllers.API;
 using DAM.Backend.Services.ControllerServices;
 using Microsoft.AspNetCore.Mvc;
+using DAM.Backend.Data.Models;
 
 namespace DAM.Backend.Controllers;
 
@@ -20,28 +21,42 @@ public class TagController : ApiController
         return await _tagService.GetTags();
     }
 
-    [HttpGet("{imageId}")]
+    [HttpGet("{imageId}/get")]
     public async Task<IActionResult> GetImageTag(string imageId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.GetImageTag(imageId);
     }
     
-    [HttpGet("exclude/{imageId}")]
+    [HttpGet("{imageId}/getexcluded")]
     public async Task<IActionResult> GetTagsNotOnImage(string imageId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.GetTagsNotOnImage(imageId);
     }
 
-    [HttpPost("{imageId}")]
+    [HttpPost("{imageId}/add")]
     public async Task<IActionResult> AddTagsToImage(string imageId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.AddTagToImage(imageId, tagId);
     }
 
-    [HttpDelete("{imageId}")]
+    [HttpPost("{tagId}/create")]
+    public async Task<IActionResult> CreateTag([FromBody] CreateTagRequest requestParams)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _tagService.CreateTag(requestParams);
+    }
+
+    [HttpDelete("{tagId}/delete")]
+    public async Task<IActionResult> DeleteTag([FromBody] DeleteTagRequest requestParams)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _tagService.DeleteTag(requestParams);
+    }
+    
+    [HttpDelete("{imageId}/deletefromimage")]
     public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);

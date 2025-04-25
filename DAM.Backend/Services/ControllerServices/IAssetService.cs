@@ -15,7 +15,7 @@ public interface IAssetService
     Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParametre);
     Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDocument);
     Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDocument);
-    Task<IActionResult> DeleteProductImage(string productId, string imageId);
+    // Task<IActionResult> DeleteProductImage(string productId, string imageId);
     Task<IActionResult> AddProductImage(string productId, AddProductImageRequest request);
     Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request);
     Task<IActionResult> DeleteImage(string imageId);

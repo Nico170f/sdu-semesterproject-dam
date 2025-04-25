@@ -9,7 +9,57 @@ namespace DAM.Backend.Services;
 
 public class TagService : ITagService
 {
+    private readonly IConfiguration _configuration;
     private readonly Database _database;
+
+    public TagService(IConfiguration configuration, Database database)
+    {
+        _configuration = configuration;
+        _database = database;
+    }
+    
+    public async Task<IActionResult> CreateTag(CreateTagRequest requestParams)
+    {
+        var existingTag = await _database.Tags
+            .FirstOrDefaultAsync(t => t.Name.ToLower() == requestParams.Name.ToLower());
+
+        if (existingTag != null)
+        {
+            return new BadRequestObjectResult("A tag with that name already exists.");
+        } 
+        
+        var tag = new Tag()
+        {
+            Name = requestParams.Name,
+            UUID = Guid.NewGuid()
+        };
+        
+        await _database.Tags.AddAsync(tag);
+        await _database.SaveChangesAsync();
+        
+        return new OkObjectResult(tag);
+    }
+    
+    public async Task<IActionResult> DeleteTag(DeleteTagRequest requestParams)
+    {
+        try
+        {
+            var existingTag = await _database.Tags
+                .FirstOrDefaultAsync(t => t.UUID.ToString() == requestParams.TagUUID);
+
+            if (existingTag == null)
+            {
+                return new NotFoundObjectResult("A tag with that ID doesn't exist");
+            }
+            
+            await _database.Delete(existingTag);
+            return new OkObjectResult("Tag removed successfully");
+        }
+        catch
+        {
+            return new BadRequestObjectResult("Error occured");
+        }
+    }
     
     public async Task<IActionResult> GetImageTag(string imageId)
     {

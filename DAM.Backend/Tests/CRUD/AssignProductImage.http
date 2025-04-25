@@ -7,8 +7,8 @@ POST {{baseUrl}}/{{assetsPath}}/{{ProductID}}/add
 Content-Type: application/json
 
 {
-    "ImageId": "50612971-cff2-4082-82f4-efdbbe1090c4",
-    "Priority": 10
+    "ImageId": "49bf3c35-7824-4419-a2aa-b2cae76918e1",
+    "Priority": 1
 }
 
 ### Flow_AssignImageToProduct
