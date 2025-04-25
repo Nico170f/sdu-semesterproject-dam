@@ -33,4 +33,11 @@ public class TagController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.AddTagsToImage(imageId, tag);
     }
+
+    [HttpDelete("{imageId}")]
+    public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tag)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _tagService.RemoveTagsFromImage(imageId, tag);
+    }
 }

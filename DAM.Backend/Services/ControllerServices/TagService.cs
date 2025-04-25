@@ -63,7 +63,7 @@ public class TagService : ITagService
             }
 
             var existingRelationship = await _database.ImageTags
-                .FirstAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
+                .FirstOrDefaultAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
             if (existingRelationship != null)
             {
                 return new OkObjectResult("Tag is already associated with image");
@@ -84,5 +84,29 @@ public class TagService : ITagService
         {
             return new BadRequestObjectResult("Bacons mom");
         }
+    }
+    
+    public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tagId)
+    {
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+        Guid? tagUUID = HelperService.ParseStringGuid(tagId);
+
+        if (imageUUID == null || tagUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        var imageTag = await _database.ImageTags
+            .FirstOrDefaultAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
+        
+        if (imageTag == null)
+        {
+            return new NotFoundObjectResult("Tag on image not found");
+        }
+
+        _database.ImageTags.Remove(imageTag);
+        await _database.SaveChangesAsync();
+        
+        return new OkObjectResult("Tag removed from image");
     }
 }
