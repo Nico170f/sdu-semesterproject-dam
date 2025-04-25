@@ -487,7 +487,6 @@ public class AssetService : IAssetService
         FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
         return fileContentResult;
     }
-
     
     public async Task<IActionResult> GetAllImageUUIDs()
     {
@@ -593,6 +592,4 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Failed to fetch products from PIM.");
         }
     }
-
-
 }

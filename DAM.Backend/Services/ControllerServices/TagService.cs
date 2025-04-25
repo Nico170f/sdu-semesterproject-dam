@@ -19,16 +19,25 @@ public class TagService : ITagService
             return new BadRequestObjectResult("Invalid UUID format");
         }
         
-        var imageTags = await _database.ImageTags
-            .Where(it => it.ImageUUID == imageUUID)
-            .ToListAsync();
+        List<Tag> imageTagsList = new List<Tag>();
+        var imageTagList = await (
+            from tag in _database.Tags
+            join imageTag in _database.ImageTags on tag.UUID equals imageTag.TagUUID
+            where imageTag.ImageUUID == imageUUID
+            select tag
+        ).ToListAsync();
         
-        if (imageTags == null || imageTags.Count == 0)
+        if (imageTagsList == null || imageTagsList.Count == 0)
         {
             return new NotFoundObjectResult("No tags found for that UUID");
         }
+
+        var response = new GetImageTagsResponse
+        {
+            imageTags = imageTagList
+        };
         
-        return new OkObjectResult(imageTags);
+        return new OkObjectResult(response);
     }
 
     public async Task<IActionResult> GetTags()
