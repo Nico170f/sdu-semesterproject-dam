@@ -31,13 +31,8 @@ public class TagService : ITagService
         {
             return new NotFoundObjectResult("No tags found for that UUID");
         }
-
-        var response = new GetImageTagsResponse
-        {
-            imageTags = imageTagList
-        };
         
-        return new OkObjectResult(response);
+        return new OkObjectResult(imageTagList);
     }
 
     public async Task<IActionResult> GetTags()
@@ -46,8 +41,22 @@ public class TagService : ITagService
         
         return new OkObjectResult(tagList);
     }
+    
+    public async Task<IActionResult> GetTagsNotOnImage(string imageUUID)
+    {
+        Guid ImageUUID = HelperService.ParseStringGuid(imageUUID).Value;
+        
+        List<Tag> tagsNotOnImage = new List<Tag>();
+     
+        tagsNotOnImage = await _database.Tags
+            .Where(tag => !_database.ImageTags
+                .Any(it => it.ImageUUID == ImageUUID && it.TagUUID == tag.UUID))
+            .ToListAsync();
+    
+        return new OkObjectResult(tagsNotOnImage);
+    }
 
-    public async Task<IActionResult> AddTagsToImage(string imageId, string tagId)
+    public async Task<IActionResult> AddTagToImage(string imageId, string tagId)
     {
         Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         Guid? tagUUID = HelperService.ParseStringGuid(tagId);
@@ -95,7 +104,7 @@ public class TagService : ITagService
         }
     }
     
-    public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tagId)
+    public async Task<IActionResult> RemoveTagFromImage(string imageId, string tagId)
     {
         Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         Guid? tagUUID = HelperService.ParseStringGuid(tagId);

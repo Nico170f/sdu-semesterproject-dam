@@ -27,17 +27,17 @@ public class TagController : ApiController
         return await _tagService.GetImageTag(imageId);
     }
 
-    [HttpPost("{imageId}/add")]
-    public async Task<IActionResult> AddTagsToImage(string imageId, string tag)
+    [HttpPost("{imageId}")]
+    public async Task<IActionResult> AddTagsToImage(string imageId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.AddTagsToImage(imageId, tag);
+        return await _tagService.AddTagToImage(imageId, tagId);
     }
 
     [HttpDelete("{imageId}")]
-    public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tag)
+    public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.RemoveTagsFromImage(imageId, tag);
+        return await _tagService.RemoveTagFromImage(imageId, tagId);
     }
 }

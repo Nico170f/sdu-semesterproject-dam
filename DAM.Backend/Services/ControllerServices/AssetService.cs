@@ -213,7 +213,6 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Patch document cannot be null");
         }
 
-
         Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (imageUUID == null || productUUID == null)
@@ -221,8 +220,8 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-		ProductImage? image = await _database.ProductImages
-		.FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+        ProductImage? image = await _database.ProductImages
+            .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
 
         if (image == null)
         {
@@ -234,28 +233,8 @@ public class AssetService : IAssetService
 
         if(image.Priority != originalPriority)
         {
-            // Get all other images for the same product
-            var otherImages = await _database.ProductImages
-                .Where(pi => pi.ProductUUID == productUUID && pi.ImageUUID != imageUUID)
-                .OrderBy(pi => pi.Priority)
-                .ToListAsync();
-
-            // Insert image at new priority and reorder all images
-            var allImages = new List<ProductImage>(otherImages);
-            int insertPosition = Math.Min(image.Priority, allImages.Count);
-            allImages.Insert(insertPosition, image);
-
-            // Reassign priorities sequentially
-            for (int i = 0; i < allImages.Count; i++)
-            {
-                allImages[i].Priority = i;
-            }
-
-            bool updateResult = await _database.SaveChangesAsync() > 0;
-            if (!updateResult)
-            {
-                return new ConflictObjectResult("Failed to update image priorities");
-            }
+            // Use the helper method to manage priority changes
+            await ManageImagePriority(productUUID.Value, imageUUID.Value, image.Priority);
         }
 
         return new OkObjectResult("Image updated successfully");
@@ -295,60 +274,117 @@ public class AssetService : IAssetService
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
-        
+
         Task<Image?> image = _database.Images
             .FirstOrDefaultAsync(i => i.UUID == imageUUID);
         Task<Product?> product = _database.Products
             .FirstOrDefaultAsync(p => p.UUID == productUUID);
-        
+
         await Task.WhenAll(image, product);
-        
+
         if (image.Result == null || product.Result == null)
         {
             return new NotFoundObjectResult("No image or product found by that UUID");
         }
-        
+
         ProductImage? existingProductImage = await _database.ProductImages
             .FirstOrDefaultAsync(pi => pi.ImageUUID == imageUUID && pi.ProductUUID == productUUID);
         if (existingProductImage != null)
         {
             return new ConflictObjectResult("Image is already associated with the product");
         }
-        
+
         int? priority = HelperService.GetImagePriority(request.Priority);
         if (priority == null)
         {
             return new BadRequestObjectResult("Invalid priority format");
         }
-        
+
+        // Create new product image with temporary priority 0
         ProductImage newProductImage = new ProductImage
         {
             ImageUUID = imageUUID.Value,
             ProductUUID = productUUID.Value,
-            Priority = (int)priority,
+            Priority = 0,
         };
-        
+
         _database.ProductImages.Add(newProductImage);
+    
+        // Save to get the entry created first
         int imageCreated = await _database.SaveChangesAsync();
         if (imageCreated <= 0)
         {
             return new BadRequestObjectResult("Failed to add image to product");
         }
 
+        // Then manage its proper priority
+        await ManageImagePriority(productUUID.Value, imageUUID.Value, priority.Value);
+
         return new OkObjectResult("Image added to product successfully");
     }
     
-    // private async UpdateImagePriority(Guid productUUID, Guid imageUUID, int newPriority)
-    // {
-    //     var productImage = await _database.ProductImages
-    //         .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
-    //
-    //     if (productImage != null)
-    //     {
-    //         productImage.Priority = newPriority;
-    //         await _database.SaveChangesAsync();
-    //     }
-    // }
+    
+    
+    private async Task ReorderPrioritiesAfterRemoval(Guid productUUID, int removedPriority)
+    {
+        // Get all images for this product with priority greater than the removed one
+        var imagesToReorder = await _database.ProductImages
+            .Where(pi => pi.ProductUUID == productUUID && pi.Priority > removedPriority)
+            .OrderBy(pi => pi.Priority)
+            .ToListAsync();
+    
+        // Shift each image's priority down by 1
+        foreach (var image in imagesToReorder)
+        {
+            image.Priority -= 1;
+        }
+    
+        await _database.SaveChangesAsync();
+    }
+    
+    
+    private async Task ManageImagePriority(Guid productUUID, Guid imageUUID, int newPriority)
+    {
+        // Get the current image and its priority
+        var currentImage = await _database.ProductImages
+            .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+    
+        if (currentImage == null)
+            return;
+    
+        int oldPriority = currentImage.Priority;
+    
+        // If no change in priority, exit early
+        if (oldPriority == newPriority)
+            return;
+    
+        // Get all images for this product (except the current one)
+        var otherImages = await _database.ProductImages
+            .Where(pi => pi.ProductUUID == productUUID && pi.ImageUUID != imageUUID)
+            .OrderBy(pi => pi.Priority)
+            .ToListAsync();
+    
+        // Temporarily remove current image from sequence
+        if (oldPriority < otherImages.Count + 1) 
+        {
+            // Decrease priority of images that were after the moved image
+            foreach (var img in otherImages.Where(pi => pi.Priority > oldPriority))
+            {
+                img.Priority -= 1;
+            }
+        }
+    
+        // Make space for the image at the new position  
+        foreach (var img in otherImages.Where(pi => pi.Priority >= newPriority))
+        {
+            img.Priority += 1;
+        }
+    
+        // Set the image to its new priority
+        currentImage.Priority = newPriority;
+    
+        await _database.SaveChangesAsync();
+    }
     
     public async Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request)
     {
@@ -358,30 +394,37 @@ public class AssetService : IAssetService
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
-        
+    
         Image? image = await _database.Images
             .FirstOrDefaultAsync(i => i.UUID == imageUUID);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
-        
-        ProductImage? newImage = await _database.ProductImages
+    
+        ProductImage? productImage = await _database.ProductImages
             .FirstOrDefaultAsync(i => i.ImageUUID == imageUUID && i.ProductUUID == productUUID);
-        if (newImage == null)
+        if (productImage == null)
         {
-            return new NotFoundObjectResult("No image found by that UUID");
+            return new NotFoundObjectResult("No image found for that product");
         }
-        
-        var deleted = await _database.Delete(newImage);
-        
+    
+        // Store the priority before deletion
+        int removedPriority = productImage.Priority;
+    
+        var deleted = await _database.Delete(productImage);
         if(!deleted)
         {
             return new BadRequestObjectResult("Could not delete image");
         }
-        
-        return new OkObjectResult("Image deleted succesfully");
+    
+        // Reorder remaining images
+        await ReorderPrioritiesAfterRemoval(productUUID.Value, removedPriority);
+    
+        return new OkObjectResult("Image removed from product successfully");
     }
+    
+    
     
     public async Task<IActionResult> DeleteImage(string imageId)
     {

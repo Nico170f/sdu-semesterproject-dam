@@ -2,12 +2,12 @@ import ../GlobalVariables.http
 run #Set Global Variables
 
 ### AssignImageToProduct
-@ProductID = ""
+@ProductID = 6f1c3cf5-c47f-4c15-8f97-12d7634800ba
 POST {{baseUrl}}/{{assetsPath}}/{{ProductID}}/add
 Content-Type: application/json
 
 {
-    "ImageId": "ImageID",
+    "ImageId": "50612971-cff2-4082-82f4-efdbbe1090c4",
     "Priority": 10
 }
 

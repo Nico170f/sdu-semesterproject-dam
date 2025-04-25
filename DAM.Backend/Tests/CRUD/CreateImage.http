@@ -6,13 +6,14 @@ run #Set Global Variables
     let randomString = client.global.get("defaultContent");
     let randomIndex = Math.floor(Math.random() * randomString.length);
     let imageContent = randomString[randomIndex];
-    request.variables.set("imageContent", imageContent);
+    console.log(imageContent);
+    request.variables.set("content", imageContent);
 %}
 POST {{baseUrl}}/{{assetsPath}}
 Content-Type: application/json
 
 {
-  "Content": "{{imageContent}}"
+  "Content": "{{content}}"
 }
 
 
