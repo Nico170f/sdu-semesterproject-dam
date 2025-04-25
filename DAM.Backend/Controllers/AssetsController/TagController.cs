@@ -26,6 +26,13 @@ public class TagController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.GetImageTag(imageId);
     }
+    
+    [HttpGet("exclude/{imageId}")]
+    public async Task<IActionResult> GetTagsNotOnImage(string imageId)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _tagService.GetTagsNotOnImage(imageId);
+    }
 
     [HttpPost("{imageId}")]
     public async Task<IActionResult> AddTagsToImage(string imageId, string tagId)

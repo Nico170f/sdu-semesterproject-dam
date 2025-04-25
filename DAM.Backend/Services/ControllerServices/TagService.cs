@@ -20,19 +20,18 @@ public class TagService : ITagService
         }
         
         List<Tag> imageTagsList = new List<Tag>();
-        var imageTagList = await (
-            from tag in _database.Tags
-            join imageTag in _database.ImageTags on tag.UUID equals imageTag.TagUUID
-            where imageTag.ImageUUID == imageUUID
-            select tag
-        ).ToListAsync();
+       
+        imageTagsList = await _database.Tags
+            .Where(tag => _database.ImageTags
+                .Any(it => it.ImageUUID == imageUUID && it.TagUUID == tag.UUID))
+            .ToListAsync();
         
         if (imageTagsList == null || imageTagsList.Count == 0)
         {
             return new NotFoundObjectResult("No tags found for that UUID");
         }
         
-        return new OkObjectResult(imageTagList);
+        return new OkObjectResult(imageTagsList);
     }
 
     public async Task<IActionResult> GetTags()
