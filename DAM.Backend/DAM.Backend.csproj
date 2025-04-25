@@ -27,6 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="DummyData\" />
       <Folder Include="Migrations\" />
       <Folder Include="OldTests\" />
     </ItemGroup>

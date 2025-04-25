@@ -2,13 +2,9 @@ using DAM.Backend.Controllers.API;
 using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using Image = DAM.Backend.Data.Models.Image;
-using Microsoft.AspNetCore.Http.HttpResults;
-using DAM.Backend.Services;
 using System.Text.Json;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -300,18 +296,16 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Invalid UUID format");
         }
         
-        Image? image = await _database.Images
+        Task<Image?> image = _database.Images
             .FirstOrDefaultAsync(i => i.UUID == imageUUID);
-        if (image == null)
-        {
-            return new NotFoundObjectResult("No image found by that UUID");
-        }
-        
-        Product? product = await _database.Products
+        Task<Product?> product = _database.Products
             .FirstOrDefaultAsync(p => p.UUID == productUUID);
-        if (product == null)
+        
+        await Task.WhenAll(image, product);
+        
+        if (image.Result == null || product.Result == null)
         {
-            return new NotFoundObjectResult("No product found by that UUID");
+            return new NotFoundObjectResult("No image or product found by that UUID");
         }
         
         ProductImage? existingProductImage = await _database.ProductImages
@@ -321,7 +315,7 @@ public class AssetService : IAssetService
             return new ConflictObjectResult("Image is already associated with the product");
         }
         
-        var priority = HelperService.GetImagePriority(request.Priority);
+        int? priority = HelperService.GetImagePriority(request.Priority);
         if (priority == null)
         {
             return new BadRequestObjectResult("Invalid priority format");
@@ -343,6 +337,18 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image added to product successfully");
     }
+    
+    // private async UpdateImagePriority(Guid productUUID, Guid imageUUID, int newPriority)
+    // {
+    //     var productImage = await _database.ProductImages
+    //         .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+    //
+    //     if (productImage != null)
+    //     {
+    //         productImage.Priority = newPriority;
+    //         await _database.SaveChangesAsync();
+    //     }
+    // }
     
     public async Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request)
     {
@@ -548,8 +554,11 @@ public class AssetService : IAssetService
     }
     private Image GetDefaultImage()
     {
-        Image image = new Image();
-        image.Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found");
+        Image image = new Image
+        {
+            Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found")
+        };
+        
         return image;
     }
     public async Task<IActionResult> GetProductsFromPIM()
