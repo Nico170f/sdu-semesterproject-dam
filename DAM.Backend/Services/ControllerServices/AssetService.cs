@@ -190,8 +190,9 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
+    public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string? searchquery)
     {
+	    searchquery = searchquery ?? "";
         List<Guid> imageIds = await _database.ProductImages
             .Join(_database.Products,
                 pi => pi.ProductUUID,

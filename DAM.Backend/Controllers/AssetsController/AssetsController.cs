@@ -96,7 +96,7 @@ public class AssetsController : ApiController
      * Returns a paginated list of image IDs filtered by search query.
      */
     [HttpGet("search")]
-    public async Task<IActionResult> SearchAssets([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchQuery) 
+    public async Task<IActionResult> SearchAssets([FromQuery] int size, [FromQuery] int page, [FromQuery] string? searchQuery = null) 
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.GetImageIdPileFromSearch(size, page * size, searchQuery);

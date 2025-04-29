@@ -1,6 +1,7 @@
 using DAM.Backend.Services.ControllerServices;
 using DAM.Backend.Services.Formatters;
 using DAM.Backend.Data;
+using DAM.Backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAM.Backend;
@@ -81,6 +82,9 @@ public sealed class Webserver
         builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddScoped<IAssetService, AssetService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IProductService, ProductService>();
+
         // builder.Services.AddSingleton<AssetService>();
 
         builder.Services.AddCors(options =>

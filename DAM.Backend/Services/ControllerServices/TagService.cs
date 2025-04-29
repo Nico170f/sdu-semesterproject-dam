@@ -18,7 +18,7 @@ public class TagService : ITagService
         _database = database;
     }
     
-    public async Task<IActionResult> GetTags()
+    public async Task<IActionResult> GetAllTags()
     {
         List<Tag> tagList = await _database.Tags.ToListAsync();
         return new OkObjectResult(tagList);

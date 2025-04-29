@@ -19,10 +19,10 @@ public class TagsController : ApiController
      * Gets all tags
      */
     [HttpGet()]
-    public async Task<IActionResult> GeAllTags()
+    public async Task<IActionResult> GetAllTags()
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetTags();
+        return await _tagService.GetAllTags();
     }
     
     
@@ -30,7 +30,7 @@ public class TagsController : ApiController
      * POST /tags
      * Creates a new tag
      */
-    [HttpPost("{tagId}")]
+    [HttpPost()]
     public async Task<IActionResult> CreateTag([FromBody] CreateTagRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);

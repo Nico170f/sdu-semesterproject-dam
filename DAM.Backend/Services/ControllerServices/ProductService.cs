@@ -12,14 +12,12 @@ public class ProductService : IProductService
 {
     
     private readonly Database _database;
-    private readonly IProductService _productService;
     private readonly IConfiguration _configuration;
 
     
-    public ProductService(Database database, IProductService productService, IConfiguration configuration)
+    public ProductService(Database database, IConfiguration configuration)
     {
         _database = database;
-        _productService = productService;
         _configuration = configuration;
     }
     
