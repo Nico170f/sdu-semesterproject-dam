@@ -192,12 +192,12 @@ public class Tests
             imageid = imageResponse.ImageId;
         }
         
-        UpdateImageRequest imageUpdateRequest = new UpdateImageRequest
+        UpdateAssetRequest assetUpdateRequest = new UpdateAssetRequest
         {
             Content = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAEOBAMAAABWZpChAAAAElBMVEUjHyDu7u7///8MCAlsaWqwr6+YjHMmAAAFQUlEQVR42u3dTXPaMBAGYDWCexDNPdLguxjZ9wTCPXHo//8rtfE3odN45WS17etLS9yZPijySrsSQrnmspvmEvFSAQ000EADDTTQQAP9L6LbP037cxEvgQYaaKCBBhpooIH+J9FIAoAGGmiggQYaaKCBRtUUmQvQQAMNNND/I9pKRL+JQ2dnvbfC0D918NLQr8ErtST66yfBlVlV115SEtCaZaF3jVnfCUJnWjWXJPTRK3EtvWvNSh/koLvOIQndN7TSpRj0UfVoIwU9NLTKxVSY3nuzKqSgrR7Qeynox6F3dMEjffSod3TBI3n0uHfkVkjVdBQ79F5IYmvGveMgBT2MLMobIWjrJ1FaBno3DXgy0KMoXfUOIejtdAyXgR6ew1AKROdyCpBXSYsIdB/xdC6n1Jv5cY8WhtZrJw6tcyMOrX35BcsXXzafvqArs6itE1nQIahS1n6PTKmXk7RNKuNVre7vyaH/zDLOPpxfTm/JoavM5Fw9d2r11uco/buo7oT6UieTFNrYsw6+ukLIn6+avr7TDI3BnxJCm+wp9KN2WDWN3d4c7lS/ibDqQiA72mQ6qFHqnb+57u7D5E71lrrAzY12mfZXsrob1P/wHKZ3huGGvaWPH2RVN6jfzDGoj1duUkC/+o8y7U+b13DjRvV7WDt+9O5Wc1aNHW7+vFYfLDd6XGb85JU7bvS9n43WB8tbNc3mN/Qla+RMAszr/IauezUrmtCjm6ZmRJt7SkPXqxmM6FEZaR56b/nQO1pDq/DM19LjFYpZDV0w9mmnaejI1Yw4NLF3hANjnKbGjpyzwmRosSO6xh6FzmgNXbDW8mhdOr7GHoV+J/doRjSpS7d73biqpsTJUsmajdOew5y3hEB6DvUPXvQ2ZlLKhKbNljxvWYw2Hha8aFLw6Lo0F5oUPPRhIxBteNG0mQdzUf3R04cWLrS5jwkeXGjS2LJnRr+TpngC0WoZNH1eSxoQ75i3ThxJYwvQQAMN9H+DlhmnJaLVDycQvZeILpjRpFleLhHtF0F/c+bSL9UyJbakHJG57kFc2roTWELgruXRijXMVVPaQgBzfZqIvmNdCbDEpU/e5QvaFgRv5K0EXPa3SVtzUToXiFaq5ETTRhel11ba4mf3KEpDX1a4uPaaEgN11dQl49YJ4l6xeoebsP0e3BtkqTGvfhbZtm0+Ujt1/dFKK2rjVaNeGVlb3NqH0fKgyeFjmKKK2QHZJgPC9pqOaglydvWO9lAwoCOexJwr5G0insSCDU3OA/q9TBxo8pPY1fS+fa/pJmZMNExJwCZiSh11fF7sp+Sow0vBid5SuzQnmtip406ii0XTNn5HnkQX/clPUqTWe140KXupojQrmjT98Ib5g8FH2sSDF72lJQC8aEL/8CX7J/Q1aS7NjN56yrSUGT27f1xW5biqpu3L2Tl59PF5S6BnZgLNJ86Y0XPT2+b4bG70zP5RuCTQs+an7VSaHT1rfupdGmj37mcE6VTQWfj8ykWZCnpGKlC4ZNCffhTDIR30jVm1DyH45DYTTl5eH8YUglq9PKlrdt/QaZy2OQkgOqwuR/ptfj5N2LpwJiX0OIBo/9zcdfVpeX4y+08K7e57dcjL4e748LnwbJdBx8+n25fdFyjpsB4f8ueGY/7CepH/aNHTNmvcjeMUrakPVKyvk0sPXeGUWp2uD66se4T99aISPG3zLy9dfwlCb/A1x0ADDTTQQAO9PHqx+TS+mxlooIEGGmiggQYa6ES/DQpJANBAAw000EADDTTQqJoCDTTQQAMNNNBAAy0R/RvS59KvO5/ILQAAAABJRU5ErkJggg=="
         };
         
-        IActionResult result = await _assetService.UpdateImage(imageid, imageUpdateRequest);
+        IActionResult result = await _assetService.UpdateImage(imageid, assetUpdateRequest);
         
         Assert.IsType<OkObjectResult>(result);
     }

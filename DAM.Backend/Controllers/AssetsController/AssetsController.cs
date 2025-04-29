@@ -17,202 +17,152 @@ public class AssetsController : ApiController
     
     
     /*
-     * Retrieves all asset IDs associated with a specific product.
-     */
-    [HttpGet("{productId}/all")]
-    //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAssetsIds(string productId)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetProductAssetsIds(productId);
-    }
-
-    /*
-     * Gets the total number of assets for a specific product.
-     */
-    [HttpGet("{productId}/amount")]
-    //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAssetsAmount(string productId)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetProductAssetAmount(productId);
-    }
-
-    /*
-     * Retrieves an image from a product based on priority level.
-     */
-    [HttpGet("{productId}/{priority}")]
-    //[AllowAnonymous]
-    public async Task<IActionResult> GetImageFromProduct(string productId, string priority)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetProductImage(productId, priority);
-    }
-    
-    /*
-     * Creates a new image from a provided request body.
+     * POST /assets
+     * Upload a new asset (expects base64 image content).
      */
     [HttpPost()]
-    public async Task<IActionResult> PostCreateImage([FromBody] CreateImageRequest requestParams)
+    public async Task<IActionResult> PostCreateAsset([FromBody] CreateImageRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.CreateImage(requestParams);
+        return await _assetService.CreateImage(body);
     }
     
-    [HttpPost("{productId}/add")]
-    public async Task<IActionResult> AddImageToProduct(string productId, [FromBody] AddProductImageRequest requestParams)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.AddProductImage(productId, requestParams);
-    }
-    
-    [HttpPost("{productId}/remove")]
-    public async Task<IActionResult> RemoveImageFromProduct(string productId, [FromBody] RemoveProductImageRequest requestParams)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.RemoveProductImage(productId, requestParams);
-    }
     
     /*
-     * Updates an existing image with the specified ID.
+     * GET /assets
+     * Get all assets (optionally with pagination and search filters).
      */
-    [HttpPut("{imageId}")]
-    public async Task<IActionResult> PutUpdateImage(string imageId, [FromBody] UpdateImageRequest requestParams)
+    [HttpGet()]
+    public async Task<IActionResult> GetAssetsPage([FromQuery] int? size, [FromQuery] int? page)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.UpdateImage(imageId, requestParams);
+        
+        int? offset = page*size;
+        return await _assetService.GetAssetsPage(size, offset);
     }
     
+    
     /*
+     * GET /assets/{assetId}
+     * Retrieves an asset by its UUID.
+     */
+    [HttpGet("{assetId}")]
+    public async Task<IActionResult> GetAsset(string assetId)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.GetImageById(assetId);
+    }
+    
+    
+    /*
+     * PUT /assets/{assetId}
+     * Fully update an asset by ID.
+     */
+    [HttpPut("{assetId}")]
+    public async Task<IActionResult> PutUpdateAsset(string assetId, [FromBody] UpdateAssetRequest body)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.UpdateAsset(assetId, body);
+    }
+    
+    
+    
+    /*
+     * PATCH /assets/{assetId}
      * Partially updates an image using JSON Patch document.
      */
-    [HttpPatch("{imageId}")]
-    public async Task<IActionResult> PatchImage(string imageId, [FromBody] JsonPatchDocument<Image> patchDoc)
+    [HttpPatch("{assetId}")]
+    public async Task<IActionResult> PatchAsset(string assetId, [FromBody] JsonPatchDocument<Image> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.PatchImage(imageId, patchDoc);
+        return await _assetService.PatchAsset(assetId, patchDoc);
     }
     
-    /*
-     * Partially updates a product-image relationship using JSON Patch.
-     */
-    [HttpPatch("{productId}/{imageId}")]
-    public async Task<IActionResult> PatchProductImage(string productId, string imageId, [FromBody] JsonPatchDocument<ProductImage> patchDoc)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.PatchProductImage(productId, imageId, patchDoc);
-    }
     
     /*
-     * Removes an image from a specific product.
-     */
-    // [HttpDelete("{productId}/{imageId}")]
-    // public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
-    // {
-    //     if (!ModelState.IsValid) return BadRequest(ModelState);
-    //     return await _assetService.RemoveProd(productId, imageId);
-    // }
-    
-    /*
+     * DELETE /assets/{imageId}
      * Deletes an image by its ID.
      */
-    [HttpDelete("{imageId}")]
-    public async Task<IActionResult> DeleteImage(string imageId)
+    [HttpDelete("{assetId}")]
+    public async Task<IActionResult> DeleteAsset(string assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.DeleteImage(imageId);
+        return await _assetService.DeleteAsset(assetId);
     }
-
+    
     
     /*
-     * Returns a paginated list of image IDs.
-     */
-    [HttpGet("imageIdPile")]
-    public async Task<IActionResult> GetImageIdPile([FromQuery] int size, [FromQuery] int page) 
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        int offset = page*size;
-        return await _assetService.GetImageIdPile(size, offset);
-    }
-
-    
-    /*
+     * GET /assets/search | /assets/search?size=10&page=0&searchQuery=example
      * Returns a paginated list of image IDs filtered by search query.
      */
-    [HttpGet("imageIdPileFromSearch")]
-    public async Task<IActionResult> GetImageIdPileFromSearch([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchquery) 
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchAssets([FromQuery] int size, [FromQuery] int page, [FromQuery] string searchQuery) 
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        int offset = page*size;
-        return await _assetService.GetImageIdPileFromSearch(size, offset, searchquery);
+        return await _assetService.GetImageIdPileFromSearch(size, page * size, searchQuery);
     }
-
+    
     
     /*
-     * Retrieves an image by its UUID.
+     * GET assets/{assetId}/tags/gallery
+     * Gets all tags that are not already associated with an asset
      */
-    [HttpGet("getImageByUUID")]
-    public async Task<IActionResult> GetImageByUUID([FromQuery] string uuid)
+    [HttpGet("{assetId}/tags/gallery")]
+    public async Task<IActionResult> GetAssetTagsGallery(string assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _assetService.GetImageByUUID(uuid);
-    }
-    
-
-    [HttpGet("{productId}/gallery")]
-    public async Task<IActionResult> GetProductGallery(string productId)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _assetService.GetProductGallery(productId);
-    }
-    
-    [HttpPost("addProduct")]
-    public async Task<IActionResult> AddMockProduct([FromBody] CreateMockProductRequest requestParams)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.CreateMockProduct(requestParams);
+        return await _assetService.GetAssetTagsGallery(assetId);
     }
     
     
-    [HttpGet("getProduct")]
-    public async Task<IActionResult> GetProduct(string productId)
+    /*
+     * GET assets/{assetId}/tags
+     * Gets all tags associated with an image
+     */
+    [HttpGet("{assetId}/tags")]
+    public async Task<IActionResult> GetAssetTags(string assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetProduct(productId);
+        return await _assetService.GetAssetTags(assetId);
     }
     
     /*
-     * Testing endpoint to delete all images (currently disabled).
+     * POST /assets/{assetId}/tags/{tagId}
+     * Adds a tag to an image.
      */
-    [HttpPost("delete-all")]
-    public async Task<IActionResult> DeleteAllImages()
-    {
-        // var allImages = await Database.Instance.Images.ToListAsync();
-        // Database.Instance.Images.RemoveRange(allImages);
-        // await Database.Instance.SaveChangesAsync();
-
-        return Ok();
-    }
-
-    [HttpGet("get-all")]
-    public async Task<IActionResult> GetAllImageUUIDs ()
-    {
-	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _assetService.GetAllImageUUIDs();
-    }
-
-    [HttpGet("getProductsFromPIM")]
-    public async Task<IActionResult> GetProductsFromPIM()
+    [HttpPost("{imageId}/tags/{tagId}")]
+    public async Task<IActionResult> AddAssetTag(string imageId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetProductsFromPIM();
+        return await _assetService.AddAssetTag(imageId, tagId);
     }
-
     
-    [HttpDelete("delete-all-products")]
-    public async Task<IActionResult> DeleteAllProducts()
+    
+    /*
+     * DELETE /assets/{imageId}/tags/{tagId}
+     * Removes a tag from an image.
+     */
+    [HttpDelete("{imageId}/tags/{tagId}")]
+    public async Task<IActionResult> DeleteAssetTag(string imageId, string tagId)
     {
-        if(!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.DeleteAllProducts();
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _assetService.RemoveAssetTag(imageId, tagId);
     }
+    
 }
+
+
+// [HttpGet("getProductsFromPIM")]
+// public async Task<IActionResult> GetProductsFromPIM()
+// {
+//     if (!ModelState.IsValid) return BadRequest(ModelState);
+//     return await _assetService.GetProductsFromPIM();
+// }
+//
+//
+// [HttpDelete("delete-all-products")]
+// public async Task<IActionResult> DeleteAllProducts()
+// {
+//     if(!ModelState.IsValid) return BadRequest(ModelState);
+//     return await _assetService.DeleteAllProducts();
+// }

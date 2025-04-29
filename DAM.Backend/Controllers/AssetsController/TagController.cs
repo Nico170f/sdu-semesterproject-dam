@@ -5,61 +5,47 @@ using DAM.Backend.Data.Models;
 
 namespace DAM.Backend.Controllers;
 
-public class TagController : ApiController
+public class TagsController : ApiController
 {
     private readonly ITagService _tagService;
 
-    public TagController(ITagService tagService)
+    public TagsController(ITagService tagService)
     {
         _tagService = tagService;
     }
 
-    [HttpGet("all")]
-    public async Task<IActionResult> GetTags()
+    /*
+     * GET /tags
+     * Gets all tags
+     */
+    [HttpGet()]
+    public async Task<IActionResult> GeAllTags()
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.GetTags();
     }
-
-    [HttpGet("{imageId}/get")]
-    public async Task<IActionResult> GetImageTag(string imageId)
+    
+    
+    /*
+     * POST /tags
+     * Creates a new tag
+     */
+    [HttpPost("{tagId}")]
+    public async Task<IActionResult> CreateTag([FromBody] CreateTagRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetImageTag(imageId);
+        return await _tagService.CreateTag(body);
     }
     
-    [HttpGet("{imageId}/getexcluded")]
-    public async Task<IActionResult> GetTagsNotOnImage(string imageId)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetTagsNotOnImage(imageId);
-    }
-
-    [HttpPost("{imageId}/add")]
-    public async Task<IActionResult> AddTagsToImage(string imageId, string tagId)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.AddTagToImage(imageId, tagId);
-    }
-
-    [HttpPost("{tagId}/create")]
-    public async Task<IActionResult> CreateTag([FromBody] CreateTagRequest requestParams)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.CreateTag(requestParams);
-    }
-
-    [HttpDelete("{tagId}/delete")]
-    public async Task<IActionResult> DeleteTag([FromBody] DeleteTagRequest requestParams)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.DeleteTag(requestParams);
-    }
     
-    [HttpDelete("{imageId}/deletefromimage")]
-    public async Task<IActionResult> RemoveTagsFromImage(string imageId, string tagId)
+    /*
+     * DELETE /tags/{tagId}
+     * Deletes a tag by ID
+     */
+    [HttpDelete("{tagId}")]
+    public async Task<IActionResult> DeleteTag(string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.RemoveTagFromImage(imageId, tagId);
+        return await _tagService.DeleteTag(tagId);
     }
 }
