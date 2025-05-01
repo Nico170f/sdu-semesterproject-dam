@@ -135,9 +135,9 @@ public class AssetService : IAssetService
         return new OkObjectResult(response);
     }
 
-    public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParams)
+    public async Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest body)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -150,7 +150,7 @@ public class AssetService : IAssetService
             return new NotFoundObjectResult("No image found by that UUID");
         }
         
-        image.Content = requestParams.Content;
+        image.Content = body.Content;
         image.UpdatedAt = DateTime.Now;
 
         (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
@@ -628,4 +628,46 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Failed to fetch products from PIM.");
         }
     }
+
+    public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> DeleteAsset(string assetId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> GetAssetsPage(int? size, int? offset)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> GetAssetTags(string assetId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> GetAssetTagsGallery(string assetId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> GetImageById(string assetId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Image> patchDoc)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IActionResult> RemoveAssetTag(string assetId, string tagId)
+    {
+        throw new NotImplementedException();
+    }
+
+    
 }
