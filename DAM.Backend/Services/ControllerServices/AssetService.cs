@@ -23,18 +23,98 @@ public class AssetService : IAssetService
         _database = database;
     }
 
-
-    public async Task<IActionResult> CreateImage(CreateImageRequest body)
+    //Method for returning all assets for a product by productId
+    public async Task<IActionResult> GetProductAssetsIds(string productId)
     {
-        if (body.Content.Length < 30)
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid product uuid");
+        }
+
+        List<Guid> imageIds = await _database.ProductImages
+            .Where(i => i.ProductUUID == productUUID)
+            .OrderBy(i => i.Priority)
+            .Select(i => i.ImageUUID)
+            .ToListAsync();
+
+        GetProductAssetsIdsResponse response = new GetProductAssetsIdsResponse(imageIds);
+        return new OkObjectResult(response);
+    }
+
+
+    public async Task<IActionResult> GetProductAssetAmount(string productId)
+    {
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid product uuid");
+        }
+
+        int imageCount = await _database.ProductImages
+            .Where(i => i.ProductUUID == productUUID)
+            .CountAsync();
+
+        GetProductAssetAmountResponse response = new GetProductAssetAmountResponse(imageCount);
+        return new OkObjectResult(response);
+    }
+
+
+
+    //Method for returning a single image by productId and priority
+    public async Task<IActionResult> GetProductImage(string productId, string priority)
+    {
+
+        int? imagePriority = HelperService.GetImagePriority(priority);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+
+        if (imagePriority == null || productUUID == null)
+        {
+            return new BadRequestObjectResult($"Invalid {(imagePriority == null ? "priority": "product uuid")}");
+        }
+        
+
+        Image? finalImage = null;
+        
+        try {
+            ProductImage? productImage = await _database.ProductImages
+                //.Include()
+                .Where(i => i.ProductUUID == productUUID && i.Priority == imagePriority)
+                .FirstOrDefaultAsync();
+
+            if (productImage == null) throw new Exception("No image found by that priority");
+
+            finalImage = await _database.Images
+                .Where(i => i.UUID == productImage.ImageUUID)
+                .FirstOrDefaultAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally 
+        {
+            if(finalImage == null)
+            {
+                finalImage = GetDefaultImage();
+            }
+        }
+        return HelperService.ConvertImageToFileContent(finalImage);
+
+    }
+
+    //Method for creating a new image
+    public async Task<IActionResult> CreateImage(CreateImageRequest requestParams)
+    {
+        if (requestParams.Content.Length < 30)
         {
             return new BadRequestObjectResult("Image content is too short");
         }
-
+        
         Image image = new Image
         {
             UUID = Guid.NewGuid(),
-            Content = body.Content,
+            Content = requestParams.Content,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
@@ -44,7 +124,7 @@ public class AssetService : IAssetService
         image.Height = dimensions.Height;
 
         _database.Images.Add(image);
-
+        
         int imageCreated = await _database.SaveChangesAsync();
         if (imageCreated <= 0)
         {
@@ -55,50 +135,21 @@ public class AssetService : IAssetService
         return new OkObjectResult(response);
     }
 
-
-    public async Task<IActionResult> GetAssetsPage(int? size, int? page)
-    {
-        List<Guid> uuids = await _database.Images.Select(img => img.UUID).ToListAsync();
-        return new OkObjectResult(uuids);
-    }
-
-
-    public async Task<IActionResult> GetImageById(string assetId)
-    {
-        Image? finalImage = null;
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        if (imageUUID != null)
-        {
-            finalImage = await _database.Images
-                .FirstOrDefaultAsync(i => i.UUID == imageUUID);
-        }
-
-        if (finalImage == null)
-        {
-            finalImage = GetDefaultImage();
-        }
-
-        FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
-        return fileContentResult;
-    }
-
-
-
-    public async Task<IActionResult> UpdateAsset(string imageId, UpdateAssetRequest requestParams)
+    public async Task<IActionResult> UpdateImage(string imageId, UpdateImageRequest requestParams)
     {
         Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
-
+        
         Image? image = await _database.Images
             .FirstOrDefaultAsync(i => i.UUID == imageUUID);
         if (image == null)
         {
             return new NotFoundObjectResult("No image found by that UUID");
         }
-
+        
         image.Content = requestParams.Content;
         image.UpdatedAt = DateTime.Now;
 
@@ -115,16 +166,14 @@ public class AssetService : IAssetService
         return new OkObjectResult("Image updated successfully");
     }
 
-
-
-    public async Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Image> patchDoc)
+    
+    public async Task<IActionResult> PatchImage(string imageId, JsonPatchDocument<Image> patchDoc)
     {
-        if (patchDoc == null)
-        {
+        if (patchDoc == null){
             return new BadRequestObjectResult("Patch document cannot be null");
         }
-
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
+        
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -153,11 +202,227 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image updated successfully");
     }
-
-
-    public async Task<IActionResult> DeleteAsset(string assetId)
+    
+    
+    
+    public async Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDocument)
+{
+    if (patchDocument == null)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
+        return new BadRequestObjectResult("Patch document cannot be null");
+    }
+
+    Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+    Guid? productUUID = HelperService.ParseStringGuid(productId);
+    if (imageUUID == null || productUUID == null)
+    {
+        return new BadRequestObjectResult("Invalid UUID format");
+    }
+
+    ProductImage? image = await _database.ProductImages
+        .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+
+    if (image == null)
+    {
+        return new NotFoundObjectResult($"Image with ID {imageId} not found");
+    }
+
+    int originalPriority = image.Priority;
+    patchDocument.ApplyTo(image);
+
+    if (image.Priority != originalPriority)
+    {
+        List<ProductImage> productImages = await _database.ProductImages
+            .Where(pi => pi.ProductUUID == productUUID)
+            .OrderBy(pi => pi.Priority)
+            .ToListAsync();
+
+        // Ensure priority is within valid range
+        image.Priority = Math.Max(0, Math.Min(image.Priority, productImages.Count - 1));
+
+        // Moving to higher priority (smaller number)
+        if (image.Priority < originalPriority)
+        {
+            foreach (var img in productImages.Where(pi => 
+                pi.Priority >= image.Priority && 
+                pi.Priority < originalPriority && 
+                pi.ImageUUID != imageUUID))
+            {
+                img.Priority += 1;
+                _database.ProductImages.Update(img);
+            }
+        }
+        // Moving to lower priority (larger number)
+        else if (image.Priority > originalPriority)
+        {
+            foreach (var img in productImages.Where(pi => 
+                pi.Priority > originalPriority && 
+                pi.Priority <= image.Priority && 
+                pi.ImageUUID != imageUUID))
+            {
+                img.Priority -= 1;
+                _database.ProductImages.Update(img);
+            }
+        }
+
+        // Update the image with its new priority
+        _database.ProductImages.Update(image);
+        
+        // Save all changes to the database
+        await _database.SaveChangesAsync();
+    }
+    return new OkObjectResult("Image updated successfully");
+}
+
+
+    // public async Task<IActionResult> DeleteProductImage(string productId, string imageId)
+    // {
+    //     Guid? imageUUID = HelperService.ParseStringGuid(imageId);
+    //     Guid? productUUID = HelperService.ParseStringGuid(productId);
+    //     if (imageUUID == null || productUUID == null)
+    //     {
+    //         return new BadRequestObjectResult("Invalid UUID format");
+    //     }
+    //
+    //     ProductImage? image = await _database.ProductImages
+    //         .FirstOrDefaultAsync(i => i.ImageUUID == imageUUID && i.ProductUUID == productUUID);
+    //     if (image == null)
+    //     {
+    //         return new NotFoundObjectResult("No image found by that UUID");
+    //     }
+    //
+    //     var deleted = await _database.Delete(image);
+    //     if(!deleted)
+    //     {
+    //         return new BadRequestObjectResult("Failed to delete image");
+    //     }
+    //
+    //     return new OkObjectResult("Image deleted successfully");
+    // }
+
+    public async Task<IActionResult> AddProductImage(string productId, AddProductImageRequest request)
+    {
+        Guid? imageUUID = HelperService.ParseStringGuid(request.ImageId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+        if (imageUUID == null || productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        Task<Image?> image = _database.Images
+            .FirstOrDefaultAsync(i => i.UUID == imageUUID);
+        Task<Product?> product = _database.Products
+            .FirstOrDefaultAsync(p => p.UUID == productUUID);
+
+        await Task.WhenAll(image, product);
+
+        if (image.Result == null || product.Result == null)
+        {
+            return new NotFoundObjectResult("No image or product found by that UUID");
+        }
+
+        ProductImage? existingProductImage = await _database.ProductImages
+            .FirstOrDefaultAsync(pi => pi.ImageUUID == imageUUID && pi.ProductUUID == productUUID);
+        if (existingProductImage != null)
+        {
+            return new ConflictObjectResult("Image is already associated with the product");
+        }
+
+        int? priority = HelperService.GetImagePriority(request.Priority);
+        if (priority == null || priority <= 0)
+        {
+            return new BadRequestObjectResult("Invalid priority format");
+        }
+        
+        List<ProductImage>? productImages = await _database.ProductImages
+            .Where(pi => pi.ProductUUID == productUUID)
+            .OrderBy(pi => pi.Priority)
+            .ToListAsync();
+
+        priority = Math.Min(Math.Max(priority.Value, 0), productImages.Count);
+
+        ProductImage newProductImage = new ProductImage
+        {
+            ImageUUID = imageUUID.Value,
+            ProductUUID = productUUID.Value,
+            Priority = priority.Value
+        };
+
+        foreach (var img in productImages.Where(pi => pi.Priority >= priority.Value))
+        {
+            img.Priority += 1;
+            _database.ProductImages.Update(img);
+        }
+
+        _database.ProductImages.Add(newProductImage);
+
+        int imageCreated = await _database.SaveChangesAsync();
+        if (imageCreated <= 0)
+        {
+            return new BadRequestObjectResult("Failed to add image to product");
+        }
+
+        return new OkObjectResult("Image added to product successfully");
+    }
+    
+    public async Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request)
+    {
+        Guid? imageUUID = HelperService.ParseStringGuid(request.ImageId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+        if (imageUUID == null || productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        Task<Image?> image = _database.Images
+            .FirstOrDefaultAsync(i => i.UUID == imageUUID);
+        Task<Product?> product = _database.Products
+            .FirstOrDefaultAsync(p => p.UUID == productUUID);
+
+        await Task.WhenAll(image, product);
+
+        if (image.Result == null || product.Result == null)
+        {
+            return new NotFoundObjectResult("No image or product found by that UUID");
+        }
+    
+        ProductImage? productImage = await _database.ProductImages
+            .FirstOrDefaultAsync(pi => pi.ImageUUID == imageUUID && pi.ProductUUID == productUUID);
+        if (productImage == null)
+        {
+            return new ConflictObjectResult("Product image relation does not exist");
+        }
+
+        // Store the priority before deletion for reference
+        int removedPriority = productImage.Priority;
+    
+        var deleted = await _database.Delete(productImage);
+        if(!deleted)
+        {
+            return new BadRequestObjectResult("Could not delete image");
+        }
+    
+        List<ProductImage>? productImages = await _database.ProductImages
+            .Where(pi => pi.ProductUUID == productUUID)
+            .OrderBy(pi => pi.Priority)
+            .ToListAsync();
+    
+        foreach (var img in productImages.Where(pi => pi.Priority > removedPriority))
+        {
+            img.Priority -= 1;
+            _database.ProductImages.Update(img);
+        }
+    
+        // Save the priority updates to the database
+        await _database.SaveChangesAsync();
+
+        return new OkObjectResult("Image removed from product successfully");
+    }
+    
+    public async Task<IActionResult> DeleteImage(string imageId)
+    {
+
+        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
         if (imageUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
@@ -170,7 +435,7 @@ public class AssetService : IAssetService
         }
 
         var deleted = await _database.Delete(image);
-        if (!deleted)
+        if(!deleted)
         {
             return new BadRequestObjectResult("Failed to delete image");
         }
@@ -188,11 +453,43 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Image deleted successfully");
     }
-
-
-    public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string? searchquery)
+    
+    public async Task<IActionResult> GetProductGallery(string productId)
     {
-	    searchquery = searchquery ?? "";
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+        if (productUUID == null)
+        {
+            return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+
+        List<Image> images = await _database.Images
+            .Where(i => !_database.ProductImages
+                .Any(pi => pi.ImageUUID == i.UUID && pi.ProductUUID == productUUID))
+            .ToListAsync();
+        if (images == null || images.Count == 0)
+        {
+            return new NotFoundObjectResult("No images found");
+        }
+        images = images.OrderBy(i => i.CreatedAt).ToList();
+        
+        return new OkObjectResult(images);
+    }
+    
+    public async Task<IActionResult> GetImageIdPile(int size, int offset) {
+        int currentRowNumber = offset;
+        List<Guid> imageIds = await _database.Images
+        .Select(img => img.UUID)
+        .OrderBy(uuid => uuid)
+        .Skip(offset)
+        .Take(size)
+        .ToListAsync();
+        
+        return new OkObjectResult(imageIds);
+    }
+
+    public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string searchquery)
+    {
         List<Guid> imageIds = await _database.ProductImages
             .Join(_database.Products,
                 pi => pi.ProductUUID,
@@ -204,145 +501,131 @@ public class AssetService : IAssetService
             .Take(size)
             .Select(joined => joined.ProductImage.ImageUUID)
             .ToListAsync();
-
+            
         return new OkObjectResult(imageIds);
     }
-
-
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId)
+    
+    public async Task<IActionResult> GetImageByUUID(string uuid)
     {
-        //Hvad sker der lige her? Mathias....
-        Guid ImageUUID = HelperService.ParseStringGuid(assetId).Value;
+        Image? finalImage = null;
+        Guid? imageUUID = HelperService.ParseStringGuid(uuid);
+        if (imageUUID != null)
+        {
+            finalImage = await _database.Images
+                .FirstOrDefaultAsync(i => i.UUID == imageUUID);
+        }
 
-        List<Tag> tagsNotOnImage = new List<Tag>();
+        if (finalImage == null)
+        {
+            finalImage = GetDefaultImage();
+        }
 
-        tagsNotOnImage = await _database.Tags
-            .Where(tag => !_database.ImageTags
-                .Any(it => it.ImageUUID == ImageUUID && it.TagUUID == tag.UUID))
-            .ToListAsync();
+        FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
+        return fileContentResult;
+    }
+    
+    public async Task<IActionResult> GetAllImageUUIDs()
+    {
+	    List<Guid> uuids = await _database.Images.Select(img => img.UUID).ToListAsync();
 
-        return new OkObjectResult(tagsNotOnImage);
+	    return new OkObjectResult(uuids);
+    }
+    
+    public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParams)
+    {
+        Product mockProduct = new Product
+        {
+            UUID = Guid.NewGuid(),
+            Name = requestParams.Name
+        };
+
+        _database.Products.Add(mockProduct);
+        
+        int productCreated = await _database.SaveChangesAsync();
+        if (productCreated <= 0)
+        {
+            return new BadRequestObjectResult("Failed to create product");
+        }
+
+        CreateMockProductResponse response = new CreateMockProductResponse(mockProduct);
+        return new OkObjectResult(response);
     }
 
-    public async Task<IActionResult> GetAssetTags(string assetId)
+    public async Task<IActionResult> DeleteAllProducts()
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        if (imageUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
-        List<Tag> imageTagsList = new List<Tag>();
-
-        imageTagsList = await _database.Tags
-            .Where(tag => _database.ImageTags
-                .Any(it => it.ImageUUID == imageUUID && it.TagUUID == tag.UUID))
-            .ToListAsync();
-
-        if (imageTagsList == null || imageTagsList.Count == 0)
-        {
-            return new NotFoundObjectResult("No tags found for that UUID");
-        }
-
-        return new OkObjectResult(imageTagsList);
+        var products = await _database.Products.ToListAsync();
+        var deleted = await _database.Delete(products);
+        int numDeleted = await _database.SaveChangesAsync();
+        
+        return new OkObjectResult(deleted);
     }
-
-
-    public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
+    
+    public async Task<IActionResult> GetProduct(string productId)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        Guid? tagUUID = HelperService.ParseStringGuid(tagId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
 
-        if (imageUUID == null || tagUUID == null)
+        if (productUUID == null)
         {
-            return new BadRequestObjectResult("Invalid UUID format");
+            return new BadRequestObjectResult($"Invalid product uuid");
         }
 
-        try
-        {
-            var image = await _database.Images.FindAsync(imageUUID);
-            if (image == null)
-            {
-                return new BadRequestObjectResult("Image not found");
-            }
+        Product? product = null;
+        
+        try {
+            product = await _database.Products.Select(i => i)
+                .Where(i => i.UUID == productUUID)
+                .FirstOrDefaultAsync();
 
-            var tag = await _database.Tags.FindAsync(tagUUID);
-            if (tag == null)
-            {
-                return new NotFoundObjectResult("Tag not found");
-            }
-
-            var existingRelationship = await _database.ImageTags
-                .FirstOrDefaultAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
-            if (existingRelationship != null)
-            {
-                return new OkObjectResult("Tag is already associated with image");
-            }
-
-            var imageTag = new ImageTags()
-            {
-                ImageUUID = (Guid)imageUUID,
-                TagUUID = (Guid)tagUUID
-            };
-
-            await _database.ImageTags.AddAsync(imageTag);
-            await _database.SaveChangesAsync();
-
-            return new OkObjectResult("Tag associated with image completed");
+            if (product == null) throw new Exception("No image found by that priority");
         }
-        catch
+        catch (Exception ex)
         {
-            return new BadRequestObjectResult("Bacons mom");
+            Console.WriteLine(ex);
         }
+
+        GetProductResponse response = new GetProductResponse(product.Name, product.UUID);
+        
+        return new OkObjectResult(response);
     }
-
-    public async Task<IActionResult> RemoveAssetTag(string assetId, string tagId)
-    {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        Guid? tagUUID = HelperService.ParseStringGuid(tagId);
-
-        if (imageUUID == null || tagUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
-        var imageTag = await _database.ImageTags
-            .FirstOrDefaultAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
-
-        if (imageTag == null)
-        {
-            return new NotFoundObjectResult("Tag on image not found");
-        }
-
-        _database.ImageTags.Remove(imageTag);
-        await _database.SaveChangesAsync();
-
-        return new OkObjectResult("Tag removed from image");
-    }
-
-
-
-    // This method should probably be in the helper service
     private Image GetDefaultImage()
     {
         Image image = new Image
         {
-            Content = _configuration.GetSection("DefaultImages")["NotFound"] ??
-                      throw new Exception("No default image found")
+            Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default image found")
         };
-
+        
         return image;
     }
+    public async Task<IActionResult> GetProductsFromPIM()
+    {
+        using var client = new HttpClient();
 
-    // public async Task<IActionResult> GetImageIdPile(int size, int offset) {
-    //     int currentRowNumber = offset;
-    //     List<Guid> imageIds = await _database.Images
-    //         .Select(img => img.UUID)
-    //         .OrderBy(uuid => uuid)
-    //         .Skip(offset)
-    //         .Take(size)
-    //         .ToListAsync();
-    //     
-    //     return new OkObjectResult(imageIds);
-    // }
+        try
+        {
+            string pimApiUrl = "http://localhost:5084/api/products/list?page=99999";
+
+            HttpResponseMessage response = await client.GetAsync(pimApiUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new BadRequestObjectResult("Failed to fetch all products from PIM.");
+            }
+
+            // Read the actual content from the response
+            string result = await response.Content.ReadAsStringAsync();
+
+            // Deserialize the actual content
+            var products = JsonSerializer.Deserialize<List<Product>>(result, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return new OkObjectResult(products);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return new BadRequestObjectResult("Failed to fetch products from PIM.");
+        }
+    }
 }

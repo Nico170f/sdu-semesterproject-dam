@@ -6,7 +6,12 @@ namespace DAM.Backend.Services.ControllerServices;
 
 public interface ITagService
 {
-    Task<IActionResult> GetAllTags();
-    Task<IActionResult> CreateTag(CreateTagRequest body);
-    Task<IActionResult> DeleteTag(string tagId);
+    Task<IActionResult> CreateTag(CreateTagRequest requestParams);
+    Task<IActionResult> DeleteTag(DeleteTagRequest requestParams);
+    Task<IActionResult> GetImageTag(string imageId);
+    Task<IActionResult> GetTags();
+    Task<IActionResult> AddTagToImage(string imageId, string tagId);
+    Task<IActionResult> RemoveTagFromImage(string imageId, string tagId);
+    Task<IActionResult> GetTagsNotOnImage(string imageUUID);
+    Task<IActionResult> GetAssetsByTags(GetAssetsByTagsRequest requestParams);
 }
