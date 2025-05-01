@@ -271,7 +271,6 @@ public class AssetService : IAssetService
         // Save all changes to the database
         await _database.SaveChangesAsync();
     }
-
     return new OkObjectResult("Image updated successfully");
 }
 

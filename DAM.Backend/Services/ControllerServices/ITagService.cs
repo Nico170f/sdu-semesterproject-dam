@@ -13,4 +13,5 @@ public interface ITagService
     Task<IActionResult> AddTagToImage(string imageId, string tagId);
     Task<IActionResult> RemoveTagFromImage(string imageId, string tagId);
     Task<IActionResult> GetTagsNotOnImage(string imageUUID);
+    Task<IActionResult> GetAssetsByTags(GetAssetsByTagsRequest requestParams);
 }

@@ -176,4 +176,39 @@ public class TagService : ITagService
         
         return new OkObjectResult("Tag removed from image");
     }
+
+    public async Task<IActionResult> GetAssetsByTags(GetAssetsByTagsRequest requestParams)
+    {
+        if (requestParams == null || requestParams.tagList == null || !requestParams.tagList.Any())
+        {
+            return new BadRequestObjectResult("Tag list cannot be null or empty.");
+        }
+
+        GetAssetsByTagsResponse responseParams = new GetAssetsByTagsResponse
+        {
+            imageList = new List<Image>()
+        };
+
+        foreach (var tag in requestParams.tagList)
+        {
+            var tagUUID = tag.UUID;
+
+            // Find images associated with the current tag
+            var images = await _database.Images
+                .Where(image => _database.ImageTags
+                    .Any(it => it.TagUUID == tagUUID && it.ImageUUID == image.UUID))
+                .ToListAsync();
+
+            // Add the images to the response list
+            responseParams.imageList.AddRange(images);
+        }
+
+        // Remove duplicate images (if any)
+        responseParams.imageList = responseParams.imageList
+            .GroupBy(img => img.UUID)
+            .Select(group => group.First())
+            .ToList();
+
+        return new OkObjectResult(responseParams);
+    }
 }

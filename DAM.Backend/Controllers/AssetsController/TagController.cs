@@ -62,4 +62,11 @@ public class TagController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.RemoveTagFromImage(imageId, tagId);
     }
+
+    public async Task<IActionResult> GetAssetsByTag(GetAssetsByTagsRequest requestParams)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _tagService.GetAssetsBytag()
+    }
+    
 }
