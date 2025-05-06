@@ -26,10 +26,4 @@
       <PackageReference Include="System.Drawing.Common" Version="9.0.3" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="DummyData\" />
-      <Folder Include="Migrations\" />
-      <Folder Include="OldTests\" />
-    </ItemGroup>
-
 </Project>

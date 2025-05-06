@@ -87,4 +87,8 @@ bin
 appsettings.Development.json
 appsettings.json
 
+DAM.sln.DotSettings.user
+./DAM.sln.DotSettings.user
+DAM.*
+*.user
 # End of https://www.toptal.com/developers/gitignore/api/rider

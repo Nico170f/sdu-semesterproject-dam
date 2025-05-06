@@ -1,4 +1,0 @@
-//Generate a new test case that tests /test
-
-POST http://localhost:5115/test/billede
-Content-Type: image/png
