@@ -1,17 +1,23 @@
 using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Image = DAM.Backend.Data.Models.Image;
 namespace DAM.Backend.Services;
+
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Png;
+using System.IO;
 
 public static class HelperService
 {
-    public static FileContentResult ConvertImageToFileContent(Image finalImage)
+    public static FileContentResult ConvertImageToFileContent(DAM.Backend.Data.Models.Image finalImage)
     { 
         var imageParts = finalImage.Content.Split(";base64,");
         var imageType = imageParts[0].Substring(5);
@@ -95,11 +101,11 @@ public static class HelperService
         using (var inputStream = new MemoryStream(imageBytes))
         using (SixLabors.ImageSharp.Image image = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
         {
-            var aspectRatio = (double)image.Height / image.Width;
-            int newHeight = (int)(newWidth * aspectRatio);
+            // var aspectRatio = (double)image.Height / image.Width;
+            // int newHeight = (int)(newWidth * aspectRatio);
 
-            image.Mutate(x => x.Resize(newWidth, newHeight));
-
+            // image.Mutate(x => x.Resize(newWidth, newHeight));
+            
             using (var outputStream = new MemoryStream())
             {
                 await image.SaveAsync(outputStream, new JpegEncoder{Quality = 85});
@@ -118,5 +124,54 @@ public static class HelperService
             return new WebpEncoder();
         
         throw new NotSupportedException($"Unsupported image format: {format.Name}");
+    }
+    
+    
+    public static string ResizeBase64WithPadding(
+        DAM.Backend.Data.Models.Image currentImage,
+        int? newWidth = null,
+        int? newHeight = null)
+    {
+        if (newWidth is null && newHeight is null)
+            throw new ArgumentException("At least one of newWidth or newHeight must be provided.");
+
+        byte[] imageBytes = Convert.FromBase64String(currentImage.Content);
+        using var image = Image.Load<Rgba32>(imageBytes);
+
+        int originalWidth = image.Width;
+        int originalHeight = image.Height;
+
+        float ratio;
+
+        if (newWidth.HasValue && newHeight.HasValue)
+        {
+            ratio = Math.Min((float)newWidth.Value / originalWidth, (float)newHeight.Value / originalHeight);
+        }
+        else if (newWidth.HasValue)
+        {
+            ratio = (float)newWidth.Value / originalWidth;
+            newHeight = (int)(originalHeight * ratio);
+        }
+        else // only newHeight.HasValue
+        {
+            ratio = (float)newHeight.Value / originalHeight;
+            newWidth = (int)(originalWidth * ratio);
+        }
+
+        int resizedWidth = (int)(originalWidth * ratio);
+        int resizedHeight = (int)(originalHeight * ratio);
+
+        image.Mutate(x => x.Resize(resizedWidth, resizedHeight));
+
+        using var canvas = new Image<Rgba32>(newWidth.Value, newHeight.Value, new Rgba32(0, 0, 0, 0));
+
+        int posX = (newWidth.Value - resizedWidth) / 2;
+        int posY = (newHeight.Value - resizedHeight) / 2;
+
+        canvas.Mutate(x => x.DrawImage(image, new Point(posX, posY), 1f));
+
+        using var ms = new MemoryStream();
+        canvas.Save(ms, new PngEncoder());
+        return Convert.ToBase64String(ms.ToArray());
     }
 }
