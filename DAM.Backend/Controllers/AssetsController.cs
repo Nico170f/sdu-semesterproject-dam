@@ -47,10 +47,10 @@ public class AssetsController : ApiController
      * Retrieves an asset by its UUID.
      */
     [HttpGet("{assetId}")]
-    public async Task<IActionResult> GetAsset(string assetId)
+    public async Task<IActionResult> GetAsset(string assetId, [FromQuery] int? height, [FromQuery] int? width)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetImageById(assetId);
+        return await _assetService.GetImageById(assetId, height, width);
     }
     
     

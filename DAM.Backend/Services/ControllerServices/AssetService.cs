@@ -63,7 +63,7 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetImageById(string assetId)
+    public async Task<IActionResult> GetImageById(string assetId, int? height, int? width)
     {
         Image? finalImage = null;
         Guid? imageUUID = HelperService.ParseStringGuid(assetId);
@@ -76,6 +76,11 @@ public class AssetService : IAssetService
         if (finalImage == null)
         {
             finalImage = GetDefaultImage();
+        }
+
+        if (height.HasValue || width.HasValue)
+        {
+            finalImage.Content = HelperService.ResizeBase64WithPadding(finalImage, height, width);
         }
 
         FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
