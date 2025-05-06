@@ -48,4 +48,16 @@ public class TagsController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.DeleteTag(tagId);
     }
+
+    /*
+     * GET tags/search
+     * Gets all assets associated with tagList
+     * 
+     */
+    [HttpGet("search")]
+    public async Task<IActionResult> GetAssetsTags([FromBody] GetAssetsTagsRequest body)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return await _tagService.GetAssetsTags(body);
+    }
 }
