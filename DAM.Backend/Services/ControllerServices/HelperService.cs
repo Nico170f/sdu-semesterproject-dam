@@ -1,6 +1,11 @@
 using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using Image = DAM.Backend.Data.Models.Image;
 namespace DAM.Backend.Services;
 
@@ -55,5 +60,63 @@ public static class HelperService
         }
 
         return null;
+    }
+    
+    public static async Task<string> ResizeImageFactorAsync(string base64Image, int scaleFactor)
+    {
+        if (scaleFactor <= 0)
+            throw new ArgumentOutOfRangeException(nameof(scaleFactor), "Scale factor must be greater than 0");
+        
+        byte[] imageBytes = Convert.FromBase64String(base64Image);
+        
+        using (var inputStream = new MemoryStream(imageBytes))
+        using (SixLabors.ImageSharp.Image image = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
+        {
+            int newWidth = (int)(image.Width * scaleFactor);
+            int newHeight = (int)(image.Height * scaleFactor);
+            
+            image.Mutate(x=> x.Resize(newWidth, newHeight));
+
+            using (var outputStream = new MemoryStream())
+            {
+                var format = image.Metadata.DecodedImageFormat;
+                IImageEncoder encoder = GetEncoder(format);
+
+                await image.SaveAsync(outputStream, encoder);
+                return Convert.ToBase64String(outputStream.ToArray());
+            }
+        }
+    }
+        
+    public static async Task<string> ResizeImageWidthAsync(string base64Image, int newWidth)
+    {
+        byte[] imageBytes = Convert.FromBase64String(base64Image);
+        
+        using (var inputStream = new MemoryStream(imageBytes))
+        using (SixLabors.ImageSharp.Image image = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
+        {
+            var aspectRatio = (double)image.Height / image.Width;
+            int newHeight = (int)(newWidth * aspectRatio);
+
+            image.Mutate(x => x.Resize(newWidth, newHeight));
+
+            using (var outputStream = new MemoryStream())
+            {
+                await image.SaveAsync(outputStream, new JpegEncoder{Quality = 85});
+                return Convert.ToBase64String(outputStream.ToArray());
+            }
+        } 
+    }
+    
+    private static IImageEncoder GetEncoder(IImageFormat format)
+    {
+        if (format == JpegFormat.Instance)
+            return new JpegEncoder { Quality = 85 };
+        if (format == PngFormat.Instance)
+            return new PngEncoder();
+        if (format == WebpFormat.Instance)
+            return new WebpEncoder();
+        
+        throw new NotSupportedException($"Unsupported image format: {format.Name}");
     }
 }
