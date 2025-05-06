@@ -15,7 +15,7 @@ public class ProductService : IProductService
     private readonly IConfiguration _configuration;
 
     
-    public ProductService(Database database, IConfiguration configuration)
+    public ProductService(IConfiguration configuration, Database database)
     {
         _database = database;
         _configuration = configuration;
