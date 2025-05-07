@@ -72,7 +72,7 @@ public class ProductService : IProductService
 		    .Where(p => p.UUID == productUUID)
 		    .FirstOrDefaultAsync();
 
-	    if (product is null) return new BadRequestObjectResult("No product with uuid" + productId);
+	    if (product is null) return new NotFoundObjectResult("No product found with UUID: " + productId + ".");
 
 	    GetProductResponse response = new GetProductResponse(product.Name, product.UUID);
 	    return new OkObjectResult(response);
