@@ -41,9 +41,41 @@ public class ProductService : IProductService
         return new OkObjectResult(response);
     }
 
+    public async Task<IActionResult> CreateProduct(CreateProductRequest body)
+    {
+	    Product product = new Product()
+	    {
+		    Name = body.Name,
+		    UUID = body.UUID
+	    };
+
+	    _database.Products.Add(product);
+	    
+	    int productCreated = await _database.SaveChangesAsync();
+	    if (productCreated <= 0)
+	    {
+		    return new BadRequestObjectResult("Failed to create product");
+	    }
+
+	    return new OkObjectResult(product);
+    }
+
     public async Task<IActionResult> GetProduct(string productId)
     {
-        throw new NotImplementedException();
+	    Guid? productUUID = HelperService.ParseStringGuid(productId);
+	    if (productUUID == null)
+	    {
+		    return new BadRequestObjectResult("Invalid product uuid");
+	    }
+
+	    Product? product = await _database.Products
+		    .Where(p => p.UUID == productUUID)
+		    .FirstOrDefaultAsync();
+
+	    if (product is null) return new NotFoundObjectResult("No product found with UUID: " + productId + ".");
+
+	    GetProductResponse response = new GetProductResponse(product.Name, product.UUID);
+	    return new OkObjectResult(response);
     }
 
     public async Task<IActionResult> GetProductAssets(string productId)

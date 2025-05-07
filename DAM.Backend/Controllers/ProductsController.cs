@@ -20,16 +20,27 @@ public class ProductsController : ApiController
      * Add a mock product.
      */
     [HttpPost("mock")]
-    public async Task<IActionResult> CreateProduct([FromBody] CreateMockProductRequest body)
+    public async Task<IActionResult> CreateMockProduct([FromBody] CreateMockProductRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.CreateMockProduct(body);
     }
     
+    /*
+     * POST /products/add
+     * Add a product with both name and uuid
+     */
+    [HttpPost("add")]
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest body)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.CreateProduct(body);
+    }
+    
     
     /*
      * GET /products/{productId}
-     * Get all products (optionally with pagination and search filters).
+     * Get product by id
      */
     [HttpGet("{productId}")]
     public async Task<IActionResult> GetProduct(string productId)
