@@ -8,6 +8,7 @@ namespace DAM.Backend.Services.ControllerServices;
 public interface IProductService
 {
     Task<IActionResult> CreateMockProduct(CreateMockProductRequest body);
+    Task<IActionResult> CreateProduct(CreateProductRequest body);
     Task<IActionResult> GetProduct(string productId);
     Task<IActionResult> GetProductAssets(string productId);
     Task<IActionResult> GetProductAssetsAmount(string productId);
