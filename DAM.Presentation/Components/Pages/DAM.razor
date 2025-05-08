@@ -87,13 +87,18 @@
     🖼️ Assets
 </button>
 
+<button class="nav-button" @onclick="NavigateToTags">
+    🏷️️ Tags
+</button>
+
 <button class="nav-button" @onclick="NavigateToHelp" >
     💡 Help
 </button>
 
-<button class="help-toggle" @onclick="ToggleHelp">
-    ❓ Help
-</button>
+        
+        
+
+<button class="help-toggle" @onclick="ToggleHelp">❓ Help</button>
 
 <div class="help-slide-in @(showHelp ? "open" : "")">
     <h3>Do you need help?</h3>
@@ -102,6 +107,11 @@
         <li>💼 <strong>Assets:</strong> Upload and manage digital assets.</li>
     </ul>
 </div>
+
+
+
+
+
 
 @code
 {
@@ -120,10 +130,17 @@
         NavigationManager.NavigateTo($"/dam/help");
     }
     
+    public void NavigateToTags ()
+    {
+        NavigationManager.NavigateTo("/dam/tags");
+    }
+    
     private bool showHelp = false;
 
     private void ToggleHelp()
     {
         showHelp = !showHelp;
     }
+
 }
+
