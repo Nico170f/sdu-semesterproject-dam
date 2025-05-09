@@ -187,7 +187,7 @@ public class ProductService : IProductService
         }
 
         int? priority = HelperService.GetImagePriority(body.Priority);
-        if (priority == null || priority <= 0)
+        if (priority == null || priority < 0)
         {
             return new BadRequestObjectResult("Invalid priority format");
         }

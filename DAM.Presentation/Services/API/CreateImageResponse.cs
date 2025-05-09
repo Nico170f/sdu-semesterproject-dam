@@ -6,7 +6,7 @@ public class CreateImageResponse
 {
     public string ImageId { get; set; }
 
-    public CreateImageResponse(Image image)
+    public CreateImageResponse(Asset image)
     {
         ImageId = image.UUID.ToString();
     }

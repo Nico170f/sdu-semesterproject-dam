@@ -12,8 +12,8 @@ public partial class Edit : ComponentBase
     private int _pageNumber = 1;
     private string _searchText = "";
 
-    private List<Models.Image> _productImages = [];
-    private List<Models.Image> _gallery = [];
+    private List<Models.Asset> _productImages = [];
+    private List<Models.Asset> _gallery = [];
         
     protected override async Task OnInitializedAsync ()
     {
@@ -28,7 +28,7 @@ public partial class Edit : ComponentBase
         List<string> assetIds = await ReadService.GetAssetsByProduct(_productId); 
         foreach (string assetId in assetIds)
         {
-	        _productImages.Add(new Models.Image
+	        _productImages.Add(new Models.Asset
 	        {
 		        UUID = new Guid(assetId)
 	        });
@@ -37,7 +37,7 @@ public partial class Edit : ComponentBase
         List<string> galleryImageIds = await ReadService.GetAllAssetIds();
         foreach (string galleryImageId in galleryImageIds)
         {
-	        _gallery.Add(new Models.Image()
+	        _gallery.Add(new Models.Asset()
 	        {
 		        UUID = new Guid(galleryImageId)
 	        });

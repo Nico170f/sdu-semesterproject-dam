@@ -1,3 +1,4 @@
+using DAM.Presentation.EnhancedModels;
 using DAM.Presentation.Services;
 using Microsoft.AspNetCore.Components;
 
@@ -17,7 +18,7 @@ public partial class Products : ComponentBase
 
     private bool _isLoaded = false;
     private string searchText = ""; // Holds the search text
-    List<Models.Product> products = [];
+    List<EnhancedProduct> products = [];
 
     private string _newProductName, _newProductUuid;
 
@@ -63,7 +64,7 @@ public partial class Products : ComponentBase
         Navigation.NavigateTo($"/dam/products/edit?productId={productId}");
     }
     
-    private IEnumerable<Models.Product> FilteredProducts()
+    private IEnumerable<EnhancedProduct> FilteredProducts()
     {
         if (string.IsNullOrWhiteSpace(searchProduct)) //if there is nothing in search product it searches for all the products
             return products;

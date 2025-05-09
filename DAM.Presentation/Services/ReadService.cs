@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using DAM.Presentation.EnhancedModels;
 using DAM.Presentation.Models;
 using DAM.Presentation.Services.API;
 
@@ -113,7 +114,11 @@ public class ReadService
 		return tags;
 	}
 	
-	// TODO: Implement endpoint for this action
+	/// <summary>
+	/// Returns a list of assetIds based on a list of tagIds
+	/// </summary>
+	/// <param name="selectedTags"></param>
+	/// <returns></returns>
 	public static async Task<List<string>> GetAssetsByTags(List<string> selectedTags)
 	{
 		List<string> imageSources = new List<string>();
@@ -203,9 +208,10 @@ public class ReadService
 		
 	}
 
-	public async Task<List<Product>> GetAllProducts ()
+	public async Task<List<EnhancedProduct>> GetAllProducts()
 	{
 		List<Product> products = [];
+		List<EnhancedProduct> enhancedProducts = [];
 
 		HttpClientHandler handler = new HttpClientHandler();
 		HttpClient Http = new HttpClient(handler)
@@ -215,7 +221,32 @@ public class ReadService
 
 		products = await Http.GetFromJsonAsync<List<Product>>("api/v1/products");
 
-		return products;
+		foreach (Product product in products)
+		{
+			// Create a new EnhancedProduct instead of casting
+			EnhancedProduct enhancedProduct = new EnhancedProduct
+			{
+				// Copy all properties from the Product
+				UUID = product.UUID,
+				Name = product.Name,
+				// Copy any other properties from Product that exist in EnhancedProduct
+			};
+
+			string assetId = "";
+			try
+			{
+				assetId = (await GetAssetsByProduct(product.UUID.ToString()))[0];
+			}
+			catch (Exception e)
+			{
+				assetId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+			}
+			enhancedProduct.MainAssetUrl = $"http://localhost:5115/api/v1/assets/{assetId}";
+
+			enhancedProducts.Add(enhancedProduct);
+		}
+
+		return enhancedProducts;
 	}
 	
 }
