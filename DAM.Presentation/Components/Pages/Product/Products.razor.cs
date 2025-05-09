@@ -37,10 +37,10 @@ public partial class Products : ComponentBase
 		    Console.WriteLine(e.Message);
 	    }
     }
-    
-    protected override void OnInitialized ()
+
+    protected override async Task OnInitializedAsync ()
     {
-        base.OnInitialized();
+	    products = await ReadService.GetAllProducts() ?? [];
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -68,8 +68,13 @@ public partial class Products : ComponentBase
         if (string.IsNullOrWhiteSpace(searchProduct)) //if there is nothing in search product it searches for all the products
             return products;
 
-        return products.Where(products =>
-            (products.Name != null && products.Name.Contains(searchProduct, StringComparison.OrdinalIgnoreCase)) || //returns based on product name and product id
-            (products.UUID != null && products.UUID.ToString().Contains(searchProduct, StringComparison.OrdinalIgnoreCase)));
+        return products.Where(product =>
+            product.Name.Contains(searchProduct, StringComparison.OrdinalIgnoreCase) || //returns based on product name and product id
+            product.UUID.ToString().Contains(searchProduct, StringComparison.OrdinalIgnoreCase));
+    }
+    
+    private void HandleSearch(ChangeEventArgs e)
+    {
+	    searchProduct = e.Value?.ToString() ?? string.Empty;
     }
 }

@@ -58,8 +58,7 @@
 
     
     <!-- Search bar -->
-    <input class="form-control" @bind="searchProduct" @bind:event="oninput" placeholder="Search by product name, id or image tag..."/>
-
+    <InputText class="form-control" @bind-Value="@searchProduct" @oninput="HandleSearch" placeholder="Search by product name, id or image tag..."/>
     <div class="gallery" id="imageGrid">
         @foreach(Product product in FilteredProducts())
         {

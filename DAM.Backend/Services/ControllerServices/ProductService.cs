@@ -20,7 +20,13 @@ public class ProductService : IProductService
         _database = database;
         _configuration = configuration;
     }
-    
+
+    public async Task<IActionResult> GetAllProducts ()
+    {
+	    var response = await _database.Products.ToListAsync();
+	    return new OkObjectResult(response);
+    }
+
     public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest body)
     {
         Product mockProduct = new Product

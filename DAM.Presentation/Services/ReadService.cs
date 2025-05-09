@@ -202,5 +202,20 @@ public class ReadService
 		return response.Name;
 		
 	}
+
+	public async Task<List<Product>> GetAllProducts ()
+	{
+		List<Product> products = [];
+
+		HttpClientHandler handler = new HttpClientHandler();
+		HttpClient Http = new HttpClient(handler)
+		{
+			BaseAddress = new Uri("http://localhost:5115/")
+		};
+
+		products = await Http.GetFromJsonAsync<List<Product>>("api/v1/products");
+
+		return products;
+	}
 	
 }
