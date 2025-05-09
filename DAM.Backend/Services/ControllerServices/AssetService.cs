@@ -228,6 +228,7 @@ public class AssetService : IAssetService
 
         return new OkObjectResult(tagsNotOnImage);
     }
+    
 
     public async Task<IActionResult> GetAssetTags(string assetId)
     {

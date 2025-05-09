@@ -1,0 +1,90 @@
+@page "/dam/tags"
+@using global::DAM.Presentation.Models
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<style>
+    body {
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+    }
+
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    {
+        width: 80%
+    ;
+        max-width: 400px
+    ;
+        padding: 10px
+    ;
+        font-size: 16px
+    ;
+        border: 1px solid #ccc
+    ;
+        border-radius: 5px
+    ;
+    }
+
+    .gallery {
+        margin: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .gallery img {
+        width: 20vw;
+        height: 20vw; /* Forces square scaling */
+        border-radius: 5px;
+        object-fit: cover;
+        border: 2px solid #000000;
+        padding: 1vw;
+        transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+    }
+    
+    .gallery img:hover{
+        transform: scale(1.05);
+    }
+
+    .tag-menu {
+        padding: 1rem;
+        border: 1px solid #ccc;
+        background-color: #f8f8f8;
+        border-radius: 5px;
+        margin-top: 10px;
+        max-width: 300px;
+    }
+    
+</style>
+
+<PageTitle>Tag Overview</PageTitle>
+
+    <div style="text-align: left">
+        <button @onclick="NavigateToHome">Home</button>
+    </div>
+    <div>
+        <h1>Tag Gallery</h1>
+        <InputText @bind-Value="searchText" placeholder="Search for assets"/>
+        <button @onclick="SearchButton">Search</button>
+        
+        <InputText @bind-Value="addTagText" placeholder="Give your tag a name"></InputText>
+        <button @onclick="() => AddTag(addTagText)">Add</button>
+    </div>
+
+    <div class="gallery" id="imageGrid">
+        @foreach (Tag tag in tags)
+        {
+            <div class="image-container">
+                <p>@tag.Name</p>
+                <button @onclick="() => DeleteTag(tag.UUID)">X</button>
+            </div>
+        }
+    </div>
+
+

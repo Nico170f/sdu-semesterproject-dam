@@ -148,7 +148,6 @@ public class AssetsController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.RemoveAssetTag(imageId, tagId);
     }
-    
 }
 
 

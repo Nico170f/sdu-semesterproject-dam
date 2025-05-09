@@ -14,6 +14,17 @@ public class ProductsController : ApiController
     {
         _productService = productService;
     }
+    
+    /*
+     * GET /products
+     * Gets all products
+     */
+    [HttpGet()]
+    public async Task<IActionResult> GetAllProducts()
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetAllProducts();
+    }
         
     /*
      * POST /products/mock

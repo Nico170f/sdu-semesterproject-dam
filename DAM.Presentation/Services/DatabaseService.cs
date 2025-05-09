@@ -1,8 +1,6 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json; // For easy JSON handling
-using System.Threading.Tasks;
+﻿// For easy JSON handling
 
-namespace DAM.Presentation;
+namespace DAM.Presentation.Services;
 
 public class DatabaseService
 {
