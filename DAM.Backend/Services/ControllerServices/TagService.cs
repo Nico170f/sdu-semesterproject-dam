@@ -67,22 +67,23 @@ public class TagService : ITagService
         }
     }
     
-    public async Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest body)
+    public async Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest query)
     {
-        if (body.tagList == null || !body.tagList.Any())
+        if (query.tagList == null || !query.tagList.Any())
         {
             return new BadRequestObjectResult("Tag list cannot be null or empty");
         }
 
-        var tagUUIDs = body.tagList.Select(tag => tag.UUID).ToList();
-
-        var imagesWithTags = await _database.ImageTags.Where(it => tagUUIDs.Contains(it.TagUUID))
+        var imagesWithTags = await _database.ImageTags
+            .Where(it => query.tagList.Contains(it.TagUUID))
             .GroupBy(it => it.ImageUUID)
-            .Where(group => group.Select(it => it.TagUUID).Distinct().Count() == tagUUIDs.Count)
-            .Select(group => group.Key).ToListAsync();
+            .Where(group => group.Select(it => it.TagUUID).Distinct().Count() == query.tagList.Count)
+            .Select(group => group.Key)
+            .ToListAsync();
 
-        var assets = await _database.Images.Where(image => imagesWithTags.Contains(image.UUID)).Select(image =>
-            new Image
+        var assets = await _database.Images
+            .Where(image => imagesWithTags.Contains(image.UUID))
+            .Select(image => new Image
             {
                 UUID = image.UUID,
                 Content = image.Content,
@@ -90,7 +91,9 @@ public class TagService : ITagService
                 Height = image.Height,
                 CreatedAt = image.CreatedAt,
                 UpdatedAt = image.UpdatedAt
-            }).ToListAsync();
+            })
+            .ToListAsync();
+
         return new OkObjectResult(assets);
     }
     
