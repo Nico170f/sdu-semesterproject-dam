@@ -61,7 +61,7 @@ public partial class Assets : ComponentBase
 
     public void NavigateToHome()
     {
-        Navigation.NavigateTo("/", true);
+        Navigation.NavigateTo("/dam", true);
     }
 
     public void NavigateToPage(int pageNum)

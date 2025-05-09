@@ -79,8 +79,23 @@
         <button @onclick="SearchButton">Search</button>
         <InputFile OnChange="CreateService.UploadImage" accept="image/*" />
     </div>
-
     
+    @if (showTagMenu)
+    {
+        <div class="tag-menu">
+            <h4>Filter with Tags</h4>
+            @foreach (var tag in allTags)
+            {
+                <label style="display: block;">
+                    <input type="checkbox"
+                           checked="@selectedTags.Contains(tag.Name)"
+                           @onchange="(e) => OnTagFilterChanged(tag.Name, (bool?) e.Value == true)"/>
+                    @tag.Name
+                </label>
+            }
+            <button @onclick="ApplyFilter">Apply Filter</button>
+        </div>
+    }
 
     <div class="gallery" id="imageGrid">
         @foreach (string src in imageSources)
@@ -92,26 +107,3 @@
         }
     </div>
 </div>
-
-<button @onclick="ToggleTagMenu">Select Tags</button> 
-
-@if (showTagMenu)
-{
-<div class="tag-menu">
-    <h4>Filter with Tags</h4>
-    @foreach (var tag in allTags)
-    {
-    <label style="display: block;">
-        <input type="checkbox"
-               checked="@selectedTags.Contains(tag.Name)"
-               @onchange="(e) => OnTagFilterChanged(tag.Name, (bool?)e.Value == true)" />
-        @tag.Name
-    </label>
-    }
-
-
-    <button @onclick="ApplyFilter">Apply Filter</button>
-</div>
-}
-
-
