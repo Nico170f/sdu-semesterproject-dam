@@ -55,9 +55,14 @@ public class TagsController : ApiController
      * 
      */
     [HttpGet("search")]
-    public async Task<IActionResult> GetAssetsTags([FromBody] GetAssetsTagsRequest body)
+    public async Task<IActionResult> GetAssetsTags([FromQuery] string tagList)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetAssetsTags(body);
+        GetAssetsTagsRequest query = new GetAssetsTagsRequest
+        {
+            tagList = tagList.Split(",").Select(Guid.Parse).ToList()
+        };
+        
+        return await _tagService.GetAssetsTags(query);
     }
 }
