@@ -245,11 +245,6 @@ public class AssetService : IAssetService
                 .Any(it => it.ImageUUID == imageUUID && it.TagUUID == tag.UUID))
             .ToListAsync();
 
-        if (imageTagsList == null || imageTagsList.Count == 0)
-        {
-            return new NotFoundObjectResult("No tags found for that UUID");
-        }
-
         return new OkObjectResult(imageTagsList);
     }
 
