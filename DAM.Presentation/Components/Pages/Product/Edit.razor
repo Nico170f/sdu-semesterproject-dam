@@ -3,10 +3,6 @@
 @rendermode  InteractiveServer
 @using BlazorSortableList
 @using global::DAM.Presentation.Services
-@inject CreateService CreateService
-@inject ReadService ReadService
-@inject UpdateService UpdateService
-@inject DeleteService DeleteService
 
 <style>
     .gallery {
@@ -53,7 +49,7 @@
                       OnRemove="ProductImageRemove" OnUpdate="ProductImageReorder">
             <SortableItemTemplate>
                 <div class="card has-border has-background-white img_in_gallery">
-                    <img src="@ReadService.GetAssetContentById(asset.UUID.ToString())" alt="image of something"/>
+                    <img src="@ReadService.GetAssetContentById(asset.UUID)" alt="image of something"/>
                     <p>@asset.UUID</p>
                 </div>
             </SortableItemTemplate>
@@ -75,7 +71,7 @@
                           OnRemove="GalleryRemove" OnUpdate="GalleryReorder">
                 <SortableItemTemplate>
                     <div class="card has-border has-background-white img_in_gallery">
-                        <img src="@ReadService.GetAssetContentById(asset.UUID.ToString())" alt=""/>
+                        <img src="@ReadService.GetAssetContentById(asset.UUID)" alt=""/>
                         <p>@asset.UUID</p>
                     </div>
                 </SortableItemTemplate>

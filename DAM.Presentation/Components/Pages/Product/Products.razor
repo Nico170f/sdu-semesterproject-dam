@@ -64,7 +64,7 @@
         @foreach(EnhancedProduct product in FilteredProducts())
         {
             <div class="image-container" @onclick="@(e => OnImageClickNavigateTo(@product.UUID.ToString()))">
-                <img src="@(product.MainAssetUrl)" alt="Placeholder Image">
+                <img src="@(ReadService.GetAssetContentById(product.MainAssetUUID))" alt="Placeholder Image">
 
                 <p>@($"{product.Name}")</p>
                 <p>@($"{product.UUID}")</p>

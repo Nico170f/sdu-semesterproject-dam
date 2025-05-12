@@ -2,6 +2,7 @@ using DAM.Presentation.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http;
 
 namespace DAM.Presentation {
     public static class ServiceExtensions
@@ -17,6 +18,11 @@ namespace DAM.Presentation {
             builder.Services.AddScoped<ReadService>();
             builder.Services.AddScoped<UpdateService>();
             builder.Services.AddScoped<DeleteService>();
+            
+            builder.Services.AddHttpClient("DAMApi", client =>
+            {
+	            client.BaseAddress = new Uri("http://localhost:5115/");
+            });
 
             
             return builder;            

@@ -6,13 +6,17 @@ namespace DAM.Presentation.Components.Pages.Asset;
 public partial class Edit : ComponentBase
 {
 
+	#region Injects
+	#pragma warning disable CS8618
 	[Inject] private NavigationManager Navigation { get; set; }
 	[Inject] private CreateService CreateService { get; set; }
 	[Inject] private ReadService ReadService { get; set; }
 	[Inject] private UpdateService UpdateService { get; set; }
 	[Inject] private DeleteService DeleteService { get; set; }
+	#pragma warning disable CS8618
+	#endregion
 	
-	private string _assetId = "";
+	private Guid _assetId = Guid.Empty;
     private string _searchText = "";
     
     private List<Models.Tag> _imageTags = [];
@@ -23,8 +27,8 @@ public partial class Edit : ComponentBase
         var uri = new Uri(Navigation.Uri);
         var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
 
-        if (queryParams.TryGetValue("imageId", out var id))
-	        _assetId = id;
+        if (queryParams.TryGetValue("assetId", out var id))
+	        _assetId = new Guid(id);
 
         _imageTags = await ReadService.GetTagsByAsset(_assetId);
 
@@ -54,7 +58,7 @@ public partial class Edit : ComponentBase
         // add it to the new index in list 2
         _list.Insert(indices.newIndex, item);
 
-        await DeleteService.RemoveTagFromAsset(_assetId, _imageTags[indices.oldIndex].UUID.ToString());
+        await DeleteService.RemoveTagFromAsset(_assetId, _imageTags[indices.oldIndex].UUID);
         
         // remove the item from the old index in list 1
         _imageTags.Remove(_imageTags[indices.oldIndex]);
@@ -68,7 +72,7 @@ public partial class Edit : ComponentBase
         // add it to the new index in list 1
         _imageTags.Insert(indices.newIndex, tag);
         
-        await CreateService.AddTagToImage(_assetId, tag.UUID.ToString());
+        await CreateService.AddTagToImage(_assetId, tag.UUID);
        // remove the item from the old index in list 2
        _list.Remove(_list[indices.oldIndex]);
     }

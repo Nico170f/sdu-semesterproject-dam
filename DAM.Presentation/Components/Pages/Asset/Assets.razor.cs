@@ -1,65 +1,41 @@
 using DAM.Presentation.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace DAM.Presentation.Components.Pages.Asset;
 
 public partial class Assets : ComponentBase
 {
-	
+
+	#region Injects 
+	#pragma warning disable CS8618
 	[Inject] private NavigationManager Navigation { get; set; }
 	[Inject] private CreateService CreateService { get; set; }
 	[Inject] private ReadService ReadService { get; set; }
 	[Inject] private UpdateService UpdateService { get; set; }
 	[Inject] private DeleteService DeleteService { get; set; }
+	#pragma warning restore CS8618
+	#endregion
 	
-    private bool _isLoaded = false;
-    private string searchText = "";
-    private int size = 20; 
-    private int pageNumber = 0;
-    private List<string> imageSources = [];
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            //await Task.Delay(250);
-            _isLoaded = true;
-            StateHasChanged();
-        }
-    }
-
-    public async Task SearchButton()
-    {
-        imageSources = await ReadService.GetAssetIdsBySearching(size, pageNumber, searchText);
-    }
-    
-    public void OnImageClickNavigateTo(string imageUrl)
-    {
-        //http://localhost:5115/api/v1/assets/GetImageByUUID?uuid=008bd3e2-5a4d-4a16-ae8b-f7537bee8642
-        string imageId = imageUrl.Substring(imageUrl.Length - 36); //ew
-        Navigation.NavigateTo($"/dam/assets/edit?imageId={imageId}");
-    }
+    private List<Guid> _assetsIds = [];
+    private string _searchText = "";
+    private bool _showTagMenu = false;
+    private List<Models.Tag> _allTags = [];
+    private HashSet<Guid> _selectedTagIds = []; 
     
     protected override async Task OnInitializedAsync()
     {
-        await Task.Delay(250);
-
-        var uri = new Uri(Navigation.Uri);
-        var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-
-        if (queryParams.TryGetValue("Page", out var pageNumString))
-            pageNumber = int.Parse(pageNumString);
-
-        foreach (var assetId in await ReadService.GetAssetIdsBySearching(size, pageNumber, searchText))
-        {
-	        imageSources.Add(await ReadService.GetAssetContentById(assetId));
-        }
-        
-        allTags = await ReadService.GetAllTags();
-        
+        _assetsIds = await ReadService.GetAllAssetIds();
+        _allTags = await ReadService.GetAllTags();
     }
 
-    public void NavigateToHome()
+    private async Task DeleteAsset (Guid assetId)
+    {
+	    await DeleteService.DeleteAsset(assetId);
+	    UpdateAssetList();
+    }
+
+    private void NavigateToHome()
     {
         Navigation.NavigateTo("/dam", true);
     }
@@ -68,28 +44,41 @@ public partial class Assets : ComponentBase
     {
         Navigation.NavigateTo($"/dam/assets?Page={pageNum}", true);
     }
-        
-    private bool showTagMenu = false;
-    private List<Models.Tag> allTags = new();
-    private HashSet<string> selectedTags = new(); 
 
-    public void ToggleTagMenu()
+
+    private void ToggleTagMenu()
     {
-        showTagMenu = !showTagMenu;
+        _showTagMenu = !_showTagMenu;
     }
 
-    public void OnTagFilterChanged(string tag, bool isChecked)
+    private void OnTagFilterChanged(Guid tagId, bool isChecked)
     {
-        if (isChecked)
-            selectedTags.Add(tag);
-        else
-            selectedTags.Remove(tag);
+	    if (isChecked)
+	    {
+	        _selectedTagIds.Add(tagId);
+	    }
+	    else
+	    {
+	        _selectedTagIds.Remove(tagId);
+	    }
+	    UpdateAssetList();
     }
 
-    public async void ApplyFilter()
+    private async void UpdateAssetList ()
     {
-        imageSources = await ReadService.GetAssetsByTags(selectedTags.ToList());
-        StateHasChanged();
+	    _assetsIds = await ReadService.GetAssetIds(searchText: _searchText, selectedTagIds: _selectedTagIds);
+	    StateHasChanged();
     }
-	
+
+    private void OnSearchInputChanged (ChangeEventArgs e)
+    {
+	    _searchText = e.Value?.ToString() ?? "";
+	    UpdateAssetList();
+    }
+
+    private async void UploadAsset (InputFileChangeEventArgs e)
+    {
+	    await CreateService.UploadImage(e);
+	    UpdateAssetList();
+    }
 }

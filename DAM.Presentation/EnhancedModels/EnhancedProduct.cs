@@ -4,5 +4,5 @@ namespace DAM.Presentation.EnhancedModels;
 
 public class EnhancedProduct : Product
 {
-	public string? MainAssetUrl;
+	public Guid MainAssetUUID = Guid.Empty;
 }

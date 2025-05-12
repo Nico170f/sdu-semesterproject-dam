@@ -5,9 +5,15 @@ using DAM.Presentation.Services.API;
 
 namespace DAM.Presentation.Services;
 
-public class ReadService
+public class ReadService : BaseService
 {
+
+	public ReadService(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+	{
+	}
 	
+	
+	//Not used
 	/// <summary>
 	/// Returns a list of asset IDs by searching for a specific query.
 	/// </summary>
@@ -17,13 +23,7 @@ public class ReadService
 	/// <returns>List of asset IDs matching the search query.</returns>
 	public async Task<List<string>> GetAssetIdsBySearching(int size, int pageNumber, string searchText)
 	{
-		List<string> assetIds = new List<string>();
-
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/") // Replace with your API's base URL
-		};
+		List<string> assetIds = [];
 
 		string apiUrl = $"api/v1/assets/search?size={size}&page={pageNumber}";
 
@@ -32,17 +32,17 @@ public class ReadService
 			apiUrl += $"&searchQuery={searchText}";
 		}
 		
-		assetIds = await Http.GetFromJsonAsync<List<string>>(apiUrl);
+		assetIds = await _httpClient.GetFromJsonAsync<List<string>>(apiUrl);
 
 		return assetIds;
 	}
 	
 	/// <summary>
-	/// Simply converts a assetId into a url for that asset.
+	/// Converts a assetId into a url for that asset.
 	/// </summary>
 	/// <param name="assetId"></param>
 	/// <returns>The url that points to that asset.</returns>
-	public async Task<string> GetAssetContentById(string assetId)
+	public string GetAssetContentById(Guid assetId)
 	{
 		return $"http://localhost:5115/api/v1/assets/{assetId}";
 	}
@@ -52,47 +52,20 @@ public class ReadService
 	/// </summary>
 	/// <param name="productId"></param>
 	/// <returns></returns>
-	public async Task<List<string>> GetAssetsByProduct(string productId)
+	public async Task<List<Guid>> GetAssetsByProduct(Guid productId)
 	{
-		List<string> assets = new List<string>();
-
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-
-		var response = await Http.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
-		foreach (Guid guid in response.ImageIds)
-		{
-			assets.Add(guid.ToString());
-		}
-		
-		return assets;
+		var response = await _httpClient.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
+		return response?.ImageIds ?? [];
 	}
 	
 	/// <summary>
 	/// Returns a complete list of all asset ids.
 	/// </summary>
 	/// <returns></returns>
-	public async Task<List<string>> GetAllAssetIds ()
+	public async Task<List<Guid>> GetAllAssetIds ()
 	{
-		List<string> assetIds = [];
-
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-
-		var guids = await Http.GetFromJsonAsync<List<Guid>>("api/v1/assets");
-
-		foreach (var guid in guids)
-		{
-			assetIds.Add(guid.ToString());
-		}
-
-		return assetIds;
+		List<Guid>? guids = await _httpClient.GetFromJsonAsync<List<Guid>>("api/v1/assets");
+		return guids ?? [];
 	}
 	
 	/// <summary>
@@ -101,52 +74,26 @@ public class ReadService
 	/// <returns></returns>
 	public async Task<List<Tag>> GetAllTags()
 	{
-		List<Tag> tags = [];
-
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-
-		tags = await Http.GetFromJsonAsync<List<Tag>>("api/v1/tags");
-
-		return tags;
+		List<Tag>? tags = await _httpClient.GetFromJsonAsync<List<Tag>>("api/v1/tags");
+		return tags ?? [];
 	}
 	
 	/// <summary>
 	/// Returns a list of assetIds based on a list of tagIds
 	/// </summary>
-	/// <param name="selectedTags"></param>
+	/// <param name="selectedTagsIds"></param>
 	/// <returns></returns>
-	public static async Task<List<string>> GetAssetsByTags(List<string> selectedTags)
+	public async Task<List<Guid>> GetAssetsByTags(List<Guid> selectedTagsIds)
 	{
-		List<string> imageSources = new List<string>();
+		string tagQuery = string.Join(",", selectedTagsIds);
+		string apiUrl = $"api/v1/tags/search?tagList={tagQuery}";
 
-		try
-		{
-			HttpClientHandler handler = new HttpClientHandler();
-			HttpClient Http = new HttpClient(handler)
-			{
-				BaseAddress = new Uri("http://localhost:5115/") 
-			};
+		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
 
-			string tagQuery = string.Join(",", selectedTags);
-			string apiUrl = $"api/v1/assets/byTags?tags={tagQuery}";
+		List<Guid> assetIds = [];
+		assetIds.AddRange((response ?? []).Select(asset => asset.UUID));
 
-			List<string> imageIds = await Http.GetFromJsonAsync<List<string>>(apiUrl);
-
-			foreach (string id in imageIds)
-			{
-				imageSources.Add($"http://localhost:5115/api/v1/assets/GetImageByUUID?uuid={id}");
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Error loading images by tags: {ex.Message}");
-		}
-
-		return imageSources;
+		return assetIds;
 	}
 	
 	/// <summary>
@@ -154,99 +101,78 @@ public class ReadService
 	/// </summary>
 	/// <param name="assetId"></param>
 	/// <returns></returns>
-	public async Task<List<Tag>> GetTagsByAsset (string assetId)
+	public async Task<List<Tag>> GetTagsByAsset (Guid assetId)
 	{
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-		try{
-		var response = await Http.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags");
-		return response;
-		}
-		catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Handle 404 specifically
-			Console.WriteLine("Resource not found (404)");
-			// Return empty list or default value
-			return [];
-		}
+		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags");
+		return response ?? [];
 	}
 	
-	public async Task<List<Tag>> GetTagsNotOnAsset (string assetId)
+	/// <summary>
+	/// Returns a list of tags that are not associated with the specified asset.
+	/// </summary>
+	/// <param name="assetId">The ID of the asset to check for unassigned tags.</param>
+	/// <returns>A list of tags not present on the asset, or empty list if none found.</returns>
+	public async Task<List<Tag>> GetTagsNotOnAsset (Guid assetId)
 	{
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-		
-		var response = await Http.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags/gallery");
-    
-		return response;
+		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags/gallery");
+		return response ?? [];
 	}
 	
 	/// <summary>
 	/// Returns a product name based on a product id
 	/// </summary>
-	/// <param name="productId"></param>
-	/// <returns></returns>
-	public async Task<string> GetProductName(string productId)
+	/// <param name="productGuid">The ID of the product</param>
+	/// <returns>The name of the product. If not exist, "No product found!"</returns>
+	public async Task<string> GetProductName(Guid productGuid)
 	{
-		string apiUrl = $"api/v1/products/{productId}";
-    
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-		
-		var response = await Http.GetFromJsonAsync<GetProductResponse>(apiUrl);
-    
-		return response.Name;
-		
+		var response = await _httpClient.GetFromJsonAsync<GetProductResponse>($"api/v1/products/{productGuid}");
+		return response?.Name ?? "No product found!";
 	}
 
 	public async Task<List<EnhancedProduct>> GetAllProducts()
 	{
-		List<Product> products = [];
 		List<EnhancedProduct> enhancedProducts = [];
-
-		HttpClientHandler handler = new HttpClientHandler();
-		HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-
-		products = await Http.GetFromJsonAsync<List<Product>>("api/v1/products");
+		List<Product>? products = await _httpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
 
 		foreach (Product product in products)
 		{
-			// Create a new EnhancedProduct instead of casting
-			EnhancedProduct enhancedProduct = new EnhancedProduct
+			var enhancedProduct = new EnhancedProduct
 			{
-				// Copy all properties from the Product
 				UUID = product.UUID,
 				Name = product.Name,
-				// Copy any other properties from Product that exist in EnhancedProduct
 			};
 
-			string assetId = "";
-			try
-			{
-				assetId = (await GetAssetsByProduct(product.UUID.ToString()))[0];
-			}
-			catch (Exception e)
-			{
-				assetId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-			}
-			enhancedProduct.MainAssetUrl = $"http://localhost:5115/api/v1/assets/{assetId}";
-
+			Guid assetId = (await GetAssetsByProduct(product.UUID))[0];
+			
+			enhancedProduct.MainAssetUUID = assetId;
+			
 			enhancedProducts.Add(enhancedProduct);
 		}
 
 		return enhancedProducts;
 	}
-	
+
+	public async Task<List<Guid>> GetAssetIds(string searchText = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
+	{
+		string apiUrl = "api/v1/Assets?";
+		List<string> parameters = [];
+		
+		if (!string.IsNullOrEmpty(searchText))
+		{
+			parameters.Add($"searchString={searchText}");
+		}
+		
+		if (selectedTagIds is not null && selectedTagIds.Count > 0)
+		{
+			parameters.Add($"selectedTagIds={string.Join(',', selectedTagIds)}");
+		}
+		
+		parameters.Add($"amount={amount}");
+		parameters.Add($"page={page}");
+
+		apiUrl += string.Join('&', parameters);
+
+		List<Guid>? assetIds = await _httpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
+		return assetIds ?? [];
+	}
 }

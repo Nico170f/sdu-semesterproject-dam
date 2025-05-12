@@ -8,11 +8,15 @@ public partial class Products : ComponentBase
 {
 	
 	
+	#region Injects
+	#pragma warning disable CS8618
 	[Inject] private NavigationManager Navigation { get; set; }
 	[Inject] private CreateService CreateService { get; set; }
 	[Inject] private ReadService ReadService { get; set; }
 	[Inject] private UpdateService UpdateService { get; set; }
 	[Inject] private DeleteService DeleteService { get; set; }
+	#pragma warning disable CS8618
+	#endregion
 	
 	private string searchProduct = ""; //variable that holds text in searchbar
 

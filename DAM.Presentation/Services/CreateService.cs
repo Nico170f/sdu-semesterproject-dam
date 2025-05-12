@@ -5,8 +5,12 @@ using Microsoft.AspNetCore.Components.Forms;
 
 namespace DAM.Presentation.Services;
 
-public class CreateService
+public class CreateService : BaseService
 {
+
+	public CreateService (IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+	{
+	}
 
 	/// <summary>
 	/// Allows uploading of products with both name and uuid to the database.
@@ -20,15 +24,8 @@ public class CreateService
 			Name = product.Name,
 			UUID = product.UUID
 		};
-		
-		// Make a new HttpClient
-		using HttpClientHandler handler = new HttpClientHandler();
-		using HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-		// Post to the backend via HTTP
-		var response = await Http.PostAsJsonAsync($"api/v1/products/add", payload);
+
+		var response = await _httpClient.PostAsJsonAsync($"api/v1/products/add", payload);
 		
 		if (response.IsSuccessStatusCode)
 		{
@@ -36,7 +33,7 @@ public class CreateService
 		}
 		else
 		{
-			var error = await response.Content.ReadAsStringAsync();
+			string error = await response.Content.ReadAsStringAsync();
 			Console.WriteLine($"Error: {response.StatusCode} - {error}");
 		}
 	}
@@ -67,14 +64,7 @@ public class CreateService
 			Content = dataUrl
 		};
 
-		// Make a new HttpClient
-		using HttpClientHandler handler = new HttpClientHandler();
-		using HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/") // Replace with your API's base URL
-		};
-		// Post to the backend via HTTP
-		var response = await Http.PostAsJsonAsync("api/v1/assets", payload);
+		var response = await _httpClient.PostAsJsonAsync("api/v1/assets", payload);
 
 		if (response.IsSuccessStatusCode)
 		{
@@ -98,14 +88,7 @@ public class CreateService
 			Name = tagName
 		};
 		
-		// Make a new HttpClient
-		using HttpClientHandler handler = new HttpClientHandler();
-		using HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/") // Replace with your API's base URL
-		};
-		// Post to the backend via HTTP
-		var response = await Http.PostAsJsonAsync($"api/v1/tags", payload);
+		var response = await _httpClient.PostAsJsonAsync($"api/v1/tags", payload);
 		
 		if (response.IsSuccessStatusCode)
 		{
@@ -123,7 +106,7 @@ public class CreateService
 	/// </summary>
 	/// <param name="assetId"></param>
 	/// <param name="tagId"></param>
-	public async Task AddTagToImage(string assetId, string tagId)
+	public async Task AddTagToImage(Guid assetId, Guid tagId)
 	{
 		// Make a new HttpClient
 		using HttpClientHandler handler = new HttpClientHandler();
@@ -149,22 +132,15 @@ public class CreateService
 	/// <param name="productId"></param>
 	/// <param name="assetId"></param>
 	/// <param name="priority"></param>
-	public async Task AddAssetToProduct(string productId, string assetId, string priority)
+	public async Task AddAssetToProduct(Guid productId, Guid assetId, int priority)
 	{
 		var payload = new AddProductImageRequest()
 		{
-			ImageId = assetId,
-			Priority = priority
+			ImageId = assetId.ToString(),
+			Priority = priority.ToString()
 		};
-
-		// Make a new HttpClient
-		using HttpClientHandler handler = new HttpClientHandler();
-		using HttpClient Http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-		// Post to the backend via HTTP
-		var response = await Http.PostAsJsonAsync($"api/v1/products/{productId}/assets", payload);
+		
+		var response = await _httpClient.PostAsJsonAsync($"api/v1/products/{productId}/assets", payload);
 
 		if (response.IsSuccessStatusCode) {
 			Console.WriteLine($"Asset \"{assetId}\" added to product \"{productId}\" successfully.");

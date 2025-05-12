@@ -1,9 +1,15 @@
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.JsonPatch;
+using DAM.Presentation.Models;
 
 namespace DAM.Presentation.Services;
 
-public class UpdateService
+public class UpdateService : BaseService
 {
+
+	public UpdateService (IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+	{
+	}
 
 	/// <summary>
 	/// Updates the relationship priority between a product and an asset.
@@ -11,25 +17,20 @@ public class UpdateService
 	/// <param name="productId"></param>
 	/// <param name="assetId"></param>
 	/// <param name="newPriority"></param>
-	public async Task UpdatePriority(string productId, string assetId, int newPriority)
+	public async Task UpdatePriority(Guid productId, Guid assetId, int newPriority)
 	{
-		var patchDoc = new[]
+		// Create an array of operations in the correct JSON Patch format
+		var patchOperation = new[] 
 		{
-			new
-			{
-				op = "replace",
-				path = "/priority",
-				value = newPriority
+			new 
+			{ 
+				op = "replace", 
+				path = "/priority", 
+				value = newPriority 
 			}
 		};
 
-		using HttpClientHandler handler = new HttpClientHandler();
-		using HttpClient http = new HttpClient(handler)
-		{
-			BaseAddress = new Uri("http://localhost:5115/")
-		};
-
-		var response = await http.PatchAsJsonAsync($"api/v1/assets/{productId}/assets/{assetId}", patchDoc);
+		var response = await _httpClient.PatchAsJsonAsync($"api/v1/products/{productId}/assets/{assetId}", patchOperation);
 
 		if (response.IsSuccessStatusCode)
 		{

@@ -9,7 +9,7 @@ namespace DAM.Backend.Services.ControllerServices;
 public interface IAssetService
 {
     Task<IActionResult> CreateImage(CreateImageRequest body);
-    Task<IActionResult> GetAssetsPage(int? size, int? offset);
+    Task<IActionResult> GetAssets(string? searchString, string? selectedTagIds, int? amount, int? page);
     Task<IActionResult> GetImageById(string assetId, int? height, int? width);
     Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest body);
     Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Image> patchDoc);

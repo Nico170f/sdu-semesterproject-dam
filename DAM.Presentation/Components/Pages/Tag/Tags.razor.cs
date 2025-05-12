@@ -6,11 +6,15 @@ namespace DAM.Presentation.Components.Pages.Tag;
 public partial class Tags : ComponentBase
 {
 	
+	#region Injects
+	#pragma warning disable CS8618
 	[Inject] private NavigationManager Navigation { get; set; }
 	[Inject] private CreateService CreateService { get; set; }
 	[Inject] private ReadService ReadService { get; set; }
 	[Inject] private UpdateService UpdateService { get; set; }
 	[Inject] private DeleteService DeleteService { get; set; }
+	#pragma warning disable CS8618
+	#endregion
 	
 	private bool DEBUG = true;
 
@@ -33,7 +37,7 @@ public partial class Tags : ComponentBase
 
 	public async Task DeleteTag (Guid TagId)
 	{
-		await DeleteService.DeleteTag(TagId.ToString());
+		await DeleteService.DeleteTag(TagId);
 		tags = await ReadService.GetAllTags();
 	}
 
@@ -71,7 +75,7 @@ public partial class Tags : ComponentBase
 
 	public void NavigateToHome()
 	{
-		Navigation.NavigateTo("/", true);
+		Navigation.NavigateTo("/dam", true);
 	}
 	
 }
