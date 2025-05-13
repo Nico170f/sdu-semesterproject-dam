@@ -22,10 +22,18 @@ public class ProductService : IProductService
         _configuration = configuration;
     }
 
-    public async Task<IActionResult> GetAllProducts ()
+    public async Task<IActionResult> GetAllProducts(string? searchString = null)
     {
-	    var response = await _database.Products.ToListAsync();
-	    return new OkObjectResult(response);
+        IQueryable<Product> query = _database.Products;
+    
+        // Apply search filter if provided
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            query = query.Where(p => p.Name.Contains(searchString));
+        }
+        
+        var response = await query.ToListAsync();
+        return new OkObjectResult(response);    
     }
 
     public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest body)
