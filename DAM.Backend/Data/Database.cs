@@ -9,11 +9,11 @@ namespace DAM.Backend.Data;
 
 public sealed class Database : DbContext
 {
-    public DbSet<Image> Images { get; set; }
+    public DbSet<Asset> Asset { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<Tag> Tags { get; set; }
-    public DbSet<ProductImage> ProductImages { get; set; }	
-	public DbSet<ImageTags> ImageTags { get; set; }
+    public DbSet<ProductAsset> ProductAssets { get; set; }	
+	public DbSet<AssetTags> AssetTags { get; set; }
 	public Database(DbContextOptions<Database> options) : base(options)
 	{
 		this.Database.EnsureCreated();
@@ -45,15 +45,12 @@ public sealed class Database : DbContext
         {
             options.UseSqlite($"Data Source=" + GetDatabasePath());
         }
-
-      
-        
     }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Configure Image model
-        modelBuilder.Entity<Image>()
+        // Configure Asset model
+        modelBuilder.Entity<Asset>()
             .Property(i => i.UUID)
             .HasConversion(
                 v => v.ToString(),
@@ -79,31 +76,31 @@ public sealed class Database : DbContext
         
         
         
-        // Configure ImageTags model
-        modelBuilder.Entity<ImageTags>()
-            .Property(i => i.ImageUUID)
+        // Configure AssetTags model
+        modelBuilder.Entity<AssetTags>()
+            .Property(i => i.AssetUUID)
             .HasConversion(
                 v => v.ToString(),
                 v => Guid.Parse(v)
             );
         
-        modelBuilder.Entity<ImageTags>()
+        modelBuilder.Entity<AssetTags>()
             .Property(i => i.TagUUID)
             .HasConversion(
                 v => v.ToString(),
                 v => Guid.Parse(v)
             );
         
-        modelBuilder.Entity<ImageTags>()
-            .HasKey(it => new { it.ImageUUID, it.TagUUID });
+        modelBuilder.Entity<AssetTags>()
+            .HasKey(it => new { AssetUUID = it.AssetUUID, it.TagUUID });
 
-        modelBuilder.Entity<ImageTags>()
-            .HasOne<Image>()
+        modelBuilder.Entity<AssetTags>()
+            .HasOne<Asset>()
             .WithMany()
-            .HasForeignKey(it => it.ImageUUID)
+            .HasForeignKey(it => it.AssetUUID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<ImageTags>()
+        modelBuilder.Entity<AssetTags>()
             .HasOne<Tag>()
             .WithMany()
             .HasForeignKey(it => it.TagUUID)
@@ -114,34 +111,34 @@ public sealed class Database : DbContext
         
         
         
-        // Configure ImageTags ProductImages
-        modelBuilder.Entity<ProductImage>()
+        // Configure AssetTags ProductAssets
+        modelBuilder.Entity<ProductAsset>()
             .Property(i => i.ProductUUID)
             .HasConversion(
                 v => v.ToString(),
                 v => Guid.Parse(v)
             );
         
-        modelBuilder.Entity<ProductImage>()
-            .Property(i => i.ImageUUID)
+        modelBuilder.Entity<ProductAsset>()
+            .Property(i => i.AssetUUID)
             .HasConversion(
                 v => v.ToString(),
                 v => Guid.Parse(v)
             );
         
-        modelBuilder.Entity<ProductImage>()
-            .HasKey(pi => new { pi.ProductUUID, pi.ImageUUID });
+        modelBuilder.Entity<ProductAsset>()
+            .HasKey(pi => new { pi.ProductUUID, AssetUUID = pi.AssetUUID });
         
-        modelBuilder.Entity<ProductImage>()
+        modelBuilder.Entity<ProductAsset>()
             .HasOne<Product>()
             .WithMany()
             .HasForeignKey(pi => pi.ProductUUID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<ProductImage>()
-            .HasOne<Image>()
+        modelBuilder.Entity<ProductAsset>()
+            .HasOne<Asset>()
             .WithMany()
-            .HasForeignKey(pi => pi.ImageUUID)
+            .HasForeignKey(pi => pi.AssetUUID)
             .OnDelete(DeleteBehavior.Cascade);
         
         

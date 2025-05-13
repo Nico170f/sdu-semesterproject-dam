@@ -60,7 +60,7 @@ public class TagsController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         GetAssetsTagsRequest query = new GetAssetsTagsRequest
         {
-            tagList = tagList.Split(",").Select(Guid.Parse).ToList()
+            TagList = tagList.Split(",").Select(Guid.Parse).ToList()
         };
         
         return await _tagService.GetAssetsTags(query);

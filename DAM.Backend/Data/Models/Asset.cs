@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAM.Backend.Data.Models;
 
-public class Image
+public class Asset
 {
     [Key] public Guid UUID { get; set; }
     public string Content { get; set; } 

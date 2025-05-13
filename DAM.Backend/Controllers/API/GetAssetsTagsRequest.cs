@@ -5,5 +5,5 @@ namespace DAM.Backend.Controllers.API;
 
 public class GetAssetsTagsRequest
 {
-    [Required] public List<Guid> tagList { get; set; }
+    [Required] public List<Guid> TagList { get; set; }
 }

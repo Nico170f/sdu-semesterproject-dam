@@ -69,58 +69,31 @@ public class TagService : ITagService
     
     public async Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest query)
     {
-        if (query.tagList == null || !query.tagList.Any())
+        if (!query.TagList.Any())
         {
             return new BadRequestObjectResult("Tag list cannot be null or empty");
         }
 
-        var imagesWithTags = await _database.ImageTags
-            .Where(it => query.tagList.Contains(it.TagUUID))
-            .GroupBy(it => it.ImageUUID)
-            .Where(group => group.Select(it => it.TagUUID).Distinct().Count() == query.tagList.Count)
+        var assetsWithTags = await _database.AssetTags
+            .Where(it => query.TagList.Contains(it.TagUUID))
+            .GroupBy(it => it.AssetUUID)
+            .Where(group => group.Select(it => it.TagUUID).Distinct().Count() == query.TagList.Count)
             .Select(group => group.Key)
             .ToListAsync();
 
-        var assets = await _database.Images
-            .Where(image => imagesWithTags.Contains(image.UUID))
-            .Select(image => new Image
+        var assets = await _database.Asset
+            .Where(asset => assetsWithTags.Contains(asset.UUID))
+            .Select(asset => new Asset
             {
-                UUID = image.UUID,
-                Content = image.Content,
-                Width = image.Width,
-                Height = image.Height,
-                CreatedAt = image.CreatedAt,
-                UpdatedAt = image.UpdatedAt
+                UUID = asset.UUID,
+                Content = asset.Content,
+                Width = asset.Width,
+                Height = asset.Height,
+                CreatedAt = asset.CreatedAt,
+                UpdatedAt = asset.UpdatedAt
             })
             .ToListAsync();
 
         return new OkObjectResult(assets);
     }
-    
-    /*
-    
-    */
-
-    
-    
-    /*
-    public async Task<IActionResult> GetTagsNotOnImage(string imageUUID)
-    {
-        Guid ImageUUID = HelperService.ParseStringGuid(imageUUID).Value;
-        
-        List<Tag> tagsNotOnImage = new List<Tag>();
-     
-        tagsNotOnImage = await _database.Tags
-            .Where(tag => !_database.ImageTags
-                .Any(it => it.ImageUUID == ImageUUID && it.TagUUID == tag.UUID))
-            .ToListAsync();
-    
-        return new OkObjectResult(tagsNotOnImage);
-    }
-    */
-
-    /*
-
-    
-    */
 }

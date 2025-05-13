@@ -103,7 +103,7 @@ public class ProductsController : ApiController
      * Associate an existing asset with a product
      */
     [HttpPost("{productId}/assets")]
-    public async Task<IActionResult> AssignProductAsset(string productId, [FromBody] AddProductImageRequest body)
+    public async Task<IActionResult> AssignProductAsset(string productId, [FromBody] AddProductAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.AssignProductAsset(productId, body);
@@ -126,19 +126,17 @@ public class ProductsController : ApiController
      * Update relationship metadata (like priority) between product and asset.
      */
     [HttpPatch("{productId}/assets/{assetId}")]
-    public async Task<IActionResult> PatchProductAsset(string productId, string assetId, [FromBody] JsonPatchDocument<ProductImage> patchDoc)
+    public async Task<IActionResult> PatchProductAsset(string productId, string assetId, [FromBody] JsonPatchDocument<ProductAsset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.PatchProductAsset(productId, assetId, patchDoc);
     }
     
     
-    /*
+     /*
      * GET /products/{productId}/assets/gallery
-     * Gets all images that are not associated with a specific product.
-     */
-
-    
+     * Gets all assets that are not associated with a specific product.
+    */
     [HttpGet("{productId}/assets/gallery")]
     public async Task<IActionResult> GetProductGallery(string productId)
     {
