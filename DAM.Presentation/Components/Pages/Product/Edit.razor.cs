@@ -41,15 +41,8 @@ public partial class Edit : ComponentBase
 		        UUID = assetId
 	        });
         }
-
-        List<Guid> galleryImageIds = await ReadService.GetAllAssetIds();
-        foreach (Guid galleryImageId in galleryImageIds)
-        {
-	        _gallery.Add(new Models.Asset()
-	        {
-		        UUID = galleryImageId
-	        });
-        }
+        
+        _gallery = await ReadService.GetAssetsNotOnProduct(_productId);
     }
     
     private async Task SearchButton()

@@ -82,4 +82,9 @@ public partial class Products : ComponentBase
     {
 	    searchProduct = e.Value?.ToString() ?? string.Empty;
     }
+
+    private async Task SyncWithPim ()
+    {
+	    await ReadService.SyncWithPim();
+    }
 }

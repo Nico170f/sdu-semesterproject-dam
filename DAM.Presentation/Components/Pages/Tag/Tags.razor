@@ -12,23 +12,27 @@
         margin-bottom: 10px;
     }
 
+    .search-controls {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .input-field {
+        margin: 20px;
+    }
+
+
     .search-container {
         margin-bottom: 20px;
     }
 
-    {
-        width: 80%
-    ;
-        max-width: 400px
-    ;
-        padding: 10px
-    ;
-        font-size: 16px
-    ;
-        border: 1px solid #ccc
-    ;
-        border-radius: 5px
-    ;
+    .search-input{
+        width: 80%;
+        max-width: 400px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
     }
 
     .gallery {
@@ -60,6 +64,13 @@
         margin-top: 10px;
         max-width: 300px;
     }
+    .tag-background {
+        background-color: #f9f9f9;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
+        font-weight: bold;
+    }
     
 </style>
 
@@ -70,8 +81,8 @@
     </div>
     <div>
         <h1>Tag Gallery</h1>
-        <InputText @bind-Value="searchText" placeholder="Search for assets"/>
-        <button @onclick="SearchButton">Search</button>
+        <InputText class="search-controls" @bind-Value="searchText" placeholder="Search for tags"/>
+        <button class="input-field" @onclick="SearchButton">Search</button>
         
         <InputText @bind-Value="addTagText" placeholder="Give your tag a name"></InputText>
         <button @onclick="() => AddTag(addTagText)">Add</button>
@@ -81,8 +92,8 @@
         @foreach (Tag tag in tags)
         {
             <div class="image-container">
-                <p>@tag.Name</p>
-                <button @onclick="() => DeleteTag(tag.UUID)">X</button>
+                <p class="tag-background">@tag.Name</p>
+                <button @onclick="() => DeleteTag(tag.UUID)">🗑️</button>
             </div>
         }
     </div>

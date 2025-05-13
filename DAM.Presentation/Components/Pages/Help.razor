@@ -1,5 +1,7 @@
 @page "/dam/help"
-@inject NavigationManager Navigation
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
 
 <style>
     .help-container {
@@ -31,11 +33,13 @@
     }
 </style>
 
-
+<div style="text-align: left">
+    <button @onclick="@(_ => NavigationManager.NavigateTo("/dam", true))">Home</button>
+</div>
 <div class="help-container">
     <h3>Help Page</h3>
     <p>Welcome to the help page. Here you can look up information on how to operate the DAM system.</p>
-
+    
     <h4>Pages Overview</h4>
     <ul>
         <li>

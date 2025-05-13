@@ -134,13 +134,23 @@ public class ProductsController : ApiController
     
     
     /*
-     * GET /products/{productId}/gallery
+     * GET /products/{productId}/assets/gallery
      * Gets all images that are not associated with a specific product.
      */
-    [HttpGet("{productId}/gallery")]
+
+    
+    [HttpGet("{productId}/assets/gallery")]
     public async Task<IActionResult> GetProductGallery(string productId)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.GetProductGallery(productId);
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetProductGallery(productId);
+    }
+
+
+    [HttpGet("syncWithPim")]
+    public async Task<IActionResult> SynchronizeWithPim ()
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetProductsFromPIM();
     }
 }

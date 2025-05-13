@@ -12,31 +12,6 @@ public class ReadService : BaseService
 	{
 	}
 	
-	
-	//Not used
-	/// <summary>
-	/// Returns a list of asset IDs by searching for a specific query.
-	/// </summary>
-	/// <param name="size">Number of results per page.</param>
-	/// <param name="pageNumber">Page number to retrieve.</param>
-	/// <param name="searchText">Search query text.</param>
-	/// <returns>List of asset IDs matching the search query.</returns>
-	public async Task<List<string>> GetAssetIdsBySearching(int size, int pageNumber, string searchText)
-	{
-		List<string> assetIds = [];
-
-		string apiUrl = $"api/v1/assets/search?size={size}&page={pageNumber}";
-
-		if (!string.IsNullOrEmpty(searchText))
-		{
-			apiUrl += $"&searchQuery={searchText}";
-		}
-		
-		assetIds = await _httpClient.GetFromJsonAsync<List<string>>(apiUrl);
-
-		return assetIds;
-	}
-	
 	/// <summary>
 	/// Converts a assetId into a url for that asset.
 	/// </summary>
@@ -119,6 +94,17 @@ public class ReadService : BaseService
 	}
 	
 	/// <summary>
+	/// Returns a list of assets that are not associated with the specified product.
+	/// </summary>
+	/// <param name="productId">The ID of the product to check for unassigned assets.</param>
+	/// <returns>A list of assets not present on the product, or an empty list if none found.</returns>
+	public async Task<List<Asset>> GetAssetsNotOnProduct(Guid productId)
+	{
+		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>($"api/v1/products/{productId}/assets/gallery");
+		return response ?? [];
+	}
+	
+	/// <summary>
 	/// Returns a product name based on a product id
 	/// </summary>
 	/// <param name="productGuid">The ID of the product</param>
@@ -132,7 +118,7 @@ public class ReadService : BaseService
 	public async Task<List<EnhancedProduct>> GetAllProducts()
 	{
 		List<EnhancedProduct> enhancedProducts = [];
-		List<Product>? products = await _httpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
+		List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
 
 		foreach (Product product in products)
 		{
@@ -178,5 +164,11 @@ public class ReadService : BaseService
 
 		List<Guid>? assetIds = await _httpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
 		return assetIds ?? [];
+	}
+	
+	public async Task SyncWithPim ()
+	{
+		var response = await _httpClient.GetAsync("api/v1/Products/syncWithPim");
+		Console.WriteLine(response.Content);
 	}
 }
