@@ -103,13 +103,13 @@ public class AssetsController : ApiController
     
     /*
      * GET assets/{assetId}/tags/gallery
-     * Gets all tags that are not already associated with an asset
+     * Gets all tags that are not already associated with an asset with optional searching for name/uuid
      */
     [HttpGet("{assetId}/tags/gallery")]
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId)
+    public async Task<IActionResult> GetAssetTagsGallery(string assetId, [FromQuery] string? searchString = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetTagsGallery(assetId);
+        return await _assetService.GetAssetTagsGallery(assetId, searchString);
     }
     
     

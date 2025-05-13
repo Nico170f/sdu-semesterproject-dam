@@ -81,15 +81,21 @@ public class ReadService : BaseService
 		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags");
 		return response ?? [];
 	}
-	
+
 	/// <summary>
 	/// Returns a list of tags that are not associated with the specified asset.
 	/// </summary>
 	/// <param name="assetId">The ID of the asset to check for unassigned tags.</param>
+	/// <param name="searchString"></param>
 	/// <returns>A list of tags not present on the asset, or empty list if none found.</returns>
-	public async Task<List<Tag>> GetTagsNotOnAsset (Guid assetId)
+	public async Task<List<Tag>> GetTagsNotOnAsset (Guid assetId, string searchString = "")
 	{
-		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags/gallery");
+		string apiurl = $"api/v1/assets/{assetId}/tags/gallery";
+		if (!string.IsNullOrEmpty(searchString))
+		{
+			apiurl += $"?searchString={searchString}";
+		}
+		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiurl);
 		return response ?? [];
 	}
 	

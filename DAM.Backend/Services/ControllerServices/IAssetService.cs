@@ -15,7 +15,7 @@ public interface IAssetService
     Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Asset> patchDoc);
     Task<IActionResult> DeleteAsset(string assetId);
     Task<IActionResult> GetAssetIdPileFromSearch(int size, int offset, string? searchQuery);
-    Task<IActionResult> GetAssetTagsGallery(string assetId);
+    Task<IActionResult> GetAssetTagsGallery(string assetId, string? searchString);
     Task<IActionResult> GetAssetTags(string assetId);
     Task<IActionResult> AddAssetTag(string assetId, string tagId);
     Task<IActionResult> RemoveAssetTag(string assetId, string tagId);

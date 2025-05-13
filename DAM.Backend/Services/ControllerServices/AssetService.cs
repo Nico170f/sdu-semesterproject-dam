@@ -252,19 +252,22 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId)
+    public async Task<IActionResult> GetAssetTagsGallery(string assetId, string? searchString)
     {
-        //Hvad sker der lige her? Mathias....
-        Guid assetIds = HelperService.ParseStringGuid(assetId).Value;
-
-        List<Tag> tagsNotOnAsset = new List<Tag>();
-
-        tagsNotOnAsset = await _database.Tags
-            .Where(tag => !_database.AssetTags
-                .Any(it => it.AssetUUID == assetIds && it.TagUUID == tag.UUID))
-            .ToListAsync();
-
-        return new OkObjectResult(tagsNotOnAsset);
+	    IQueryable<Tag> query = _database.Tags
+	        .Where(tag => !_database.AssetTags
+	            .Any(it => it.AssetUUID.ToString() == assetId && it.TagUUID == tag.UUID));
+	    
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+	        query = query.Where(tag => tag.Name.Contains(searchString) || tag.UUID.ToString().Contains(searchString));
+	    }
+	    
+	    var tagsNotOnAsset = await query
+	        .OrderBy(tag => tag.Name)
+	        .ToListAsync();
+	    
+	    return new OkObjectResult(tagsNotOnAsset);
     }
     
 

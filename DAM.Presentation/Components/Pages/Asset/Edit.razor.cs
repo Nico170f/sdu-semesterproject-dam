@@ -19,8 +19,8 @@ public partial class Edit : ComponentBase
 	private Guid _assetId = Guid.Empty;
     private string _searchText = "";
     
-    private List<Models.Tag> _imageTags = [];
-    private List<Models.Tag> _list = [];
+    private List<Models.Tag> _assetTags = [];
+    private List<Models.Tag> _assetGallery = [];
         
     protected override async Task OnInitializedAsync ()
     {
@@ -30,74 +30,72 @@ public partial class Edit : ComponentBase
         if (queryParams.TryGetValue("assetId", out var id))
 	        _assetId = new Guid(id);
 
-        _imageTags = await ReadService.GetTagsByAsset(_assetId);
+        _assetTags = await ReadService.GetTagsByAsset(_assetId);
 
-        _list = await ReadService.GetTagsNotOnAsset(_assetId);
+        _assetGallery = await ReadService.GetTagsNotOnAsset(_assetId);
 
     }
-    
-    private async Task SearchButton()
+
+    private void OnSearchInputChanged (ChangeEventArgs e)
     {
-	    /*
-	    foreach (Models.Tag tag in _list)
-	    {
-		    tag.IsShown = true;
-		    if (!tag.Name.Contains(_searchText))
-		    {
-			    tag.IsShown = false;
-		    }
-	    }
-	    */
+	    _searchText = e.Value?.ToString() ?? "";
+	    UpdateTagList();
+    }
+
+    private async void UpdateTagList ()
+    {
+	    _assetGallery = await ReadService.GetTagsNotOnAsset(_assetId, _searchText);
+	    StateHasChanged();
     }
     
     private async Task ImageTagsRemove((int oldIndex, int newIndex) indices)
     {
         // get the item at the old index in list 1
-        var item = _imageTags[indices.oldIndex];
+        var item = _assetTags[indices.oldIndex];
 
         // add it to the new index in list 2
-        _list.Insert(indices.newIndex, item);
+        _assetGallery.Insert(indices.newIndex, item);
 
-        await DeleteService.RemoveTagFromAsset(_assetId, _imageTags[indices.oldIndex].UUID);
+        await DeleteService.RemoveTagFromAsset(_assetId, _assetTags[indices.oldIndex].UUID);
         
         // remove the item from the old index in list 1
-        _imageTags.Remove(_imageTags[indices.oldIndex]);
+        _assetTags.Remove(_assetTags[indices.oldIndex]);
     }
 
     private async Task ListRemove((int oldIndex, int newIndex) indices)
     {
         // get the item at the old index in list 2
-        var tag = _list[indices.oldIndex];
+        var tag = _assetGallery[indices.oldIndex];
 
         // add it to the new index in list 1
-        _imageTags.Insert(indices.newIndex, tag);
+        _assetTags.Insert(indices.newIndex, tag);
         
         await CreateService.AddTagToImage(_assetId, tag.UUID);
        // remove the item from the old index in list 2
-       _list.Remove(_list[indices.oldIndex]);
+       _assetGallery.Remove(_assetGallery[indices.oldIndex]);
     }
     
     private async Task ImageTagsReorder((int oldIndex, int newIndex) indices)
     {
         // Get the item being moved
-        var item = _imageTags[indices.oldIndex];
+        var item = _assetTags[indices.oldIndex];
     
         // Remove from old position
-        _imageTags.RemoveAt(indices.oldIndex);
+        _assetTags.RemoveAt(indices.oldIndex);
     
         // Insert at new position
-        _imageTags.Insert(indices.newIndex, item);
+        _assetTags.Insert(indices.newIndex, item);
     }
 
     private void ListReorder((int oldIndex, int newIndex) indices)
     {
         // Get the item being moved
-        var item = _list[indices.oldIndex];
+        var item = _assetGallery[indices.oldIndex];
     
         // Remove from old position
-        _list.RemoveAt(indices.oldIndex);
+        _assetGallery.RemoveAt(indices.oldIndex);
         
         // Insert at new position
-        _list.Insert(indices.newIndex, item);
+        _assetGallery.Insert(indices.newIndex, item);
     }
 }

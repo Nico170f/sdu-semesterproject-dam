@@ -45,7 +45,7 @@
 <section>
     <h2>Image tags</h2>
     <div class="gallery">
-        <SortableList Group="sharedLists" Items="_imageTags" Context="tag" 
+        <SortableList Group="sharedLists" Items="_assetTags" Context="tag" 
                       OnRemove="ImageTagsRemove" OnUpdate="ImageTagsReorder">
             <SortableItemTemplate>
                 <div class="card has-border has-background-white img_in_gallery">
@@ -62,12 +62,11 @@
         <h2>Tag list</h2>
 
         <div>
-            <InputText @bind-Value="_searchText" placeholder="Search for tags by name"/>
-            <button @onclick="SearchButton">Search</button>
+            <input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for tags by name or id"/>
         </div>
 
         <div class="gallery">
-            <SortableList Group="sharedLists" Items="_list.FindAll(Match)" Context="tag" 
+            <SortableList Group="sharedLists" Items="_assetGallery" Context="tag" 
                           OnRemove="ListRemove" OnUpdate="ListReorder">
                 <SortableItemTemplate>
                     <div class="card has-border has-background-white img_in_gallery">
@@ -76,13 +75,6 @@
                     </div>
                 </SortableItemTemplate>
             </SortableList>
-            @{
-                bool Match(Tag tag)
-                {
-                    return string.IsNullOrEmpty(_searchText) || tag.Name.Contains(_searchText);
-                }
-            }
-
         </div>
     </div>
 </section>
