@@ -1,7 +1,7 @@
 namespace DAM.Backend.Controllers.API;
 
-public class AddProductImageRequest
+public class AddProductAssetRequest
 {
-    public string ImageId { get; set; }
+    public string AssetId { get; set; }
     public string Priority { get; set; }
 }

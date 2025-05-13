@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DAM.Backend.Controllers.API;
 
-public class PatchImageRequest : CreateImageRequest
+public class CreateAssetRequest
 {
-
+    [Required] public string Content { get; set; }
 }

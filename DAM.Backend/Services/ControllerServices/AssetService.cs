@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
-using Image = DAM.Backend.Data.Models.Image;
 using System.Text.Json;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -24,14 +23,14 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> CreateImage(CreateImageRequest body)
+    public async Task<IActionResult> CreateAsset(CreateAssetRequest body)
     {
         if (body.Content.Length < 30)
         {
-            return new BadRequestObjectResult("Image content is too short");
+            return new BadRequestObjectResult("Asset content is too short");
         }
 
-        Image image = new Image
+        Asset asset = new Asset
         {
             UUID = Guid.NewGuid(),
             Content = body.Content,
@@ -39,19 +38,19 @@ public class AssetService : IAssetService
             UpdatedAt = DateTime.Now
         };
 
-        (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
-        image.Width = dimensions.Width;
-        image.Height = dimensions.Height;
+        (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
+        asset.Width = dimensions.Width;
+        asset.Height = dimensions.Height;
 
-        _database.Images.Add(image);
+        _database.Asset.Add(asset);
 
-        int imageCreated = await _database.SaveChangesAsync();
-        if (imageCreated <= 0)
+        int assetCreated = await _database.SaveChangesAsync();
+        if (assetCreated <= 0)
         {
-            return new BadRequestObjectResult("Failed to create image");
+            return new BadRequestObjectResult("Failed to create asset");
         }
 
-        CreateImageResponse response = new CreateImageResponse(image);
+        CreateAssetResponse response = new CreateAssetResponse(asset);
         return new OkObjectResult(response);
     }
 
@@ -62,8 +61,8 @@ public class AssetService : IAssetService
 	    int itemsPerPage = amount ?? 20;
 	    int currentPage = page ?? 1;
     
-	    // Start with all images query
-	    IQueryable<Image> query = _database.Images;
+	    // Start with all assets query
+	    IQueryable<Asset> query = _database.Asset;
     
 	    // Filter by UUID if searchString is provided
 	    if (!string.IsNullOrEmpty(searchString))
@@ -83,10 +82,10 @@ public class AssetService : IAssetService
         
 		    if (tagUUIDs.Any())
 		    {
-			    // Get images that have ANY of the specified tags
+			    // Get assets that have ANY of the specified tags
 			    query = query.Where(img => 
-				    _database.ImageTags
-					    .Any(it => it.ImageUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
+				    _database.AssetTags
+					    .Any(it => it.AssetUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
 		    }
 	    }
     
@@ -102,208 +101,208 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetImageById(string assetId, int? height, int? width)
+    public async Task<IActionResult> GetAssetById(string assetId, int? height, int? width)
     {
-        Image? finalImage = null;
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        if (imageUUID != null)
+        Asset? finalAsset = null;
+        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
+        if (assetUuid != null)
         {
-            finalImage = await _database.Images
-                .FirstOrDefaultAsync(i => i.UUID == imageUUID);
+            finalAsset = await _database.Asset
+                .FirstOrDefaultAsync(i => i.UUID == assetUuid);
         }
 
-        if (finalImage == null)
+        if (finalAsset == null)
         {
-            finalImage = GetDefaultImage();
+            finalAsset = GetDefaultAsset();
         }
 
         if (height.HasValue || width.HasValue)
         {
-            finalImage.Content = HelperService.ResizeBase64WithPadding(finalImage, height, width);
+            finalAsset.Content = HelperService.ResizeBase64WithPadding(finalAsset, height, width);
         }
 
-        FileContentResult fileContentResult = HelperService.ConvertImageToFileContent(finalImage);
+        FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(finalAsset);
         return fileContentResult;
     }
 
 
 
-    public async Task<IActionResult> UpdateAsset(string imageId, UpdateAssetRequest requestParams)
+    public async Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest requestParams)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(imageId);
-        if (imageUUID == null)
+        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
+        if (assetUuid == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        Image? image = await _database.Images
-            .FirstOrDefaultAsync(i => i.UUID == imageUUID);
-        if (image == null)
+        Asset? asset = await _database.Asset
+            .FirstOrDefaultAsync(i => i.UUID == assetUuid);
+        if (asset == null)
         {
-            return new NotFoundObjectResult("No image found by that UUID");
+            return new NotFoundObjectResult("No asset found by that UUID");
         }
 
-        image.Content = requestParams.Content;
-        image.UpdatedAt = DateTime.Now;
+        asset.Content = requestParams.Content;
+        asset.UpdatedAt = DateTime.Now;
 
-        (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
-        image.Width = dimensions.Width;
-        image.Height = dimensions.Height;
+        (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
+        asset.Width = dimensions.Width;
+        asset.Height = dimensions.Height;
 
-        bool imageUpdated = await _database.Update(image);
-        if (!imageUpdated)
+        bool assetUpdated = await _database.Update(asset);
+        if (!assetUpdated)
         {
-            return new BadRequestObjectResult("Failed to update image");
+            return new BadRequestObjectResult("Failed to update asset");
         }
 
-        return new OkObjectResult("Image updated successfully");
+        return new OkObjectResult("Asset updated successfully");
     }
 
 
 
-    public async Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Image> patchDoc)
+    public async Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Asset> patchDoc)
     {
         if (patchDoc == null)
         {
             return new BadRequestObjectResult("Patch document cannot be null");
         }
 
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        if (imageUUID == null)
+        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
+        if (assetUuid == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        Image? image = await _database.Images
-            .FirstOrDefaultAsync(i => i.UUID == imageUUID);
+        Asset? asset = await _database.Asset
+            .FirstOrDefaultAsync(i => i.UUID == assetUuid);
 
-        if (image == null)
+        if (asset == null)
         {
-            return new NotFoundObjectResult("No image found by that UUID");
+            return new NotFoundObjectResult("No asset found by that UUID");
         }
 
-        patchDoc.ApplyTo(image);
-        image.UpdatedAt = DateTime.Now;
+        patchDoc.ApplyTo(asset);
+        asset.UpdatedAt = DateTime.Now;
 
-        (int Width, int Height) dimensions = HelperService.GetImageDimensions(image.Content);
-        image.Width = dimensions.Width;
-        image.Height = dimensions.Height;
+        (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
+        asset.Width = dimensions.Width;
+        asset.Height = dimensions.Height;
 
         bool updateResult = await _database.SaveChangesAsync() > 0;
         if (!updateResult)
         {
-            return new BadRequestObjectResult("Failed to update image");
+            return new BadRequestObjectResult("Failed to update asset");
         }
 
-        return new OkObjectResult("Image updated successfully");
+        return new OkObjectResult("Asset updated successfully");
     }
 
 
     public async Task<IActionResult> DeleteAsset(string assetId)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        if (imageUUID == null)
+        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
+        if (assetUuid == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        var image = await _database.Images.FindAsync(imageUUID);
-        if (image == null)
+        var asset = await _database.Asset.FindAsync(assetUuid);
+        if (asset == null)
         {
-            return new NotFoundObjectResult("No image found by that UUID");
+            return new NotFoundObjectResult("No asset found by that UUID");
         }
 
-        var deleted = await _database.Delete(image);
+        var deleted = await _database.Delete(asset);
         if (!deleted)
         {
-            return new BadRequestObjectResult("Failed to delete image");
+            return new BadRequestObjectResult("Failed to delete asset");
         }
 
-        var productImages = await _database.ProductImages
-            .Where(pi => pi.ImageUUID == imageUUID)
+        var productAssets = await _database.ProductAssets
+            .Where(pi => pi.AssetUUID == assetUuid)
             .ToListAsync();
-        if (productImages.Any())
+        if (productAssets.Any())
         {
-            foreach (var productImage in productImages)
+            foreach (var productAsset in productAssets)
             {
-                await _database.Delete(productImage);
+                await _database.Delete(productAsset);
             }
         }
 
-        return new OkObjectResult("Image deleted successfully");
+        return new OkObjectResult("Asset deleted successfully");
     }
 
 
-    public async Task<IActionResult> GetImageIdPileFromSearch(int size, int offset, string? searchquery)
+    public async Task<IActionResult> GetAssetIdPileFromSearch(int size, int offset, string? searchquery)
     {
 	    searchquery = searchquery ?? "";
-        List<Guid> imageIds = await _database.ProductImages
+        List<Guid> assetIds = await _database.ProductAssets
             .Join(_database.Products,
                 pi => pi.ProductUUID,
                 p => p.UUID,
-                (pi, p) => new { ProductImage = pi, Product = p })
+                (pi, p) => new { ProductAsset = pi, Product = p })
             .Where(joined => joined.Product.Name.Contains(searchquery))
             .OrderBy(joined => joined.Product.Name)
             .Skip(offset)
             .Take(size)
-            .Select(joined => joined.ProductImage.ImageUUID)
+            .Select(joined => joined.ProductAsset.AssetUUID)
             .ToListAsync();
 
-        return new OkObjectResult(imageIds);
+        return new OkObjectResult(assetIds);
     }
 
 
     public async Task<IActionResult> GetAssetTagsGallery(string assetId)
     {
         //Hvad sker der lige her? Mathias....
-        Guid ImageUUID = HelperService.ParseStringGuid(assetId).Value;
+        Guid assetIds = HelperService.ParseStringGuid(assetId).Value;
 
-        List<Tag> tagsNotOnImage = new List<Tag>();
+        List<Tag> tagsNotOnAsset = new List<Tag>();
 
-        tagsNotOnImage = await _database.Tags
-            .Where(tag => !_database.ImageTags
-                .Any(it => it.ImageUUID == ImageUUID && it.TagUUID == tag.UUID))
+        tagsNotOnAsset = await _database.Tags
+            .Where(tag => !_database.AssetTags
+                .Any(it => it.AssetUUID == assetIds && it.TagUUID == tag.UUID))
             .ToListAsync();
 
-        return new OkObjectResult(tagsNotOnImage);
+        return new OkObjectResult(tagsNotOnAsset);
     }
     
 
     public async Task<IActionResult> GetAssetTags(string assetId)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-        if (imageUUID == null)
+        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
+        if (assetUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        List<Tag> imageTagsList = new List<Tag>();
+        List<Tag> assetTagsList = new List<Tag>();
 
-        imageTagsList = await _database.Tags
-            .Where(tag => _database.ImageTags
-                .Any(it => it.ImageUUID == imageUUID && it.TagUUID == tag.UUID))
+        assetTagsList = await _database.Tags
+            .Where(tag => _database.AssetTags
+                .Any(it => it.AssetUUID == assetUUID && it.TagUUID == tag.UUID))
             .ToListAsync();
 
-        return new OkObjectResult(imageTagsList);
+        return new OkObjectResult(assetTagsList);
     }
 
 
     public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
+        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
         Guid? tagUUID = HelperService.ParseStringGuid(tagId);
 
-        if (imageUUID == null || tagUUID == null)
+        if (assetUUID == null || tagUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
         try
         {
-            var image = await _database.Images.FindAsync(imageUUID);
-            if (image == null)
+            var asset = await _database.Asset.FindAsync(assetUUID);
+            if (asset == null)
             {
-                return new BadRequestObjectResult("Image not found");
+                return new BadRequestObjectResult("Asset not found");
             }
 
             var tag = await _database.Tags.FindAsync(tagUUID);
@@ -312,77 +311,64 @@ public class AssetService : IAssetService
                 return new NotFoundObjectResult("Tag not found");
             }
 
-            var existingRelationship = await _database.ImageTags
-                .FirstOrDefaultAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
+            var existingRelationship = await _database.AssetTags
+                .FirstOrDefaultAsync(it => it.AssetUUID == assetUUID && it.TagUUID == tagUUID);
             if (existingRelationship != null)
             {
-                return new OkObjectResult("Tag is already associated with image");
+                return new OkObjectResult("Tag is already associated with asset");
             }
 
-            var imageTag = new ImageTags()
+            var assetTag = new AssetTags()
             {
-                ImageUUID = (Guid)imageUUID,
+                AssetUUID = (Guid)assetUUID,
                 TagUUID = (Guid)tagUUID
             };
 
-            await _database.ImageTags.AddAsync(imageTag);
+            await _database.AssetTags.AddAsync(assetTag);
             await _database.SaveChangesAsync();
 
-            return new OkObjectResult("Tag associated with image completed");
+            return new OkObjectResult("Tag associated with asset completed");
         }
         catch
         {
-            return new BadRequestObjectResult("Bacons mom");
+            return new BadRequestObjectResult("Failed to associate tag with asset");
         }
     }
 
     public async Task<IActionResult> RemoveAssetTag(string assetId, string tagId)
     {
-        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
+        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
         Guid? tagUUID = HelperService.ParseStringGuid(tagId);
 
-        if (imageUUID == null || tagUUID == null)
+        if (assetUUID == null || tagUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
 
-        var imageTag = await _database.ImageTags
-            .FirstOrDefaultAsync(it => it.ImageUUID == imageUUID && it.TagUUID == tagUUID);
+        var assetTag = await _database.AssetTags
+            .FirstOrDefaultAsync(it => it.AssetUUID == assetUUID && it.TagUUID == tagUUID);
 
-        if (imageTag == null)
+        if (assetTag == null)
         {
-            return new NotFoundObjectResult("Tag on image not found");
+            return new NotFoundObjectResult("Tag on asset not found");
         }
 
-        _database.ImageTags.Remove(imageTag);
+        _database.AssetTags.Remove(assetTag);
         await _database.SaveChangesAsync();
 
-        return new OkObjectResult("Tag removed from image");
+        return new OkObjectResult("Tag removed from asset");
     }
-
 
 
     // This method should probably be in the helper service
-    private Image GetDefaultImage()
+    private Asset GetDefaultAsset()
     {
-        Image image = new Image
+        Asset asset = new Asset
         {
             Content = _configuration.GetSection("DefaultImages")["NotFound"] ??
-                      throw new Exception("No default image found")
+                      throw new Exception("No default asset found")
         };
 
-        return image;
+        return asset;
     }
-
-    // public async Task<IActionResult> GetImageIdPile(int size, int offset) {
-    //     int currentRowNumber = offset;
-    //     List<Guid> imageIds = await _database.Images
-    //         .Select(img => img.UUID)
-    //         .OrderBy(uuid => uuid)
-    //         .Skip(offset)
-    //         .Take(size)
-    //         .ToListAsync();
-    //     
-    //     return new OkObjectResult(imageIds);
-    // }
 }

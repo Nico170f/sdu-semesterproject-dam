@@ -14,8 +14,8 @@ public interface IProductService
     Task<IActionResult> GetProductAssets(string productId);
     Task<IActionResult> GetProductAssetsAmount(string productId);
     Task<IActionResult> GetProductAsset(string productId, string priority);
-    Task<IActionResult> AssignProductAsset(string productId, AddProductImageRequest body);
-    Task<IActionResult> UnassignProductAsset(string productId, string imageId);
-    Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductImage> body);
+    Task<IActionResult> AssignProductAsset(string productId, AddProductAssetRequest body);
+    Task<IActionResult> UnassignProductAsset(string productId, string assetId);
+    Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductAsset> body);
     Task<IActionResult> GetProductGallery(string productId);
 }

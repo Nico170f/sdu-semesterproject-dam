@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DAM.Backend.Data.Models;
 
-public class ImageTags
+public class AssetTags
 {
-    public Guid ImageUUID { get; set; }
+    public Guid AssetUUID { get; set; }
     public Guid TagUUID { get; set; }
 }
