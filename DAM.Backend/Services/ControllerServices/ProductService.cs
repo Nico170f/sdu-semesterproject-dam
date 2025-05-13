@@ -22,18 +22,25 @@ public class ProductService : IProductService
         _configuration = configuration;
     }
 
-    public async Task<IActionResult> GetAllProducts(string? searchString = null)
+    public async Task<IActionResult> GetAllProducts(string? searchString = null, int? amount = null, int? page = null)
     {
+        int itemsPerPage = amount ?? 20;
+        int currentPage = page ?? 1;
+    
         IQueryable<Product> query = _database.Products;
     
-        // Apply search filter if provided
         if (!string.IsNullOrEmpty(searchString))
         {
             query = query.Where(p => p.Name.Contains(searchString));
         }
+    
+        var products = await query
+            .OrderBy(p => p.Name)
+            .Skip((currentPage - 1) * itemsPerPage)
+            .Take(itemsPerPage)
+            .ToListAsync();
         
-        var response = await query.ToListAsync();
-        return new OkObjectResult(response);    
+        return new OkObjectResult(products);
     }
 
     public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest body)

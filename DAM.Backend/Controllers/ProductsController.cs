@@ -20,10 +20,10 @@ public class ProductsController : ApiController
      * Gets all products
      */
     [HttpGet()]
-    public async Task<IActionResult> GetAllProducts([FromQuery] string? searchString = null)
+    public async Task<IActionResult> GetAllProducts([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetAllProducts(searchString);
+	    return await _productService.GetAllProducts(searchString, amount, page);
     }
         
     /*
