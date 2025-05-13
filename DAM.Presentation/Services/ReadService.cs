@@ -218,4 +218,23 @@ public class ReadService : BaseService
 		var response = await _httpClient.GetAsync("api/v1/products/syncWithPim");
 		Console.WriteLine(response.Content);
 	}
+
+	public async Task<List<Tag>> GetTags(string searchString = "", int amount = 20, int page = 1)
+	{
+		string apiUrl = "api/v1/tags?";
+		List<string> parameters = [];
+		
+		if (!string.IsNullOrEmpty(searchString))
+		{
+			parameters.Add($"searchString={searchString}");
+		}
+		
+		parameters.Add($"amount={amount}");
+		parameters.Add($"page={page}");
+		
+		apiUrl += string.Join('&', parameters);
+		
+		var response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
+		return response ?? [];
+	}
 }

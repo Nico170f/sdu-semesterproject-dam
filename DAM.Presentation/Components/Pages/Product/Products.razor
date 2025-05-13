@@ -49,16 +49,10 @@
 <button @onclick="SyncWithPim">Synchronize with PIM</button>
 
 <div style="text-align: left">
-    <button @onclick="NavigateToHome">Home</button>
+    <button @onclick="@(_ => NavigationManager.NavigateTo("/dam"))">Home</button>
 </div>
 
 <h1>Product Gallery</h1>
-
-<!--
-<InputText @bind-Value="_newProductName" placeholder="Product name"/>
-<InputText @bind-Value="_newProductUuid" placeholder="Product uuid"/>
-<button @onclick="AddNewProduct">Add Product</button>
--->
 
 <!-- Search bar -->
 <input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for products by name or uuid"/>
@@ -66,7 +60,7 @@
 <div class="gallery" id="imageGrid">
     @foreach(EnhancedProduct product in _products)
     {
-        <div class="image-container" @onclick="@(e => OnImageClickNavigateTo(@product.UUID.ToString()))">
+        <div class="image-container" @onclick="@(_ => NavigationManager.NavigateTo($"/dam/products/edit?productId={product.UUID}"))">
             <img src="@(ReadService.GetAssetContentById(product.MainAssetUUID))" alt="Placeholder Image">
 
             <p>@($"{product.Name}")</p>

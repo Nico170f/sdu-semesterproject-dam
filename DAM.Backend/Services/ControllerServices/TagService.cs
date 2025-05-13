@@ -18,10 +18,26 @@ public class TagService : ITagService
         _database = database;
     }
     
-    public async Task<IActionResult> GetAllTags()
+    public async Task<IActionResult> GetTags(string? searchString, int? amount, int? page)
     {
-        List<Tag> tagList = await _database.Tags.ToListAsync();
-        return new OkObjectResult(tagList);
+	    int itemsPerPage = amount ?? 20;
+	    int currentPage = page ?? 1;
+    
+	    IQueryable<Tag> query = _database.Tags;
+    
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(t => t.Name.Contains(searchString) || 
+		                             t.UUID.ToString().Contains(searchString));
+	    }
+    
+	    var tags = await query
+		    .OrderBy(t => t.Name)
+		    .Skip((currentPage - 1) * itemsPerPage)
+		    .Take(itemsPerPage)
+		    .ToListAsync();
+        
+	    return new OkObjectResult(tags);
     }
     
     

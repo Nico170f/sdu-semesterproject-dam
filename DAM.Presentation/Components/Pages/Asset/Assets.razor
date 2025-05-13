@@ -1,4 +1,5 @@
 @page "/dam/assets"
+@using global::DAM.Presentation.Models
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
@@ -73,7 +74,7 @@
 {
     <div class="tag-menu">
         <h4>Filter with Tags</h4>
-        @foreach (var tag in _allTags)
+        @foreach (Tag tag in _allTags)
         {
             <label style="display: block;">
                 <input type="checkbox"

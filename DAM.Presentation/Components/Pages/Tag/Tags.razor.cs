@@ -15,65 +15,42 @@ public partial class Tags : ComponentBase
 	[Inject] private DeleteService DeleteService { get; set; }
 	#pragma warning disable CS8618
 	#endregion
-	
-	private bool DEBUG = true;
 
-	private string addTagText = "";
-	private string searchText = "";
-	private List<Models.Tag> tags = [];
+	private string _addTagText = "";
+	private string _searchText = "";
+	private List<Models.Tag> _tags = [];
 
-	public async Task SearchButton()
-	{
-		tags = await ReadService.GetAllTags();
-
-		if (!string.IsNullOrWhiteSpace(searchText))
-		{
-			tags = tags
-				.Where(tag => tag.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-				.ToList();
-		}
-	}
-
-
-	public async Task DeleteTag (Guid TagId)
-	{
-		await DeleteService.DeleteTag(TagId);
-		tags = await ReadService.GetAllTags();
-	}
-
-	public async Task AddTag (string name)
-	{
-		// check if a tag with that name already exists and return early if true
-		if (tags.Any(tag => tag.Name.ToLower() == name.ToLower()))
-		{
-			return;
-		}
-        
-		// check if the name is empty
-		if (string.IsNullOrEmpty(name))
-		{
-			return;
-		}
-        
-		// check if there already exists a tag with that name in the local list
-		var existingTag = tags.FirstOrDefault(tag => tag.Name.ToLower() == name.ToLower());
-		if (existingTag != null)
-		{
-			return;
-		}
-
-		await CreateService.UploadTag(name);
-		
-		tags = await ReadService.GetAllTags();
-
-	}
 	protected override async Task OnInitializedAsync()
 	{
-    
-		tags = await ReadService.GetAllTags();
+		_tags = await ReadService.GetAllTags();
 	}
 
-	public void NavigateToHome()
+	private async void UpdateTagList ()
+	{
+		_tags = await ReadService.GetTags(searchString: _searchText);
+		StateHasChanged();
+	}
+	private async Task AddTag ()
+	{
+		if(string.IsNullOrEmpty(_addTagText)) return;
+		
+		await CreateService.UploadTag(_addTagText);
+		UpdateTagList();
+	}
+
+	private async Task DeleteTag (Guid tagId)
+	{
+		await DeleteService.DeleteTag(tagId);
+		UpdateTagList();
+	}
+
+	private void OnSearchInputChanged(ChangeEventArgs e)
+	{
+		_searchText = e.Value?.ToString() ?? "";
+		UpdateTagList();
+	}
+
+	private void NavigateToHome()
 	{
 		Navigation.NavigateTo("/dam", true);
 	}

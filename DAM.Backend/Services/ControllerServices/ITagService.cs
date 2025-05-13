@@ -6,7 +6,7 @@ namespace DAM.Backend.Services.ControllerServices;
 
 public interface ITagService
 {
-    Task<IActionResult> GetAllTags();
+    Task<IActionResult> GetTags(string? searchString, int? amount, int? page);
     Task<IActionResult> CreateTag(CreateTagRequest body);
     Task<IActionResult> DeleteTag(string tagId);
     Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest body);

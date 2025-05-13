@@ -76,26 +76,29 @@
 
 <PageTitle>Tag Overview</PageTitle>
 
-    <div style="text-align: left">
-        <button @onclick="NavigateToHome">Home</button>
-    </div>
-    <div>
-        <h1>Tag Gallery</h1>
-        <InputText class="search-controls" @bind-Value="searchText" placeholder="Search for tags"/>
-        <button class="input-field" @onclick="SearchButton">Search</button>
-        
-        <InputText @bind-Value="addTagText" placeholder="Give your tag a name"></InputText>
-        <button @onclick="() => AddTag(addTagText)">Add</button>
-    </div>
+<div style="text-align: left">
+    <button @onclick="NavigateToHome">Home</button>
+</div>
 
-    <div class="gallery" id="imageGrid">
-        @foreach (Tag tag in tags)
-        {
-            <div class="image-container">
-                <p class="tag-background">@tag.Name</p>
-                <button @onclick="() => DeleteTag(tag.UUID)">🗑️</button>
-            </div>
-        }
-    </div>
+<div>
+    <h1>Tag Gallery</h1>
+    <input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for tags by name/uuid"/>
+</div>
+
+<div>
+        <InputText @bind-Value="_addTagText" placeholder="Give your tag a name"></InputText>
+        <button @onclick="AddTag">Add</button>
+</div>
+
+<div class="gallery" id="imageGrid">
+    @foreach (Tag tag in _tags)
+    {
+        <div class="image-container">
+            <p class="tag-background">@tag.Name</p>
+            <p class="tag-background">@tag.UUID</p>
+            <button @onclick="() => DeleteTag(tag.UUID)">🗑️</button>
+        </div>
+    }
+</div>
 
 

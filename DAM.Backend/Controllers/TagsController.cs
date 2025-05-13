@@ -16,13 +16,13 @@ public class TagsController : ApiController
 
     /*
      * GET /tags
-     * Gets all tags
+     * Gets tags with optional search parameters
      */
     [HttpGet()]
-    public async Task<IActionResult> GetAllTags()
+    public async Task<IActionResult> GetTags([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetAllTags();
+        return await _tagService.GetTags(searchString, amount, page);
     }
     
     

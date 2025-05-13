@@ -17,13 +17,13 @@ public class ProductsController : ApiController
     
     /*
      * GET /products
-     * Gets all products
+     * Gets products with optional search parameters
      */
     [HttpGet()]
-    public async Task<IActionResult> GetAllProducts([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
+    public async Task<IActionResult> GetProducts([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetAllProducts(searchString, amount, page);
+	    return await _productService.GetProducts(searchString, amount, page);
     }
         
     /*

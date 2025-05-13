@@ -22,7 +22,7 @@ public class ProductService : IProductService
         _configuration = configuration;
     }
 
-    public async Task<IActionResult> GetAllProducts(string? searchString = null, int? amount = null, int? page = null)
+    public async Task<IActionResult> GetProducts(string? searchString = null, int? amount = null, int? page = null)
     {
         int itemsPerPage = amount ?? 20;
         int currentPage = page ?? 1;
