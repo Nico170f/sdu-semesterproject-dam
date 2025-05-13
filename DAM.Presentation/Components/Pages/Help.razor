@@ -3,58 +3,88 @@
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 
+<PageTitle>Help</PageTitle>
+
 <style>
-    .help-container {
-        max-width: 700px;
-        margin: 0 auto;
-        padding: 20px;
-        font-family: sans-serif;
+    /* Common styles */
+    .section-container {
+        margin: 2rem 0;
     }
 
-    .help-container h3 {
-        text-align: center;
-        margin-bottom: 20px;
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
     }
 
-    .help-container ul {
-        list-style: none;
-        padding: 0;
-    }
-
-    .help-container li {
-        background: #f9f9f9;
-        padding: 15px;
-        margin-bottom: 15px;
+    /* Help section */
+    .help-section {
+        background-color: #f5f5f5;
+        padding: 1.5rem;
         border-radius: 8px;
+        margin-bottom: 2rem;
     }
 
-    .help-container li p {
-        margin: 10px 0 0 0;
+    /* Help cards */
+    .help-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        margin-top: 1.5rem;
+    }
+
+    .help-card {
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 1.5rem;
+    }
+
+    .help-card strong {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
     }
 </style>
 
-<div style="text-align: left">
-    <button @onclick="@(_ => NavigationManager.NavigateTo("/dam", true))">Home</button>
-</div>
-<div class="help-container">
-    <h3>Help Page</h3>
-    <p>Welcome to the help page. Here you can look up information on how to operate the DAM system.</p>
-    
-    <h4>Pages Overview</h4>
-    <ul>
-        <li>
-            📦 <strong><NavLink href="/dam/products">Products</NavLink></strong>
-            <p>The 📦 Products page contains all the products.</p>
-        </li>
-        <li>
-            🖼️ <strong><NavLink href="/dam/assets">Assets</NavLink></strong>
-            <p>The 🖼️ Assets page contains all the assets. On the page you can upload new assets,
-                search for assets, and filter the assets with their specific tags.
-                If you click on an asset it's possible to edit the assets.</p>
-        </li>
-        <li>
-            🏷️ <strong><NavLink href="/dam/tags">Tags</NavLink></strong>
-            <p>The 🏷️ Tags page contains all the tags. On the page you can add and delete tags.</p>
-        </li>
-    </ul>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="@(_ => NavigationManager.NavigateTo("/dam"))">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </button>
+        </div>
+    </div>
+
+    <section class="section-container">
+        <h2 class="section-title">Help & Documentation</h2>
+
+        <div class="help-section">
+            <p>Welcome to the help page. Here you can look up information on how to operate the DAM system.</p>
+        </div>
+    </section>
+
+    <section class="section-container">
+        <h2 class="section-title">Pages Overview</h2>
+
+        <div class="help-grid">
+            <div class="help-card">
+                <strong>📦 <NavLink href="/dam/products">Products</NavLink></strong>
+                <p>The Products page contains all the products.</p>
+            </div>
+
+            <div class="help-card">
+                <strong>🖼️ <NavLink href="/dam/assets">Assets</NavLink></strong>
+                <p>The Assets page contains all the assets. On the page you can upload new assets,
+                    search for assets, and filter the assets with their specific tags.
+                    If you click on an asset it's possible to edit the assets.</p>
+            </div>
+
+            <div class="help-card">
+                <strong>🏷️ <NavLink href="/dam/tags">Tags</NavLink></strong>
+                <p>The Tags page contains all the tags. On the page you can add and delete tags.</p>
+            </div>
+        </div>
+    </section>
 </div>

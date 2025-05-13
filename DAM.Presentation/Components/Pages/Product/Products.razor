@@ -2,71 +2,113 @@
 @using global::DAM.Presentation.EnhancedModels
 @using global::DAM.Presentation.Models
 @attribute [StreamRendering]
-@rendermode  InteractiveServer
-
-<style>
-    body {
-        text-align: center;
-    }
-
-    h1 {
-        margin-bottom: 10px;
-    }
-
-    .search-container {
-        margin-bottom: 20px;
-    }
-
-    {
-        width: 80%;
-        max-width: 400px;
-        padding: 10px;
-        font-size: 24px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-sizing: border-box;
-    }
-
-    .gallery {
-        margin: 10px;
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .gallery img {
-        width: 20vw;
-        height: 20vw;  /* Forces square scaling */
-        border-radius: 5px;
-        object-fit: cover;
-        border: 2px solid #000000;
-        padding: 1vw;
-    }
-</style>
+@rendermode InteractiveServer
 
 <PageTitle>Products Overview</PageTitle>
 
-<button @onclick="SyncWithPim">Synchronize with PIM</button>
-
-<div style="text-align: left">
-    <button @onclick="@(_ => NavigationManager.NavigateTo("/dam"))">Home</button>
-</div>
-
-<h1>Product Gallery</h1>
-
-<!-- Search bar -->
-<input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for products by name or uuid"/>
-
-<div class="gallery" id="imageGrid">
-    @foreach(EnhancedProduct product in _products)
-    {
-        <div class="image-container" @onclick="@(_ => NavigationManager.NavigateTo($"/dam/products/edit?productId={product.UUID}"))">
-            <img src="@(ReadService.GetAssetContentById(product.MainAssetUUID))" alt="Placeholder Image">
-
-            <p>@($"{product.Name}")</p>
-            <p>@($"{product.UUID}")</p>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="@(_ => NavigationManager.NavigateTo("/dam"))">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </button>
         </div>
-    }
+    </div>
+
+    <div class="row align-items-center mb-4">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Product Gallery</h2>
+                <button class="btn btn-primary" @onclick="SyncWithPim">
+                    <i class="bi bi-arrow-repeat me-1"></i>Synchronize with PIM
+                </button>
+            </div>
+            
+            <div class="mt-4">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="@_searchText"
+                        @oninput="OnSearchInputChanged"
+                        placeholder="Search for products by name or uuid" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                @foreach(EnhancedProduct product in _products)
+                {
+                <div class="col">
+                    <div class="card h-100 product-card">
+                        <a href="/dam/products/edit?productId=@product.UUID" class="div-link" title="@product.Name"></a>
+                        <div class="image-container">
+                            <img
+                                src="@(ReadService.GetAssetContentById(product.MainAssetUUID))"
+                                class="product-image"
+                                alt="@product.Name">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate">@product.Name</h5>
+                            <p class="card-text text-muted small">@product.UUID</p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
 
-    
+<style>
+    .product-card {
+        position: relative;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        padding-top: 100%; /* Creates a perfect square */
+        background-color: #f8f9fa; /* Light background for letterboxing */
+        overflow: hidden;
+    }
+
+    .product-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+        object-fit: contain; /* Maintains aspect ratio with letterboxing */
+    }
+
+    .div-link {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .card-body {
+        background-color: white;
+    }
+</style>

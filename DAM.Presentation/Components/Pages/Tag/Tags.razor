@@ -3,102 +3,77 @@
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
-<style>
-    body {
-        text-align: center;
-    }
-
-    h1 {
-        margin-bottom: 10px;
-    }
-
-    .search-controls {
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-
-    .input-field {
-        margin: 20px;
-    }
-
-
-    .search-container {
-        margin-bottom: 20px;
-    }
-
-    .search-input{
-        width: 80%;
-        max-width: 400px;
-        padding: 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    .gallery {
-        margin: 10px;
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .gallery img {
-        width: 20vw;
-        height: 20vw; /* Forces square scaling */
-        border-radius: 5px;
-        object-fit: cover;
-        border: 2px solid #000000;
-        padding: 1vw;
-        transition: opacity 1s ease-in-out, transform 1s ease-in-out;
-    }
-    
-    .gallery img:hover{
-        transform: scale(1.05);
-    }
-
-    .tag-menu {
-        padding: 1rem;
-        border: 1px solid #ccc;
-        background-color: #f8f8f8;
-        border-radius: 5px;
-        margin-top: 10px;
-        max-width: 300px;
-    }
-    .tag-background {
-        background-color: #f9f9f9;
-        padding: 5px 10px;
-        border-radius: 5px;
-        display: inline-block;
-        font-weight: bold;
-    }
-    
-</style>
-
 <PageTitle>Tag Overview</PageTitle>
 
-<div style="text-align: left">
-    <button @onclick="NavigateToHome">Home</button>
-</div>
-
-<div>
-    <h1>Tag Gallery</h1>
-    <input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for tags by name/uuid"/>
-</div>
-
-<div>
-        <InputText @bind-Value="_addTagText" placeholder="Give your tag a name"></InputText>
-        <button @onclick="AddTag">Add</button>
-</div>
-
-<div class="gallery" id="imageGrid">
-    @foreach (Tag tag in _tags)
-    {
-        <div class="image-container">
-            <p class="tag-background">@tag.Name</p>
-            <p class="tag-background">@tag.UUID</p>
-            <button @onclick="() => DeleteTag(tag.UUID)">🗑️</button>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="NavigateToHome">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </button>
         </div>
-    }
+    </div>
+
+    <div class="row align-items-center mb-4">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Tag Gallery</h2>
+            </div>
+
+            <div class="mt-4">
+                <div class="input-group mb-3">
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="@_searchText"
+                        @oninput="OnSearchInputChanged"
+                        placeholder="Search for tags by name or uuid (case sensitive)" />
+                </div>
+
+                <div class="input-group">
+                    <input
+                        type="text"
+                        class="form-control"
+                        @bind-value="_addTagText"
+                        placeholder="Add a new tag" />
+                    <button class="btn btn-primary" @onclick="AddTag">Add Tag</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                @foreach (Tag tag in _tags)
+                {
+                    <div class="col">
+                        <div class="card h-100 tag-card">
+                            <div class="card-body">
+                                <h5 class="card-title">@tag.Name</h5>
+                                <p class="card-text text-muted small">@tag.UUID</p>
+                            </div>
+                            <div class="card-footer text-end bg-transparent border-top-0">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTag(tag.UUID)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
 
-
+<style>
+    .tag-card {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+</style>
