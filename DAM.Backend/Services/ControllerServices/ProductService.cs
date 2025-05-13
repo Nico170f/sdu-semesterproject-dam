@@ -295,12 +295,7 @@ public class ProductService : IProductService
 
     public async Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductAsset> patchDoc)
     {
-        if (patchDoc == null)
-        {
-	        return new BadRequestObjectResult("Patch document cannot be null");
-        }
-
-        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
+	    Guid? assetUUID = HelperService.ParseStringGuid(assetId);
         Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (assetUUID == null || productUUID == null)
         {
@@ -424,7 +419,7 @@ public class ProductService : IProductService
     public async Task<IActionResult> GetProductsFromPIM ()
     {
 	    HttpClientHandler handler = new HttpClientHandler();
-	    HttpClient _httpClient = new(handler)
+	    HttpClient _httpClient = new HttpClient(handler)
 	    {
 		    BaseAddress = new Uri("http://localhost:5084/")
 	    };
