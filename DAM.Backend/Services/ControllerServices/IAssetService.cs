@@ -9,7 +9,7 @@ namespace DAM.Backend.Services.ControllerServices;
 public interface IAssetService
 {
     Task<IActionResult> CreateImage(CreateImageRequest body);
-    Task<IActionResult> GetAssetsPage(int? size, int? offset);
+    Task<IActionResult> GetAssets(string? searchString, string? selectedTagIds, int? amount, int? page);
     Task<IActionResult> GetImageById(string assetId, int? height, int? width);
     Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest body);
     Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Image> patchDoc);
@@ -21,17 +21,17 @@ public interface IAssetService
     Task<IActionResult> RemoveAssetTag(string assetId, string tagId);
 
 
-    
+
     // Task<IActionResult> GetProductAssetsIds(string productId);
     // Task<IActionResult> GetProductAssetAmount(string productId);
-        // Task<IActionResult> GetProductImage(string productId, string priority);
+    // Task<IActionResult> GetProductImage(string productId, string priority);
     // Task<IActionResult> CreateImage(CreateImageRequest requestParametre);
     // Task<IActionResult> PatchProductImage(string productId, string imageId, JsonPatchDocument<ProductImage> patchDocument);
-        // Task<IActionResult> AddProductImage(string productId, AddProductImageRequest request);
+    // Task<IActionResult> AddProductImage(string productId, AddProductImageRequest request);
     // Task<IActionResult> RemoveProductImage(string productId, RemoveProductImageRequest request);
     // Task<IActionResult> GetProductGallery(string productId);
-        // Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParametre);
-        // Task<IActionResult> GetProduct(string productId);
-        // Task<IActionResult> GetProductsFromPIM();
+    // Task<IActionResult> CreateMockProduct(CreateMockProductRequest requestParametre);
+    // Task<IActionResult> GetProduct(string productId);
+    // Task<IActionResult> GetProductsFromPIM();
     // Task<IActionResult> DeleteAllProducts();
 }

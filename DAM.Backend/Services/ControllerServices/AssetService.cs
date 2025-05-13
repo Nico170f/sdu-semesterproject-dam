@@ -56,10 +56,49 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetAssetsPage(int? size, int? page)
+    public async Task<IActionResult> GetAssets(string? searchString, string? selectedTagIds, int? amount, int? page)
     {
-        List<Guid> uuids = await _database.Images.Select(img => img.UUID).ToListAsync();
-        return new OkObjectResult(uuids);
+	    // Set default values if parameters are null
+	    int itemsPerPage = amount ?? 20;
+	    int currentPage = page ?? 1;
+    
+	    // Start with all images query
+	    IQueryable<Image> query = _database.Images;
+    
+	    // Filter by UUID if searchString is provided
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(img => img.UUID.ToString().Contains(searchString));
+	    }
+    
+	    // Filter by selected tags if provided
+	    if (!string.IsNullOrEmpty(selectedTagIds))
+	    {
+		    // Split the comma-separated string and parse to GUIDs
+		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
+			    .Select(id => HelperService.ParseStringGuid(id))
+			    .Where(guid => guid.HasValue)
+			    .Select(guid => guid.Value)
+			    .ToList();
+        
+		    if (tagUUIDs.Any())
+		    {
+			    // Get images that have ANY of the specified tags
+			    query = query.Where(img => 
+				    _database.ImageTags
+					    .Any(it => it.ImageUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
+		    }
+	    }
+    
+	    // Apply pagination (page starts at 1)
+	    List<Guid> uuids = await query
+		    .OrderBy(img => img.UUID) // Ensure consistent pagination order
+		    .Skip((currentPage - 1) * itemsPerPage)
+		    .Take(itemsPerPage)
+		    .Select(img => img.UUID)
+		    .ToListAsync();
+    
+	    return new OkObjectResult(uuids);
     }
 
 
@@ -228,6 +267,7 @@ public class AssetService : IAssetService
 
         return new OkObjectResult(tagsNotOnImage);
     }
+    
 
     public async Task<IActionResult> GetAssetTags(string assetId)
     {
@@ -243,11 +283,6 @@ public class AssetService : IAssetService
             .Where(tag => _database.ImageTags
                 .Any(it => it.ImageUUID == imageUUID && it.TagUUID == tag.UUID))
             .ToListAsync();
-
-        if (imageTagsList == null || imageTagsList.Count == 0)
-        {
-            return new NotFoundObjectResult("No tags found for that UUID");
-        }
 
         return new OkObjectResult(imageTagsList);
     }

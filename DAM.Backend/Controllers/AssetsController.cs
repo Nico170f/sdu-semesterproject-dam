@@ -33,12 +33,10 @@ public class AssetsController : ApiController
      * Get all assets (optionally with pagination and search filters).
      */
     [HttpGet()]
-    public async Task<IActionResult> GetAssetsPage([FromQuery] int? size, [FromQuery] int? page)
+    public async Task<IActionResult> GetAssetsWithOptionalParameters([FromQuery] string? searchString, [FromQuery] string? selectedTagIds, [FromQuery] int? amount, [FromQuery] int? page)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        
-        int? offset = page*size;
-        return await _assetService.GetAssetsPage(size, offset);
+        return await _assetService.GetAssets(searchString, selectedTagIds, amount, page);
     }
     
     
@@ -148,7 +146,6 @@ public class AssetsController : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.RemoveAssetTag(imageId, tagId);
     }
-    
 }
 
 

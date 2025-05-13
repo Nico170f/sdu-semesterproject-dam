@@ -20,7 +20,13 @@ public class ProductService : IProductService
         _database = database;
         _configuration = configuration;
     }
-    
+
+    public async Task<IActionResult> GetAllProducts ()
+    {
+	    var response = await _database.Products.ToListAsync();
+	    return new OkObjectResult(response);
+    }
+
     public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest body)
     {
         Product mockProduct = new Product
@@ -181,7 +187,7 @@ public class ProductService : IProductService
         }
 
         int? priority = HelperService.GetImagePriority(body.Priority);
-        if (priority == null || priority <= 0)
+        if (priority == null || priority < 0)
         {
             return new BadRequestObjectResult("Invalid priority format");
         }
@@ -273,71 +279,71 @@ public class ProductService : IProductService
     public async Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductImage> patchDoc)
     {
         if (patchDoc == null)
-    {
-        return new BadRequestObjectResult("Patch document cannot be null");
-    }
-
-    Guid? imageUUID = HelperService.ParseStringGuid(assetId);
-    Guid? productUUID = HelperService.ParseStringGuid(productId);
-    if (imageUUID == null || productUUID == null)
-    {
-        return new BadRequestObjectResult("Invalid UUID format");
-    }
-
-    ProductImage? image = await _database.ProductImages
-        .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
-
-    if (image == null)
-    {
-        return new NotFoundObjectResult($"Image with ID {assetId} not found");
-    }
-
-    int originalPriority = image.Priority;
-    patchDoc.ApplyTo(image);
-
-    if (image.Priority != originalPriority)
-    {
-        List<ProductImage> productImages = await _database.ProductImages
-            .Where(pi => pi.ProductUUID == productUUID)
-            .OrderBy(pi => pi.Priority)
-            .ToListAsync();
-
-        // Ensure priority is within valid range
-        image.Priority = Math.Max(0, Math.Min(image.Priority, productImages.Count - 1));
-
-        // Moving to higher priority (smaller number)
-        if (image.Priority < originalPriority)
         {
-            foreach (var img in productImages.Where(pi => 
-                pi.Priority >= image.Priority && 
-                pi.Priority < originalPriority && 
-                pi.ImageUUID != imageUUID))
-            {
-                img.Priority += 1;
-                _database.ProductImages.Update(img);
-            }
-        }
-        // Moving to lower priority (larger number)
-        else if (image.Priority > originalPriority)
-        {
-            foreach (var img in productImages.Where(pi => 
-                pi.Priority > originalPriority && 
-                pi.Priority <= image.Priority && 
-                pi.ImageUUID != imageUUID))
-            {
-                img.Priority -= 1;
-                _database.ProductImages.Update(img);
-            }
+	        return new BadRequestObjectResult("Patch document cannot be null");
         }
 
-        // Update the image with its new priority
-        _database.ProductImages.Update(image);
+        Guid? imageUUID = HelperService.ParseStringGuid(assetId);
+        Guid? productUUID = HelperService.ParseStringGuid(productId);
+        if (imageUUID == null || productUUID == null)
+        {
+	        return new BadRequestObjectResult("Invalid UUID format");
+        }
+
+        ProductImage? image = await _database.ProductImages
+	        .FirstOrDefaultAsync(pi => pi.ProductUUID == productUUID && pi.ImageUUID == imageUUID);
+
+        if (image == null)
+        {
+	        return new NotFoundObjectResult($"Image with ID {assetId} not found");
+        }
+
+        int originalPriority = image.Priority;
+        patchDoc.ApplyTo(image);
+
+        if (image.Priority != originalPriority)
+        {
+	        List<ProductImage> productImages = await _database.ProductImages
+		        .Where(pi => pi.ProductUUID == productUUID)
+		        .OrderBy(pi => pi.Priority)
+		        .ToListAsync();
+
+	        // Ensure priority is within valid range
+	        image.Priority = Math.Max(0, Math.Min(image.Priority, productImages.Count - 1));
+
+	        // Moving to higher priority (smaller number)
+	        if (image.Priority < originalPriority)
+	        {
+		        foreach (var img in productImages.Where(pi => 
+			                 pi.Priority >= image.Priority && 
+			                 pi.Priority < originalPriority && 
+			                 pi.ImageUUID != imageUUID))
+		        {
+			        img.Priority += 1;
+			        _database.ProductImages.Update(img);
+		        }
+	        }
+	        // Moving to lower priority (larger number)
+	        else if (image.Priority > originalPriority)
+	        {
+		        foreach (var img in productImages.Where(pi => 
+			                 pi.Priority > originalPriority && 
+			                 pi.Priority <= image.Priority && 
+			                 pi.ImageUUID != imageUUID))
+		        {
+			        img.Priority -= 1;
+			        _database.ProductImages.Update(img);
+		        }
+	        }
+
+	        // Update the image with its new priority
+	        _database.ProductImages.Update(image);
         
-        // Save all changes to the database
-        await _database.SaveChangesAsync();
-    }
+	        // Save all changes to the database
+	        await _database.SaveChangesAsync();
+        }
 
-    return new OkObjectResult("Image updated successfully");
+        return new OkObjectResult("Image updated successfully");
     }
 
     public async Task<IActionResult> GetProductGallery(string productId)

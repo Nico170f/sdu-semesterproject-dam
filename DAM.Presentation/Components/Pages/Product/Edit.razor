@@ -1,0 +1,81 @@
+﻿@page "/dam/products/edit"
+@attribute [StreamRendering]
+@rendermode  InteractiveServer
+@using BlazorSortableList
+@using global::DAM.Presentation.Services
+
+<style>
+    .gallery {
+        margin: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .gallery img,
+    .img_in_gallery img {
+        width: 100%;
+        aspect-ratio: 1 / 1; /* Keeps the image square */
+        border-radius: 5px;
+        object-fit: cover;
+        border: 2px solid #000000;
+        padding: 1vw;
+    }
+
+    .img_in_gallery {
+        padding: 5px;
+        box-sizing: border-box;
+    }
+
+    .gallery img:hover {
+        transform: scale(1.05);
+    }
+</style>
+
+<head>
+    <title>Edit</title>
+</head>
+
+<section>
+    <h1>Product edit page</h1>
+    <p><strong>Product name:</strong>@_productName</p>
+    <p><strong>Product ID:</strong>@_productId</p>
+</section>
+
+<section>
+    <h2>Product images</h2>
+    <div class="gallery">
+        <SortableList Group="sharedLists" Items="_productImages" Context="asset" 
+                      OnRemove="ProductImageRemove" OnUpdate="ProductImageReorder">
+            <SortableItemTemplate>
+                <div class="card has-border has-background-white img_in_gallery">
+                    <img src="@ReadService.GetAssetContentById(asset.UUID)" alt="image of something"/>
+                    <p>@asset.UUID</p>
+                </div>
+            </SortableItemTemplate>
+        </SortableList>
+    </div>
+</section>
+
+<section>
+    <div>
+        <h2>Image gallery</h2>
+
+        <div>
+            <InputText @bind-Value="_searchText" placeholder="Search for assets by uuid"/>
+            <button @onclick="SearchButton">Search</button>
+        </div>
+
+        <div class="gallery">
+            <SortableList Group="sharedLists" Items="_gallery" Context="asset" 
+                          OnRemove="GalleryRemove" OnUpdate="GalleryReorder">
+                <SortableItemTemplate>
+                    <div class="card has-border has-background-white img_in_gallery">
+                        <img src="@ReadService.GetAssetContentById(asset.UUID)" alt=""/>
+                        <p>@asset.UUID</p>
+                    </div>
+                </SortableItemTemplate>
+            </SortableList>
+        </div>
+    </div>
+</section>

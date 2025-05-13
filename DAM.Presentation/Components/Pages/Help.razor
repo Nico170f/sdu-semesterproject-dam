@@ -1,0 +1,56 @@
+@page "/dam/help"
+@inject NavigationManager Navigation
+
+<style>
+    .help-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: sans-serif;
+    }
+
+    .help-container h3 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .help-container ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .help-container li {
+        background: #f9f9f9;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+
+    .help-container li p {
+        margin: 10px 0 0 0;
+    }
+</style>
+
+
+<div class="help-container">
+    <h3>Help Page</h3>
+    <p>Welcome to the help page. Here you can look up information on how to operate the DAM system.</p>
+
+    <h4>Pages Overview</h4>
+    <ul>
+        <li>
+            📦 <strong><NavLink href="/dam/products">Products</NavLink></strong>
+            <p>The 📦 Products page contains all the products.</p>
+        </li>
+        <li>
+            🖼️ <strong><NavLink href="/dam/assets">Assets</NavLink></strong>
+            <p>The 🖼️ Assets page contains all the assets. On the page you can upload new assets,
+                search for assets, and filter the assets with their specific tags.
+                If you click on an asset it's possible to edit the assets.</p>
+        </li>
+        <li>
+            🏷️ <strong><NavLink href="/dam/tags">Tags</NavLink></strong>
+            <p>The 🏷️ Tags page contains all the tags. On the page you can add and delete tags.</p>
+        </li>
+    </ul>
+</div>

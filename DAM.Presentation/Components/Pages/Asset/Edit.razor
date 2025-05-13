@@ -1,0 +1,88 @@
+﻿@page "/dam/assets/edit"
+@attribute [StreamRendering]
+@rendermode  InteractiveServer
+@using BlazorSortableList
+@using global::DAM.Presentation.Models
+
+<style>
+    .gallery {
+        margin: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .gallery img,
+    .img_in_gallery img {
+        width: 100%;
+        aspect-ratio: 1 / 1; /* Keeps the image square */
+        border-radius: 5px;
+        object-fit: cover;
+        border: 2px solid #000000;
+        padding: 1vw;
+    }
+
+    .img_in_gallery {
+        padding: 5px;
+        box-sizing: border-box;
+    }
+
+    .gallery img:hover {
+        transform: scale(1.05);
+    }
+</style>
+
+<head>
+    <title>Edit</title>
+</head>
+
+<section>
+    <h1>Asset edit page</h1>
+    <img src="@ReadService.GetAssetContentById(_assetId)" alt="Asset image" style="object-fit: contain"/>
+    <p><strong>Image ID:</strong>@_assetId</p>
+</section>
+
+<section>
+    <h2>Image tags</h2>
+    <div class="gallery">
+        <SortableList Group="sharedLists" Items="_imageTags" Context="tag" 
+                      OnRemove="ImageTagsRemove" OnUpdate="ImageTagsReorder">
+            <SortableItemTemplate>
+                <div class="card has-border has-background-white img_in_gallery">
+                    <p>@tag.Name</p>
+                    <p>@tag.UUID</p>
+                </div>
+            </SortableItemTemplate>
+        </SortableList>
+    </div>
+</section>
+
+<section>
+    <div>
+        <h2>Tag list</h2>
+
+        <div>
+            <InputText @bind-Value="_searchText" placeholder="Search for tags by name"/>
+            <button @onclick="SearchButton">Search</button>
+        </div>
+
+        <div class="gallery">
+            <SortableList Group="sharedLists" Items="_list.FindAll(Match)" Context="tag" 
+                          OnRemove="ListRemove" OnUpdate="ListReorder">
+                <SortableItemTemplate>
+                    <div class="card has-border has-background-white img_in_gallery">
+                        <p>@tag.Name</p>
+                        <p>@tag.UUID</p>
+                    </div>
+                </SortableItemTemplate>
+            </SortableList>
+            @{
+                bool Match(Tag tag)
+                {
+                    return string.IsNullOrEmpty(_searchText) || tag.Name.Contains(_searchText);
+                }
+            }
+
+        </div>
+    </div>
+</section>
