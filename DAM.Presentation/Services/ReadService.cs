@@ -142,8 +142,12 @@ public class ReadService : BaseService
 				Name = product.Name,
 			};
 
-			Guid assetId = (await GetAssetsByProduct(product.UUID))[0];
-			
+			var assets = await GetAssetsByProduct(product.UUID);
+			Guid assetId = Guid.Empty;
+			if (assets.Count > 0)
+			{
+				assetId = assets[0];
+			}
 			enhancedProduct.MainAssetUUID = assetId;
 			
 			enhancedProducts.Add(enhancedProduct);
