@@ -7,7 +7,6 @@ namespace DAM.Presentation.Components.Pages.Product;
 public partial class Products : ComponentBase
 {
 	
-	
 	#region Injects
 	#pragma warning disable CS8618
 	[Inject] private NavigationManager NavigationManager { get; set; }

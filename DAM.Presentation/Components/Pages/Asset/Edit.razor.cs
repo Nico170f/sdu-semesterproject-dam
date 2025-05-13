@@ -20,7 +20,7 @@ public partial class Edit : ComponentBase
     private string _searchText = "";
     
     private List<Models.Tag> _assetTags = [];
-    private List<Models.Tag> _assetGallery = [];
+    private List<Models.Tag> _tagGallery = [];
         
     protected override async Task OnInitializedAsync ()
     {
@@ -32,7 +32,7 @@ public partial class Edit : ComponentBase
 
         _assetTags = await ReadService.GetTagsByAsset(_assetId);
 
-        _assetGallery = await ReadService.GetTagsNotOnAsset(_assetId);
+        _tagGallery = await ReadService.GetTagsNotOnAsset(_assetId);
 
     }
 
@@ -44,7 +44,7 @@ public partial class Edit : ComponentBase
 
     private async void UpdateTagList ()
     {
-	    _assetGallery = await ReadService.GetTagsNotOnAsset(_assetId, _searchText);
+	    _tagGallery = await ReadService.GetTagsNotOnAsset(_assetId, _searchText);
 	    StateHasChanged();
     }
     
@@ -54,7 +54,7 @@ public partial class Edit : ComponentBase
         var item = _assetTags[indices.oldIndex];
 
         // add it to the new index in list 2
-        _assetGallery.Insert(indices.newIndex, item);
+        _tagGallery.Insert(indices.newIndex, item);
 
         await DeleteService.RemoveTagFromAsset(_assetId, _assetTags[indices.oldIndex].UUID);
         
@@ -65,14 +65,14 @@ public partial class Edit : ComponentBase
     private async Task ListRemove((int oldIndex, int newIndex) indices)
     {
         // get the item at the old index in list 2
-        var tag = _assetGallery[indices.oldIndex];
+        var tag = _tagGallery[indices.oldIndex];
 
         // add it to the new index in list 1
         _assetTags.Insert(indices.newIndex, tag);
         
         await CreateService.AddTagToImage(_assetId, tag.UUID);
        // remove the item from the old index in list 2
-       _assetGallery.Remove(_assetGallery[indices.oldIndex]);
+       _tagGallery.Remove(_tagGallery[indices.oldIndex]);
     }
     
     private async Task ImageTagsReorder((int oldIndex, int newIndex) indices)
@@ -90,12 +90,12 @@ public partial class Edit : ComponentBase
     private void ListReorder((int oldIndex, int newIndex) indices)
     {
         // Get the item being moved
-        var item = _assetGallery[indices.oldIndex];
+        var item = _tagGallery[indices.oldIndex];
     
         // Remove from old position
-        _assetGallery.RemoveAt(indices.oldIndex);
+        _tagGallery.RemoveAt(indices.oldIndex);
         
         // Insert at new position
-        _assetGallery.Insert(indices.newIndex, item);
+        _tagGallery.Insert(indices.newIndex, item);
     }
 }

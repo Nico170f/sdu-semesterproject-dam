@@ -40,12 +40,6 @@ public partial class Assets : ComponentBase
         Navigation.NavigateTo("/dam", true);
     }
 
-    public void NavigateToPage(int pageNum)
-    {
-        Navigation.NavigateTo($"/dam/assets?Page={pageNum}", true);
-    }
-
-
     private void ToggleTagMenu()
     {
         _showTagMenu = !_showTagMenu;
@@ -66,7 +60,7 @@ public partial class Assets : ComponentBase
 
     private async void UpdateAssetList ()
     {
-	    _assetIds = await ReadService.GetAssetIds(searchString: _searchText, selectedTagIds: _selectedTagIds);
+	    _assetIds = await ReadService.GetAssetIds(searchString: _searchText, selectedTags: _selectedTagIds);
 	    StateHasChanged();
     }
 

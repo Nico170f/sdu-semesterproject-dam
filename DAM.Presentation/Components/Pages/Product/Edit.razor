@@ -2,54 +2,117 @@
 @attribute [StreamRendering]
 @rendermode  InteractiveServer
 @using BlazorSortableList
+@using global::DAM.Presentation.Models
 @using global::DAM.Presentation.Services
 
 <style>
-    .gallery {
-        margin: 10px;
+    /* Common styles */
+    .section-container {
+        margin: 2rem 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+
+    /* Product information */
+    .product-info {
+        background-color: #f5f5f5;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    /* Product images - horizontal layout */
+    .product-showcase {
+        padding: 1rem 0;
+    }
+
+    .product-showcase > div {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 12px;
+        overflow-x: auto;
+    }
+
+    .product-item {
+        flex: 0 0 180px;
+        min-width: 180px;
+        padding: 8px;
+        /* Remove transition from base state to avoid drag conflicts */
+    }
+
+    /* Asset gallery - grid layout */
+    .asset-grid {
+        padding: 1rem 0;
+    }
+
+    .asset-grid > div {
         display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
     }
 
-    .gallery img,
-    .img_in_gallery img {
+    .asset-item {
+        padding: 8px;
+        /* Remove transition from base state */
+    }
+
+    /* Shared image styling */
+    .product-item img,
+    .asset-item img {
         width: 100%;
-        aspect-ratio: 1 / 1; /* Keeps the image square */
-        border-radius: 5px;
+        aspect-ratio: 1/1;
         object-fit: cover;
-        border: 2px solid #000000;
-        padding: 1vw;
+        border: 2px solid #333;
+        border-radius: 6px;
+        padding: 0.5rem;
     }
 
-    .img_in_gallery {
-        padding: 5px;
-        box-sizing: border-box;
-    }
-
-    .gallery img:hover {
+    /* Apply hover effects to images instead of containers */
+    .product-item:hover img,
+    .asset-item:hover img {
         transform: scale(1.05);
+        transition: transform 0.2s ease;
+        z-index: 1;
     }
+
+    /* Search controls */
+    .search-controls {
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 8px;
+    }
+
+    .search-controls input {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    
 </style>
 
-<head>
-    <title>Edit</title>
-</head>
-
-<section>
+<section class="section-container">
     <h1>Product edit page</h1>
-    <p><strong>Product name:</strong>@_productName</p>
-    <p><strong>Product ID:</strong>@_productId</p>
+    <div class="product-info">
+        <p><strong>Product name:</strong> @_productName</p>
+        <p><strong>Product ID:</strong> @_productId</p>
+    </div>
 </section>
 
-<section>
-    <h2>Product images</h2>
-    <div class="gallery">
-        <SortableList Group="sharedLists" Items="_productImages" Context="asset" 
+<section class="section-container">
+    <h2 class="section-title">Product images</h2>
+    <div class="product-showcase">
+        <SortableList Group="sharedLists" Items="_productAssets" Context="asset"
                       OnRemove="ProductImageRemove" OnUpdate="ProductImageReorder">
             <SortableItemTemplate>
-                <div class="card has-border has-background-white img_in_gallery">
-                    <img src="@ReadService.GetAssetContentById(asset.UUID)" alt="image of something"/>
+                <div class="product-item">
+                    <img src="@ReadService.GetAssetContentById(asset.UUID)" alt="Product image"/>
                     <p>@asset.UUID</p>
                 </div>
             </SortableItemTemplate>
@@ -57,25 +120,40 @@
     </div>
 </section>
 
-<section>
-    <div>
-        <h2>Image gallery</h2>
-
-        <div>
-            <InputText @bind-Value="_searchText" placeholder="Search for assets by uuid"/>
-            <button @onclick="SearchButton">Search</button>
+<section class="section-container">
+    <h2 class="section-title">Asset gallery</h2>
+    
+    <div class="search-controls">
+        <input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for assets by uuid"/>
+        <button @onclick="ToggleTagMenu">Select Tags</button>
+    </div>
+    
+    
+    @if (_showTagMenu)
+    {
+        <div class="tag-menu">
+            <h4>Filter with Tags</h4>
+            @foreach (Tag tag in _allTags)
+            {
+                <label style="display: block;">
+                    <input type="checkbox"
+                           checked="@_selectedTagIds.Contains(tag.UUID)"
+                           @onchange="(e) => OnTagFilterChanged(tag.UUID, (bool?) e.Value == true)"/>
+                    @tag.Name
+                </label>
+            }
         </div>
+    }
 
-        <div class="gallery">
-            <SortableList Group="sharedLists" Items="_gallery" Context="asset" 
-                          OnRemove="GalleryRemove" OnUpdate="GalleryReorder">
-                <SortableItemTemplate>
-                    <div class="card has-border has-background-white img_in_gallery">
-                        <img src="@ReadService.GetAssetContentById(asset.UUID)" alt=""/>
-                        <p>@asset.UUID</p>
-                    </div>
-                </SortableItemTemplate>
-            </SortableList>
-        </div>
+    <div class="asset-grid">
+        <SortableList Group="sharedLists" Items="_assetGallery" Context="asset"
+                      OnRemove="GalleryRemove" OnUpdate="GalleryReorder">
+            <SortableItemTemplate>
+                <div class="asset-item">
+                    <img src="@ReadService.GetAssetContentById(asset.UUID)" alt="Asset"/>
+                    <p>@asset.UUID</p>
+                </div>
+            </SortableItemTemplate>
+        </SortableList>
     </div>
 </section>

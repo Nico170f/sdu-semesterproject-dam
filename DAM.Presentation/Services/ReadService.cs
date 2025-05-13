@@ -88,25 +88,54 @@ public class ReadService : BaseService
 	/// <param name="assetId">The ID of the asset to check for unassigned tags.</param>
 	/// <param name="searchString"></param>
 	/// <returns>A list of tags not present on the asset, or empty list if none found.</returns>
-	public async Task<List<Tag>> GetTagsNotOnAsset (Guid assetId, string searchString = "")
+	public async Task<List<Tag>> GetTagsNotOnAsset(Guid assetId, string searchString = "", int amount = 20, int page = 1)
 	{
-		string apiurl = $"api/v1/assets/{assetId}/tags/gallery";
+		string apiUrl = $"api/v1/assets/{assetId}/tags/gallery?";
+		List<string> parameters = [];
+		
 		if (!string.IsNullOrEmpty(searchString))
 		{
-			apiurl += $"?searchString={searchString}";
+			parameters.Add($"searchString={searchString}");
 		}
-		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiurl);
+		
+		parameters.Add($"amount={amount}");
+		parameters.Add($"page={page}");
+
+		apiUrl += string.Join('&', parameters);
+		
+		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
 		return response ?? [];
 	}
-	
+
 	/// <summary>
 	/// Returns a list of assets that are not associated with the specified product.
 	/// </summary>
 	/// <param name="productId">The ID of the product to check for unassigned assets.</param>
+	/// <param name="searchString"></param>
+	/// <param name="selectedTags"></param>
+	/// <param name="amount"></param>
+	/// <param name="page"></param>
 	/// <returns>A list of assets not present on the product, or an empty list if none found.</returns>
-	public async Task<List<Asset>> GetAssetsNotOnProduct(Guid productId)
+	public async Task<List<Asset>> GetAssetsNotOnProduct(Guid productId, string searchString = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
 	{
-		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>($"api/v1/products/{productId}/assets/gallery");
+		string apiUrl = $"api/v1/products/{productId}/assets/gallery?";
+		List<string> parameters = [];
+		
+		if (!string.IsNullOrEmpty(searchString))
+		{
+			parameters.Add($"searchString={searchString}");
+		}
+		
+		if (selectedTagIds is not null && selectedTagIds.Count > 0)
+		{
+			parameters.Add($"selectedTagIds={string.Join(',', selectedTagIds)}");
+		}				
+		parameters.Add($"amount={amount}");
+		parameters.Add($"page={page}");
+
+		apiUrl += string.Join('&', parameters);
+		
+		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
 		return response ?? [];
 	}
 	
@@ -148,7 +177,7 @@ public class ReadService : BaseService
 		return enhancedProducts;
 	}
 
-	public async Task<List<Guid>> GetAssetIds(string searchString = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
+	public async Task<List<Guid>> GetAssetIds(string searchString = "", HashSet<Guid>? selectedTags = null, int amount = 20, int page = 1)
 	{
 		string apiUrl = "api/v1/assets?";
 		List<string> parameters = [];
@@ -158,9 +187,9 @@ public class ReadService : BaseService
 			parameters.Add($"searchString={searchString}");
 		}
 		
-		if (selectedTagIds is not null && selectedTagIds.Count > 0)
+		if (selectedTags is not null && selectedTags.Count > 0)
 		{
-			parameters.Add($"selectedTagIds={string.Join(',', selectedTagIds)}");
+			parameters.Add($"selectedTagIds={string.Join(',', selectedTags)}");
 		}
 		
 		parameters.Add($"amount={amount}");

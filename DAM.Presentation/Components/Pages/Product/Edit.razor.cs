@@ -17,11 +17,15 @@ public partial class Edit : ComponentBase
 	
 	private Guid _productId = Guid.Empty;
     private string _productName = "";
-    private int _pageNumber = 1;
     private string _searchText = "";
 
-    private List<Models.Asset> _productImages = [];
-    private List<Models.Asset> _gallery = [];
+    private List<Models.Tag> _allTags = [];
+    private HashSet<Guid> _selectedTagIds = [];
+
+    private bool _showTagMenu = false;
+    
+    private List<Models.Asset> _productAssets = [];
+    private List<Models.Asset> _assetGallery = [];
         
     protected override async Task OnInitializedAsync ()
     {
@@ -36,57 +40,84 @@ public partial class Edit : ComponentBase
         List<Guid> assetIds = await ReadService.GetAssetsByProduct(_productId); 
         foreach (Guid assetId in assetIds)
         {
-	        _productImages.Add(new Models.Asset
+	        _productAssets.Add(new Models.Asset
 	        {
 		        UUID = assetId
 	        });
         }
+
+        _allTags = await ReadService.GetAllTags();
         
-        _gallery = await ReadService.GetAssetsNotOnProduct(_productId);
+        _assetGallery = await ReadService.GetAssetsNotOnProduct(_productId);
+    }
+
+    private void OnSearchInputChanged (ChangeEventArgs e)
+    {
+	    _searchText = e.Value?.ToString() ?? "";
+	    UpdateAssetGallery();
     }
     
-    private async Task SearchButton()
+    private void ToggleTagMenu()
     {
-        
+	    _showTagMenu = !_showTagMenu;
+    }
+    
+    private void OnTagFilterChanged(Guid tagId, bool isChecked)
+    {
+	    if (isChecked)
+	    {
+		    _selectedTagIds.Add(tagId);
+	    }
+	    else
+	    {
+		    _selectedTagIds.Remove(tagId);
+	    }
+	    UpdateAssetGallery();
+    }
+
+    private async void UpdateAssetGallery ()
+    {
+	    _assetGallery = await ReadService.GetAssetsNotOnProduct(_productId, _searchText, _selectedTagIds);
+	    StateHasChanged();
     }
     
     private async Task ProductImageRemove((int oldIndex, int newIndex) indices)
     {
         // get the item at the old index in list 1
-        var item = _productImages[indices.oldIndex];
+        var item = _productAssets[indices.oldIndex];
 
         // add it to the new index in list 2
-        _gallery.Insert(indices.newIndex, item);
+        _assetGallery.Insert(indices.newIndex, item);
 
-        await DeleteService.RemoveAssetFromProduct(_productId, _productImages[indices.oldIndex].UUID);
+        await DeleteService.RemoveAssetFromProduct(_productId, _productAssets[indices.oldIndex].UUID);
         
         // remove the item from the old index in list 1
-        _productImages.Remove(_productImages[indices.oldIndex]);
+        _productAssets.Remove(_productAssets[indices.oldIndex]);
     }
 
     private async Task GalleryRemove((int oldIndex, int newIndex) indices)
     {
         // get the item at the old index in list 2
-        var item = _gallery[indices.oldIndex];
+        var item = _assetGallery[indices.oldIndex];
 
         // add it to the new index in list 1
-        _productImages.Insert(indices.newIndex, item);
+        _productAssets.Insert(indices.newIndex, item);
         
         await CreateService.AddAssetToProduct(_productId, item.UUID, indices.newIndex);
        // remove the item from the old index in list 2
-        _gallery.Remove(_gallery[indices.oldIndex]);
+       _assetGallery.Remove(_assetGallery[indices.oldIndex]);
     }
     
     private async Task ProductImageReorder((int oldIndex, int newIndex) indices)
     {
         // Get the item being moved
-        var item = _productImages[indices.oldIndex];
+        var item = _productAssets[indices.oldIndex];
     
         // Remove from old position
-        _productImages.RemoveAt(indices.oldIndex);
+        _productAssets.RemoveAt(indices.oldIndex);
     
         // Insert at new position
-        _productImages.Insert(indices.newIndex, item);
+        _productAssets.Insert(indices.newIndex, item);
 
         await UpdateService.UpdatePriority(_productId, item.UUID, indices.newIndex);
     }
@@ -94,12 +125,12 @@ public partial class Edit : ComponentBase
     private void GalleryReorder((int oldIndex, int newIndex) indices)
     {
         // Get the item being moved
-        var item = _gallery[indices.oldIndex];
+        var item = _assetGallery[indices.oldIndex];
     
         // Remove from old position
-        _gallery.RemoveAt(indices.oldIndex);
+        _assetGallery.RemoveAt(indices.oldIndex);
         
         // Insert at new position
-        _gallery.Insert(indices.newIndex, item);
+        _assetGallery.Insert(indices.newIndex, item);
     }
 }

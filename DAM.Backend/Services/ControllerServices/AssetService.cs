@@ -252,8 +252,11 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId, string? searchString)
+    public async Task<IActionResult> GetAssetTagsGallery(string assetId, string? searchString, int? amount, int? page)
     {
+	    int itemsPerPage = amount ?? 20;
+	    int currentPage = page ?? 1;
+	    
 	    IQueryable<Tag> query = _database.Tags
 	        .Where(tag => !_database.AssetTags
 	            .Any(it => it.AssetUUID.ToString() == assetId && it.TagUUID == tag.UUID));
@@ -265,6 +268,8 @@ public class AssetService : IAssetService
 	    
 	    var tagsNotOnAsset = await query
 	        .OrderBy(tag => tag.Name)
+	        .Skip((currentPage - 1) * itemsPerPage)
+	        .Take(itemsPerPage)
 	        .ToListAsync();
 	    
 	    return new OkObjectResult(tagsNotOnAsset);

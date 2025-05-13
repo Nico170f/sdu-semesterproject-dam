@@ -363,19 +363,50 @@ public class ProductService : IProductService
         return new OkObjectResult("Asset updated successfully");
     }
 
-    public async Task<IActionResult> GetProductGallery(string productId)
+    public async Task<IActionResult> GetProductGallery(string productId, string? searchString, string? selectedTagIds, int? amount, int? page)
     {
+        int itemsPerPage = amount ?? 20;
+        int currentPage = page ?? 1;
+        
         Guid? productUUID = HelperService.ParseStringGuid(productId);
         if (productUUID == null)
         {
             return new BadRequestObjectResult("Invalid UUID format");
         }
-
-        List<Asset> assets = await _database.Asset
+        
+        IQueryable<Asset> query = _database.Asset
             .Where(i => !_database.ProductAssets
-                .Any(pi => pi.AssetUUID == i.UUID && pi.ProductUUID == productUUID))
+                .Any(pi => pi.AssetUUID == i.UUID && pi.ProductUUID == productUUID));
+        
+        // Filter by searchString if provided
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            query = query.Where(i => i.UUID.ToString().Contains(searchString));
+        }
+        
+        // Filter by selectedTagIds if provided
+        if (!string.IsNullOrEmpty(selectedTagIds))
+        {
+            var tagGuids = selectedTagIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(id => HelperService.ParseStringGuid(id))
+                .Where(guid => guid.HasValue)
+                .Select(guid => guid.Value)
+                .ToList();
+        
+            if (tagGuids.Count > 0)
+            {
+                query = query.Where(asset =>
+                    _database.AssetTags.Any(at => at.AssetUUID == asset.UUID && tagGuids.Contains(at.TagUUID)));
+            }
+        }
+        
+        var assets = await query
+            .OrderBy(i => i.CreatedAt)
+            .Skip((currentPage - 1) * itemsPerPage)
+            .Take(itemsPerPage)
             .ToListAsync();
-        assets = assets.OrderBy(i => i.CreatedAt).ToList();
+        
         return new OkObjectResult(assets);
     }
     

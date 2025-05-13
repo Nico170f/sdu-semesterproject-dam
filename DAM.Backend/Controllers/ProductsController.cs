@@ -138,10 +138,10 @@ public class ProductsController : ApiController
      * Gets all assets that are not associated with a specific product.
     */
     [HttpGet("{productId}/assets/gallery")]
-    public async Task<IActionResult> GetProductGallery(string productId)
+    public async Task<IActionResult> GetProductGallery(string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetProductGallery(productId);
+	    return await _productService.GetProductGallery(productId, searchString, selectedTagIds, amount, page);
     }
 
 
