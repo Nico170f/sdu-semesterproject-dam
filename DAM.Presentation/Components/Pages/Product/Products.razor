@@ -48,31 +48,31 @@
 
 <button @onclick="SyncWithPim">Synchronize with PIM</button>
 
-<div style="visibility: @(_isLoaded ? "visible" : "hidden")">
-    <div style="text-align: left">
-        <button @onclick="NavigateToHome">Back</button>
-    </div>
+<div style="text-align: left">
+    <button @onclick="NavigateToHome">Home</button>
+</div>
 
-    <h1>Product Gallery</h1>
-    
-    <InputText @bind-Value="_newProductName" placeholder="Product name"/>
-    <InputText @bind-Value="_newProductUuid" placeholder="Product uuid"/>
-    <button @onclick="AddNewProduct">Add Product</button>
+<h1>Product Gallery</h1>
 
-    
-    <!-- Search bar -->
-    <InputText class="form-control" @bind-Value="@searchProduct" @oninput="HandleSearch" placeholder="Search by product name, id or image tag..."/>
-    <div class="gallery" id="imageGrid">
-        @foreach(EnhancedProduct product in FilteredProducts())
-        {
-            <div class="image-container" @onclick="@(e => OnImageClickNavigateTo(@product.UUID.ToString()))">
-                <img src="@(ReadService.GetAssetContentById(product.MainAssetUUID))" alt="Placeholder Image">
+<!--
+<InputText @bind-Value="_newProductName" placeholder="Product name"/>
+<InputText @bind-Value="_newProductUuid" placeholder="Product uuid"/>
+<button @onclick="AddNewProduct">Add Product</button>
+-->
 
-                <p>@($"{product.Name}")</p>
-                <p>@($"{product.UUID}")</p>
-            </div>
-        }
-    </div>
+<!-- Search bar -->
+<input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for products by name or uuid"/>
+
+<div class="gallery" id="imageGrid">
+    @foreach(EnhancedProduct product in _products)
+    {
+        <div class="image-container" @onclick="@(e => OnImageClickNavigateTo(@product.UUID.ToString()))">
+            <img src="@(ReadService.GetAssetContentById(product.MainAssetUUID))" alt="Placeholder Image">
+
+            <p>@($"{product.Name}")</p>
+            <p>@($"{product.UUID}")</p>
+        </div>
+    }
 </div>
 
     

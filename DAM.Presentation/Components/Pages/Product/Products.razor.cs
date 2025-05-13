@@ -18,34 +18,17 @@ public partial class Products : ComponentBase
 	#pragma warning disable CS8618
 	#endregion
 	
-	private string searchProduct = ""; //variable that holds text in searchbar
-
     private bool _isLoaded = false;
-    private string searchText = ""; // Holds the search text
-    List<EnhancedProduct> products = [];
+    private string _searchText = "";
+    private List<EnhancedProduct> _products = [];
 
     private string _newProductName, _newProductUuid;
 
-    private async Task AddNewProduct ()
-    {
-	    try
-	    {
-		    Models.Product product = new Models.Product()
-		    {
-			    Name = _newProductName,
-			    UUID = new Guid(_newProductUuid)
-		    };
-		    await CreateService.UploadProductWithUUID(product);
-	    }
-	    catch (Exception e)
-	    {
-		    Console.WriteLine(e.Message);
-	    }
-    }
+
 
     protected override async Task OnInitializedAsync ()
     {
-	    products = await ReadService.GetAllProducts() ?? [];
+	    _products = await ReadService.GetAllProducts() ?? [];
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -68,23 +51,39 @@ public partial class Products : ComponentBase
         Navigation.NavigateTo($"/dam/products/edit?productId={productId}");
     }
     
-    private IEnumerable<EnhancedProduct> FilteredProducts()
+    private void OnSearchInputChanged (ChangeEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(searchProduct)) //if there is nothing in search product it searches for all the products
-            return products;
-
-        return products.Where(product =>
-            product.Name.Contains(searchProduct, StringComparison.OrdinalIgnoreCase) || //returns based on product name and product id
-            product.UUID.ToString().Contains(searchProduct, StringComparison.OrdinalIgnoreCase));
+	    _searchText = e.Value?.ToString() ?? "";
+	    UpdateProductList();
     }
     
-    private void HandleSearch(ChangeEventArgs e)
+    private async void UpdateProductList ()
     {
-	    searchProduct = e.Value?.ToString() ?? string.Empty;
+	    _products = await ReadService.GetProducts(searchString: _searchText);
+	    StateHasChanged();
     }
 
     private async Task SyncWithPim ()
     {
 	    await ReadService.SyncWithPim();
+	    UpdateProductList();
+    }
+    
+    //not used
+    private async Task AddNewProduct ()
+    {
+	    try
+	    {
+		    Models.Product product = new Models.Product()
+		    {
+			    Name = _newProductName,
+			    UUID = new Guid(_newProductUuid)
+		    };
+		    await CreateService.UploadProductWithUUID(product);
+	    }
+	    catch (Exception e)
+	    {
+		    Console.WriteLine(e.Message);
+	    }
     }
 }

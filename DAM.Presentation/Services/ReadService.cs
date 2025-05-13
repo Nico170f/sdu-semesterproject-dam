@@ -30,7 +30,7 @@ public class ReadService : BaseService
 	public async Task<List<Guid>> GetAssetsByProduct(Guid productId)
 	{
 		var response = await _httpClient.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
-		return response?.ImageIds ?? [];
+		return response?.AssetIds ?? [];
 	}
 	
 	/// <summary>
@@ -142,14 +142,14 @@ public class ReadService : BaseService
 		return enhancedProducts;
 	}
 
-	public async Task<List<Guid>> GetAssetIds(string searchText = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
+	public async Task<List<Guid>> GetAssetIds(string searchString = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
 	{
-		string apiUrl = "api/v1/Assets?";
+		string apiUrl = "api/v1/assets?";
 		List<string> parameters = [];
 		
-		if (!string.IsNullOrEmpty(searchText))
+		if (!string.IsNullOrEmpty(searchString))
 		{
-			parameters.Add($"searchString={searchText}");
+			parameters.Add($"searchString={searchString}");
 		}
 		
 		if (selectedTagIds is not null && selectedTagIds.Count > 0)
@@ -165,10 +165,51 @@ public class ReadService : BaseService
 		List<Guid>? assetIds = await _httpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
 		return assetIds ?? [];
 	}
+
+	public async Task<List<EnhancedProduct>> GetProducts(string searchString = "", int amount = 20, int page = 1)
+	{
+		string apiUrl = "api/v1/products?";
+		List<string> parameters = [];
+		
+		if (!string.IsNullOrEmpty(searchString))
+		{
+			parameters.Add($"searchString={searchString}");
+		}
+		
+		parameters.Add($"amount={amount}");
+		parameters.Add($"page={page}");
+
+		apiUrl += string.Join('&', parameters);
+
+		List<Product>? products = await _httpClient.GetFromJsonAsync<List<Product>>(apiUrl);
+		
+		List<EnhancedProduct> enhancedProducts = [];
+
+		foreach (var product in products ?? [])
+		{
+			var enhancedProduct = new EnhancedProduct
+			{
+				UUID = product.UUID,
+				Name = product.Name,
+			};
+
+			var assets = await GetAssetsByProduct(product.UUID);
+			Guid assetId = Guid.Empty;
+			if (assets.Count > 0)
+			{
+				assetId = assets[0];
+			}
+			enhancedProduct.MainAssetUUID = assetId;
+			
+			enhancedProducts.Add(enhancedProduct);
+		}
+		
+		return enhancedProducts;
+	}
 	
 	public async Task SyncWithPim ()
 	{
-		var response = await _httpClient.GetAsync("api/v1/Products/syncWithPim");
+		var response = await _httpClient.GetAsync("api/v1/products/syncWithPim");
 		Console.WriteLine(response.Content);
 	}
 }

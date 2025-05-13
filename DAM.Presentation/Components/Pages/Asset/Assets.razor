@@ -61,10 +61,12 @@
     <button @onclick="NavigateToHome">Home</button>
 </div>
 <div>
+    
     <h1>Assets Gallery</h1>
+    
     <input value="@_searchText" @oninput="OnSearchInputChanged" placeholder="Search for assets by uuid"/>
-    <button @onclick="ToggleTagMenu">Select Tags</button> 
-    <InputFile OnChange="UploadAsset" accept="image/*" />
+    <button @onclick="ToggleTagMenu">Select Tags</button>
+    <InputFile OnChange="UploadAsset" accept="image/*"/>
 </div>
 
 @if (_showTagMenu)
@@ -84,7 +86,7 @@
 }
 
 <div class="gallery" id="imageGrid">
-    @foreach (Guid assetId in _assetsIds)
+    @foreach (Guid assetId in _assetIds)
     {
         <div>
             <div class="image-container" @onclick="@(_ => Navigation.NavigateTo($"/dam/assets/edit?assetId={assetId}"))">

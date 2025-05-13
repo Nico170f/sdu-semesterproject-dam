@@ -59,7 +59,7 @@ public class CreateService : BaseService
 		//Console.WriteLine(dataUrl);
 
 		// Make payload for uploading an image to the backend
-		var payload = new CreateImageRequest()
+		var payload = new CreateAssetRequest()
 		{
 			Content = dataUrl
 		};
@@ -134,9 +134,9 @@ public class CreateService : BaseService
 	/// <param name="priority"></param>
 	public async Task AddAssetToProduct(Guid productId, Guid assetId, int priority)
 	{
-		var payload = new AddProductImageRequest()
+		var payload = new AddProductAssetRequest()
 		{
-			ImageId = assetId.ToString(),
+			AssetId = assetId.ToString(),
 			Priority = priority.ToString()
 		};
 		

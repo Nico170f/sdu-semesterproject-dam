@@ -17,7 +17,7 @@ public partial class Assets : ComponentBase
 	#pragma warning restore CS8618
 	#endregion
 	
-    private List<Guid> _assetsIds = [];
+    private List<Guid> _assetIds = [];
     private string _searchText = "";
     private bool _showTagMenu = false;
     private List<Models.Tag> _allTags = [];
@@ -25,7 +25,7 @@ public partial class Assets : ComponentBase
     
     protected override async Task OnInitializedAsync()
     {
-        _assetsIds = await ReadService.GetAllAssetIds();
+        _assetIds = await ReadService.GetAllAssetIds();
         _allTags = await ReadService.GetAllTags();
     }
 
@@ -66,7 +66,7 @@ public partial class Assets : ComponentBase
 
     private async void UpdateAssetList ()
     {
-	    _assetsIds = await ReadService.GetAssetIds(searchText: _searchText, selectedTagIds: _selectedTagIds);
+	    _assetIds = await ReadService.GetAssetIds(searchString: _searchText, selectedTagIds: _selectedTagIds);
 	    StateHasChanged();
     }
 

@@ -31,7 +31,8 @@ public class ProductService : IProductService
     
         if (!string.IsNullOrEmpty(searchString))
         {
-            query = query.Where(p => p.Name.Contains(searchString));
+			query = query.Where(p => p.Name.Contains(searchString) || 
+			                         p.UUID.ToString().Contains(searchString));
         }
     
         var products = await query
