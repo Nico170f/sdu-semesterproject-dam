@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 
 namespace DAM.Backend.Services.ControllerServices;
@@ -362,8 +363,6 @@ public class ProductService : IProductService
         return new OkObjectResult(assets);
     }
     
-    
-    
     // This method should probably be in the helper service
     private Asset GetDefaultAsset()
     {
@@ -373,5 +372,51 @@ public class ProductService : IProductService
         };
         
         return asset;
+    }
+
+    public async Task<IActionResult> GetProductsFromPIM ()
+    {
+	    HttpClientHandler handler = new HttpClientHandler();
+	    HttpClient _httpClient = new(handler)
+	    {
+		    BaseAddress = new Uri("http://localhost:5084/")
+	    };
+	    PimResponse? response = await _httpClient.GetFromJsonAsync<PimResponse>($"api/products/list/?page=0&page-size=9999");
+
+	    List<Product> pimProducts = [];
+
+	    foreach (var item in response?.items ?? [])
+	    {
+		    pimProducts.Add(new Product()
+		    {
+			    Name = item.name,
+			    UUID = new Guid(item.product_id)
+		    });
+	    }
+	    
+	    SyncListWithDatabase<Product>(_database.Products, pimProducts, item => item.UUID, _database);
+	    
+	    return new OkObjectResult(response);
+    }
+    
+    void SyncListWithDatabase<T>(DbSet<T> dbSet, List<T> newList, Func<T, object> keySelector, DbContext context) where T : class
+    {
+        var dbItems = dbSet.ToList();
+    
+        // Delete items not in newList
+        var toDelete = dbItems
+            .Where(dbItem => !newList.Any(newItem =>
+                keySelector(newItem).Equals(keySelector(dbItem))))
+            .ToList();
+        dbSet.RemoveRange(toDelete);
+    
+        // Add items in newList not in DB
+        var toAdd = newList
+            .Where(newItem => !dbItems.Any(dbItem =>
+                keySelector(dbItem).Equals(keySelector(newItem))))
+            .ToList();
+        dbSet.AddRange(toAdd);
+    
+        context.SaveChanges();
     }
 }

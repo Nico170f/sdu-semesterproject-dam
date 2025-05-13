@@ -27,51 +27,6 @@
         background-color: #333;
         color: white;
     }
-
-
-    .help-toggle {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 15px;
-        font-size: 16px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        z-index: 1000;
-    }
-
-    .help-slide-in {
-        position: fixed;
-        top: 0;
-        right: -350px; /* skjult */
-        width: 300px;
-        height: 100%;
-        background-color: #f8f9fa;
-        box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-        padding: 20px;
-        transition: right 0.3s ease-in-out;
-        z-index: 999;
-        overflow-y: auto;
-    }
-
-    .help-slide-in.open {
-        right: 0; /* vises */
-    }
-
-    .close-help {
-        margin-top: 20px;
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
 </style>
 
 
@@ -95,24 +50,6 @@
     💡 Help
 </button>
 
-        
-        
-
-<button class="help-toggle" @onclick="ToggleHelp">❓ Help</button>
-
-<div class="help-slide-in @(showHelp ? "open" : "")">
-    <h3>Do you need help?</h3>
-    <ul>
-        <li>📦 <strong>Products:</strong> Look up and search for products.</li>
-        <li>💼 <strong>Assets:</strong> Upload and manage digital assets.</li>
-    </ul>
-</div>
-
-
-
-
-
-
 @code
 {
     public void NavigateToProducts()
@@ -134,13 +71,5 @@
     {
         NavigationManager.NavigateTo("/dam/tags");
     }
-    
-    private bool showHelp = false;
-
-    private void ToggleHelp()
-    {
-        showHelp = !showHelp;
-    }
-
 }
 

@@ -18,4 +18,5 @@ public interface IProductService
     Task<IActionResult> UnassignProductAsset(string productId, string assetId);
     Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductAsset> body);
     Task<IActionResult> GetProductGallery(string productId);
+    Task<IActionResult> GetProductsFromPIM();
 }
