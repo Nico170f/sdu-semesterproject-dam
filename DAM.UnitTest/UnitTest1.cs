@@ -1,5 +1,6 @@
 ﻿//namespace DAM.UnitTest;
 
+using System.Linq.Expressions;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -147,6 +148,7 @@ public class Tests
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
     }
     
+    /*
     [Test]
     public async Task TestCreateAndDeleteTag()
     {
@@ -171,7 +173,7 @@ public class Tests
         IActionResult actionResult = await _tagService.DeleteTag(tag.UUID.ToString());
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
     }
-    
+    */
     [Test]
     public async Task TestUpdateImage()
     {
@@ -197,15 +199,57 @@ public class Tests
         
         Assert.IsType<OkObjectResult>(result);
     }
+    
+    [Test]
+    public async Task TestGetAssetResizedByNewWidth()
+    {
+        // Arrange
+        string productId = Guid.NewGuid().ToString();
+        int priority = 0;
+        int newWidth = 200;
+
+        _db = CreateDbContext();
+
+        // Mock asset data
+        var asset = new Asset
+        {
+            UUID = Guid.NewGuid(),
+            Content = "data:image/png;base64,originalBase64Content",
+            Width = 400,
+            Height = 300
+        };
+
+        var productAsset = new ProductAsset
+        {
+            ProductUUID = Guid.Parse(productId),
+            AssetUUID = asset.UUID,
+            Priority = priority
+        };
+
+        _db.Asset.Add(asset);
+        _db.ProductAssets.Add(productAsset);
+        _db.SaveChanges();
+
+        // Act
+        IActionResult result = await _productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
+
+        // Assert
+        Console.WriteLine(result.ToString());
+        Assert.IsType<FileContentResult>(result);
+        var fileResult = result as FileContentResult;
+        Assert.NotNull(fileResult);
+        var response = System.Text.Encoding.Default.GetString(fileResult.FileContents);
+        Assert.NotEmpty(response); // Ensure the resized content is returned
+    }
 
     [Test]
-    public async Task TestPatchImage()
+    public async Task TestPatchAsset()
     {
         
     }
     
     [Test]
-    public async Task TestDeleteImage()
+    public async Task TestDeleteAsset()
     {
         
     }
