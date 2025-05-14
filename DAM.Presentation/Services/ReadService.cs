@@ -94,7 +94,7 @@ public class ReadService : BaseService
 	/// <param name="assetId">The ID of the asset to check for unassigned tags.</param>
 	/// <param name="searchString"></param>
 	/// <returns>A list of tags not present on the asset, or empty list if none found.</returns>
-	public async Task<List<Tag>> GetTagsNotOnAsset(Guid assetId, string searchString = "", int amount = 20, int page = 1)
+	public async Task<(List<Tag> tagList, int totalAmount)> GetTagsNotOnAsset(Guid assetId, string searchString = "", int amount = 20, int page = 1)
 	{
 		string apiUrl = $"api/v1/assets/{assetId}/tags/gallery?";
 		List<string> parameters = [];
@@ -104,13 +104,16 @@ public class ReadService : BaseService
 			parameters.Add($"searchString={searchString}");
 		}
 		
+		string amountApiUrl = $"api/v1/tags/count?assetId={assetId}&" + string.Join('&', parameters); 
+		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 		
 		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
-		return response ?? [];
+		return (response ?? [], totalAmount);
 	}
 
 	/// <summary>

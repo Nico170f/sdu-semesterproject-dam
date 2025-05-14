@@ -101,7 +101,7 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetAssetById(string assetId, int? height, int? width)
+    public async Task<IActionResult> GetAssetById(string assetId, int? width, int? height)
     {
         Asset? finalAsset = null;
         Guid? assetUuid = HelperService.ParseStringGuid(assetId);

@@ -26,7 +26,10 @@ public partial class Edit : ComponentBase
     
     private List<Models.Asset> _productAssets = [];
     private List<Models.Asset> _assetGallery = [];
-        
+
+    private int _currentPageNumber = 1;
+    private int _totalPageCount = 0;
+    private int _amount = 18;
     protected override async Task OnInitializedAsync ()
     {
         var uri = new Uri(Navigation.Uri);
@@ -75,9 +78,10 @@ public partial class Edit : ComponentBase
 	    UpdateAssetGallery();
     }
 
-    private async void UpdateAssetGallery ()
+    private async void UpdateAssetGallery()
     {
-	    _assetGallery = await ReadService.GetAssetsNotOnProduct(_productId, _searchText, _selectedTagIds);
+	    (_assetGallery, int totalAmount) = await ReadService.GetAssetsNotOnProduct(_productId, _searchText, _selectedTagIds,amount: _amount, page: _currentPageNumber);
+	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
 	    StateHasChanged();
     }
     
@@ -132,5 +136,17 @@ public partial class Edit : ComponentBase
         
         // Insert at new position
         _assetGallery.Insert(indices.newIndex, item);
+    }
+    
+    private void NextPage ()
+    {
+	    _currentPageNumber = int.Min(_totalPageCount, _currentPageNumber + 1);
+	    UpdateAssetGallery();
+    }
+
+    private void PreviousPage ()
+    {
+	    _currentPageNumber = int.Max(1, _currentPageNumber - 1);
+	    UpdateAssetGallery();
     }
 }

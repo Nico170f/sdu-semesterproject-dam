@@ -528,4 +528,71 @@ public class ProductService : IProductService
     {
         throw new NotImplementedException();
     }
+    
+    public async Task<IActionResult> GetCountOfAssetsNotOnProduct(string? productId, string? searchString, string? selectedTagIds)
+    {
+	    // Check if productId is valid
+	    Guid? productUUID = HelperService.ParseStringGuid(productId);
+	    if (productUUID == null)
+	    {
+		    return new BadRequestObjectResult("Invalid product UUID format");
+	    }
+
+	    // Verify the product exists
+	    var product = await _database.Products
+		    .FirstOrDefaultAsync(p => p.UUID == productUUID);
+
+	    if (product == null)
+	    {
+		    return new NotFoundObjectResult("Product not found");
+	    }
+
+	    // Get the assets already associated with this product
+	    var assetsOnProduct = _database.ProductAssets
+		    .Where(pa => pa.ProductUUID == productUUID)
+		    .Select(pa => pa.AssetUUID);
+
+	    // Start with query for assets not on the product
+	    IQueryable<Asset> query = _database.Asset
+		    .Where(a => !assetsOnProduct.Contains(a.UUID));
+
+	    // Filter by UUID if searchString is provided
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(asset => asset.UUID.ToString().Contains(searchString));
+	    }
+
+	    // Filter by selected tags if provided
+	    if (!string.IsNullOrEmpty(selectedTagIds))
+	    {
+		    // Split the comma-separated string and parse to GUIDs
+		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
+			    .Select(id => HelperService.ParseStringGuid(id))
+			    .Where(guid => guid.HasValue)
+			    .Select(guid => guid.Value)
+			    .ToList();
+
+		    if (tagUUIDs.Any())
+		    {
+			    // Get assets that have ANY of the specified tags
+			    query = query.Where(asset =>
+				    _database.AssetTags
+					    .Any(it => it.AssetUUID == asset.UUID && tagUUIDs.Contains(it.TagUUID)));
+		    }
+	    }
+
+	    // Count total matching assets
+	    int count = await query.CountAsync();
+
+	    return new OkObjectResult(count);
+    }
+
+    public async Task<IActionResult> GetCountOfProducts(string searchString)
+    {
+	    List<Product> products = new List<Product>();
+
+	    products = await _database.Products.Where(p => p.Name.Contains(searchString) || p.UUID.ToString().Contains(searchString)).ToListAsync();
+
+	    return new OkObjectResult(products.Count);
+    }
 }

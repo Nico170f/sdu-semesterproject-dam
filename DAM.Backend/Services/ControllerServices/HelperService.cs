@@ -114,12 +114,12 @@ public static class HelperService
         byte[] assetBytes = Convert.FromBase64String(base64Asset);
         
         using (var inputStream = new MemoryStream(assetBytes))
-        using (SixLabors.ImageSharp.Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
+        using (Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
         {
-            // var aspectRatio = (double)image.Height / image.Width;
-            // int newHeight = (int)(newWidth * aspectRatio);
+            var aspectRatio = (double)asset.Height / asset.Width;
+            int newHeight = (int)(newWidth * aspectRatio);
 
-            // image.Mutate(x => x.Resize(newWidth, newHeight));
+            asset.Mutate(x => x.Resize(newWidth, newHeight));
             
             using (var outputStream = new MemoryStream())
             {

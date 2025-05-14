@@ -87,7 +87,7 @@
                             <div class="image-container" @onclick="@(_ => Navigation.NavigateTo($"/dam/assets/edit?assetId={assetId}"))">
                                 <img 
                                     loading="lazy"
-                                    src="@ReadService.GetAssetContentById(assetId)"
+                                    src="@ReadService.GetAssetContentById(assetId, 100, 100)"
                                     class="asset-image"
                                     alt="Asset" />
                             </div>
@@ -106,6 +106,8 @@
         </div>
     </div>
 </div>
+
+
 
 <style>
     .asset-card {

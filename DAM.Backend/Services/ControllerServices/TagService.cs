@@ -4,6 +4,7 @@ using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace DAM.Backend.Services;
 
@@ -112,4 +113,30 @@ public class TagService : ITagService
 
         return new OkObjectResult(assets);
     }
+    
+    public async Task<IActionResult> GetCountOfTags(string? searchString, string? assetId)
+    {
+	    // Start with all assets query
+	    IQueryable<Tag> query = _database.Tags;
+
+	    // Filter by UUID if searchString is provided
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(tag => tag.UUID.ToString().Contains(searchString));
+	    }
+
+	    if (assetId != null)
+	    {
+		    query = query
+			    .Join(_database.AssetTags, t => t.UUID, at => at.TagUUID, (t, at) => new { Tag = t, AssetTag = at })
+			    .Where(joined => !joined.Tag.UUID.ToString().Equals(joined.AssetTag.AssetUUID.ToString()))
+			    .Select(joined => joined.Tag);
+	    }
+
+	    // Count total matching assets
+	    int count = await query.CountAsync();
+
+	    return new OkObjectResult(count);
+    }
+    
 }
