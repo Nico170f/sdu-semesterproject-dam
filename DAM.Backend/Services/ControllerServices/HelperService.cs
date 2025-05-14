@@ -68,7 +68,7 @@ public static class HelperService
         return null;
     }
     
-    public static async Task<string> ResizeAssetByFactorAsync(string base64Asset, int scaleFactor)
+    public static async Task<string> ResizeAssetByFactor(string base64Asset, int scaleFactor)
     {
         if (scaleFactor <= 0)
             throw new ArgumentOutOfRangeException(nameof(scaleFactor), "Scale factor must be greater than 0");
@@ -94,7 +94,7 @@ public static class HelperService
         }
     }
         
-    public static async Task<string> ResizeAssetWidthAsync(string base64Asset, int newWidth)
+    public static async Task<string> ResizeAssetByNewWidth(string base64Asset, int newWidth)
     {
         byte[] assetBytes = Convert.FromBase64String(base64Asset);
         
