@@ -7,13 +7,16 @@ namespace DAM.Backend.Services.ControllerServices;
 
 public interface IProductService
 {
+	Task<IActionResult> GetProducts (string? searchString, int? amount, int? page);
     Task<IActionResult> CreateMockProduct(CreateMockProductRequest body);
+    Task<IActionResult> CreateProduct(CreateProductRequest body);
     Task<IActionResult> GetProduct(string productId);
     Task<IActionResult> GetProductAssets(string productId);
     Task<IActionResult> GetProductAssetsAmount(string productId);
     Task<IActionResult> GetProductAsset(string productId, string priority);
-    Task<IActionResult> AssignProductAsset(string productId, AddProductImageRequest body);
-    Task<IActionResult> UnassignProductAsset(string productId, string imageId);
-    Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductImage> body);
-    Task<IActionResult> GetProductGallery(string productId);
+    Task<IActionResult> AssignProductAsset(string productId, AddProductAssetRequest body);
+    Task<IActionResult> UnassignProductAsset(string productId, string assetId);
+    Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductAsset> body);
+    Task<IActionResult> GetProductGallery(string productId, string? searchString, string? selectedTagIds, int? amount, int? page);
+    Task<IActionResult> GetProductsFromPIM();
 }

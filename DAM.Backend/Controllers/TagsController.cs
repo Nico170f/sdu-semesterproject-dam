@@ -16,13 +16,13 @@ public class TagsController : ApiController
 
     /*
      * GET /tags
-     * Gets all tags
+     * Gets tags with optional search parameters
      */
     [HttpGet()]
-    public async Task<IActionResult> GetAllTags()
+    public async Task<IActionResult> GetTags([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetAllTags();
+        return await _tagService.GetTags(searchString, amount, page);
     }
     
     
@@ -47,5 +47,22 @@ public class TagsController : ApiController
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _tagService.DeleteTag(tagId);
+    }
+
+    /*
+     * GET tags/search
+     * Gets all assets associated with tagList
+     * 
+     */
+    [HttpGet("search")]
+    public async Task<IActionResult> GetAssetsTags([FromQuery] string tagList)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        GetAssetsTagsRequest query = new GetAssetsTagsRequest
+        {
+            TagList = tagList.Split(",").Select(Guid.Parse).ToList()
+        };
+        
+        return await _tagService.GetAssetsTags(query);
     }
 }

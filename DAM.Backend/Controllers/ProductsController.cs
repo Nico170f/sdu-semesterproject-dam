@@ -14,22 +14,44 @@ public class ProductsController : ApiController
     {
         _productService = productService;
     }
+    
+    /*
+     * GET /products
+     * Gets products with optional search parameters
+     */
+    [HttpGet()]
+    public async Task<IActionResult> GetProducts([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetProducts(searchString, amount, page);
+    }
         
     /*
      * POST /products/mock
      * Add a mock product.
      */
     [HttpPost("mock")]
-    public async Task<IActionResult> CreateProduct([FromBody] CreateMockProductRequest body)
+    public async Task<IActionResult> CreateMockProduct([FromBody] CreateMockProductRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.CreateMockProduct(body);
     }
     
+    /*
+     * POST /products/add
+     * Add a product with both name and uuid
+     */
+    [HttpPost("add")]
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest body)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.CreateProduct(body);
+    }
+    
     
     /*
      * GET /products/{productId}
-     * Get all products (optionally with pagination and search filters).
+     * Get product by id
      */
     [HttpGet("{productId}")]
     public async Task<IActionResult> GetProduct(string productId)
@@ -81,7 +103,7 @@ public class ProductsController : ApiController
      * Associate an existing asset with a product
      */
     [HttpPost("{productId}/assets")]
-    public async Task<IActionResult> AssignProductAsset(string productId, [FromBody] AddProductImageRequest body)
+    public async Task<IActionResult> AssignProductAsset(string productId, [FromBody] AddProductAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.AssignProductAsset(productId, body);
@@ -104,21 +126,29 @@ public class ProductsController : ApiController
      * Update relationship metadata (like priority) between product and asset.
      */
     [HttpPatch("{productId}/assets/{assetId}")]
-    public async Task<IActionResult> PatchProductAsset(string productId, string assetId, [FromBody] JsonPatchDocument<ProductImage> patchDoc)
+    public async Task<IActionResult> PatchProductAsset(string productId, string assetId, [FromBody] JsonPatchDocument<ProductAsset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.PatchProductAsset(productId, assetId, patchDoc);
     }
     
     
-    /*
-     * GET /products/{productId}/gallery
-     * Gets all images that are not associated with a specific product.
-     */
-    [HttpGet("{productId}/gallery")]
-    public async Task<IActionResult> GetProductGallery(string productId)
+     /*
+     * GET /products/{productId}/assets/gallery
+     * Gets all assets that are not associated with a specific product.
+    */
+    [HttpGet("{productId}/assets/gallery")]
+    public async Task<IActionResult> GetProductGallery(string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.GetProductGallery(productId);
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetProductGallery(productId, searchString, selectedTagIds, amount, page);
+    }
+
+
+    [HttpGet("syncWithPim")]
+    public async Task<IActionResult> SynchronizeWithPim ()
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetProductsFromPIM();
     }
 }

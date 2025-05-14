@@ -18,13 +18,13 @@ public class AssetsController : ApiController
     
     /*
      * POST /assets
-     * Upload a new asset (expects base64 image content).
+     * Upload a new asset (expects base64 asset content).
      */
     [HttpPost()]
-    public async Task<IActionResult> PostCreateAsset([FromBody] CreateImageRequest body)
+    public async Task<IActionResult> PostCreateAsset([FromBody] CreateAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.CreateImage(body);
+        return await _assetService.CreateAsset(body);
     }
     
     
@@ -33,12 +33,10 @@ public class AssetsController : ApiController
      * Get all assets (optionally with pagination and search filters).
      */
     [HttpGet()]
-    public async Task<IActionResult> GetAssetsPage([FromQuery] int? size, [FromQuery] int? page)
+    public async Task<IActionResult> GetAssetsWithOptionalParameters([FromQuery] string? searchString, [FromQuery] string? selectedTagIds, [FromQuery] int? amount, [FromQuery] int? page)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        
-        int? offset = page*size;
-        return await _assetService.GetAssetsPage(size, offset);
+        return await _assetService.GetAssets(searchString, selectedTagIds, amount, page);
     }
     
     
@@ -50,7 +48,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetAsset(string assetId, [FromQuery] int? height, [FromQuery] int? width)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetImageById(assetId, height, width);
+        return await _assetService.GetAssetById(assetId, height, width);
     }
     
     
@@ -69,10 +67,10 @@ public class AssetsController : ApiController
     
     /*
      * PATCH /assets/{assetId}
-     * Partially updates an image using JSON Patch document.
+     * Partially updates an asset using JSON Patch document.
      */
     [HttpPatch("{assetId}")]
-    public async Task<IActionResult> PatchAsset(string assetId, [FromBody] JsonPatchDocument<Image> patchDoc)
+    public async Task<IActionResult> PatchAsset(string assetId, [FromBody] JsonPatchDocument<Asset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.PatchAsset(assetId, patchDoc);
@@ -80,8 +78,8 @@ public class AssetsController : ApiController
     
     
     /*
-     * DELETE /assets/{imageId}
-     * Deletes an image by its ID.
+     * DELETE /assets/{assetId}
+     * Deletes an asset by its ID.
      */
     [HttpDelete("{assetId}")]
     public async Task<IActionResult> DeleteAsset(string assetId)
@@ -93,31 +91,31 @@ public class AssetsController : ApiController
     
     /*
      * GET /assets/search | /assets/search?size=10&page=0&searchQuery=example
-     * Returns a paginated list of image IDs filtered by search query.
+     * Returns a paginated list of asset IDs filtered by search query.
      */
     [HttpGet("search")]
     public async Task<IActionResult> SearchAssets([FromQuery] int size, [FromQuery] int page, [FromQuery] string? searchQuery = null) 
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetImageIdPileFromSearch(size, page * size, searchQuery);
+        return await _assetService.GetAssetIdPileFromSearch(size, page * size, searchQuery);
     }
     
     
     /*
      * GET assets/{assetId}/tags/gallery
-     * Gets all tags that are not already associated with an asset
+     * Gets all tags that are not already associated with an asset with optional searching for name/uuid and pagination
      */
     [HttpGet("{assetId}/tags/gallery")]
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId)
+    public async Task<IActionResult> GetAssetTagsGallery(string assetId, [FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetTagsGallery(assetId);
+        return await _assetService.GetAssetTagsGallery(assetId, searchString, amount, page);
     }
     
     
     /*
      * GET assets/{assetId}/tags
-     * Gets all tags associated with an image
+     * Gets all tags associated with an asset
      */
     [HttpGet("{assetId}/tags")]
     public async Task<IActionResult> GetAssetTags(string assetId)
@@ -128,27 +126,26 @@ public class AssetsController : ApiController
     
     /*
      * POST /assets/{assetId}/tags/{tagId}
-     * Adds a tag to an image.
+     * Adds a tag to an asset.
      */
-    [HttpPost("{imageId}/tags/{tagId}")]
-    public async Task<IActionResult> AddAssetTag(string imageId, string tagId)
+    [HttpPost("{assetId}/tags/{tagId}")]
+    public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.AddAssetTag(imageId, tagId);
+        return await _assetService.AddAssetTag(assetId, tagId);
     }
     
     
     /*
-     * DELETE /assets/{imageId}/tags/{tagId}
-     * Removes a tag from an image.
+     * DELETE /assets/{assetId}/tags/{tagId}
+     * Removes a tag from an asset.
      */
-    [HttpDelete("{imageId}/tags/{tagId}")]
-    public async Task<IActionResult> DeleteAssetTag(string imageId, string tagId)
+    [HttpDelete("{assetId}/tags/{tagId}")]
+    public async Task<IActionResult> DeleteAssetTag(string assetId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.RemoveAssetTag(imageId, tagId);
+        return await _assetService.RemoveAssetTag(assetId, tagId);
     }
-    
 }
 
 
