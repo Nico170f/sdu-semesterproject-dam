@@ -1,5 +1,6 @@
 ﻿//namespace DAM.UnitTest;
 
+using System.Linq.Expressions;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -197,15 +198,66 @@ public class Tests
         
         Assert.IsType<OkObjectResult>(result);
     }
+    
+    [Fact]
+    public async Task TestGetAssetResizedByNewWidth()
+    {
+        // Arrange
+        string productId = Guid.NewGuid().ToString();
+        int priority = 1;
+        int newWidth = 200;
+
+        var mockDatabase = new Mock<Database>();
+        var mockHelperService = new Mock<IHelperService>();
+
+        // Mock asset data
+        var asset = new Asset
+        {
+            UUID = Guid.NewGuid(),
+            Content = "data:image/png;base64,originalBase64Content",
+            Width = 400,
+            Height = 300
+        };
+
+        var productAsset = new ProductAsset
+        {
+            ProductUUID = Guid.Parse(productId),
+            AssetUUID = asset.UUID,
+            Priority = priority
+        };
+
+        mockDatabase.Setup(db => db.ProductAssets
+                .FirstOrDefaultAsync(It.IsAny<Expression<Func<ProductAsset, bool>>>()))
+            .ReturnsAsync(productAsset);
+
+        mockDatabase.Setup(db => db.Asset
+                .FirstOrDefaultAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+            .ReturnsAsync(asset);
+
+        mockHelperService.Setup(hs => hs.ResizeBase64WithPadding(It.IsAny<Asset>(), null, newWidth))
+            .Returns("data:image/png;base64,resizedBase64Content");
+
+        var productService = new ProductService(Mock.Of<IConfiguration>(), mockDatabase.Object);
+
+        // Act
+        IActionResult result = await productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
+
+        // Assert
+        Assert.IsType<FileContentResult>(result);
+        var fileResult = result as FileContentResult;
+        Assert.NotNull(fileResult);
+        var response = System.Text.Encoding.Default.GetString(fileResult.FileContents);
+        Assert.Equal("data:image/png;base64,resizedBase64Content", response);
+    }
 
     [Test]
-    public async Task TestPatchImage()
+    public async Task TestPatchAsset()
     {
         
     }
     
     [Test]
-    public async Task TestDeleteImage()
+    public async Task TestDeleteAsset()
     {
         
     }

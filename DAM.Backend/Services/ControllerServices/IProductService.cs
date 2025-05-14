@@ -19,4 +19,5 @@ public interface IProductService
     Task<IActionResult> PatchProductAsset(string productId, string assetId, JsonPatchDocument<ProductAsset> body);
     Task<IActionResult> GetProductGallery(string productId, string? searchString, string? selectedTagIds, int? amount, int? page);
     Task<IActionResult> GetProductsFromPIM();
+    Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority, int newWidth);
 }

@@ -461,4 +461,9 @@ public class ProductService : IProductService
     
         context.SaveChanges();
     }
+
+    public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority, int newWidth)
+    {
+        throw new NotImplementedException();
+    }
 }
