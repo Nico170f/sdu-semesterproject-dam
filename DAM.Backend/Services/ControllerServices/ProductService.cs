@@ -462,62 +462,67 @@ public class ProductService : IProductService
         context.SaveChanges();
     }
 
-    public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority, int newWidth)
+  public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority, int newWidth)
+{
+    Guid? productUUID = HelperService.ParseStringGuid(productId);
+    if (productUUID == null)
     {
-        Guid? productUUID = HelperService.ParseStringGuid(productId);
-        if (productUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid product UUID format");
-        }
-
-        if (newWidth <= 0)
-        {
-            return new BadRequestObjectResult("New width must be greater than zero");
-        }
-
-        // Find the product image by product ID and priority
-        ProductAsset? ProductAsset = await _database.ProductAssets
-            .Where(pi => pi.ProductUUID == productUUID && pi.Priority == priority)
-            .FirstOrDefaultAsync();
-
-        if (ProductAsset == null)
-        {
-            return new NotFoundObjectResult("No image found for the given product and priority");
-        }
-
-        Asset? asset = await _database.Asset
-            .Where(i => i.UUID == ProductAsset.AssetUUID)
-            .FirstOrDefaultAsync();
-
-        // Retrieve the image
-        if (asset == null)
-        {
-            return new NotFoundObjectResult("Image not found");
-        }
-
-        // Resize the image (newWidth can be larger or smaller than the original width)
-        string resizedImageContent;
-        try
-        {
-            resizedImageContent = await HelperService.ResizeAssetByNewWidth(asset.Content, newWidth);
-        }
-        catch (Exception ex)
-        {
-            return new BadRequestObjectResult($"Failed to resize image: {ex.Message}");
-        }
-
-        var response = new Asset()
-        {
-            Content = resizedImageContent,
-            UUID = asset.UUID,
-            Width = newWidth,
-            Height = (int)(asset.Height * ((double)newWidth / asset.Width))
-        };
-
-        // Return the resized image as a file
-        FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(response);
-        return fileContentResult;
+        return new BadRequestObjectResult("Invalid product UUID format");
     }
+
+    if (newWidth <= 0)
+    {
+        return new BadRequestObjectResult("New width must be greater than zero");
+    }
+
+    // Log productUUID and priority
+    Console.WriteLine($"ProductUUID: {productUUID}, Priority: {priority}");
+
+    // Find the product image by product ID and priority
+    ProductAsset? productAsset = await _database.ProductAssets
+        .Where(pi => pi.ProductUUID == productUUID && pi.Priority == priority)
+        .FirstOrDefaultAsync();
+
+    if (productAsset == null)
+    {
+        Console.WriteLine("No ProductAsset found for the given productId and priority.");
+        return new NotFoundObjectResult("No image found for the given product and priority");
+    }
+
+    Asset? asset = await _database.Asset
+        .Where(i => i.UUID == productAsset.AssetUUID)
+        .FirstOrDefaultAsync();
+
+    if (asset == null)
+    {
+        Console.WriteLine("No Asset found for the given AssetUUID.");
+        return new NotFoundObjectResult("Image not found");
+    }
+
+    // Resize the image
+    string resizedImageContent;
+    try
+    {
+        resizedImageContent = await HelperService.ResizeAssetByNewWidth(asset.Content, newWidth);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error resizing image: {ex.Message}");
+        return new BadRequestObjectResult($"Failed to resize image: {ex.Message}");
+    }
+
+    var response = new Asset()
+    {
+        Content = resizedImageContent,
+        UUID = asset.UUID,
+        Width = newWidth,
+        Height = (int)(asset.Height * ((double)newWidth / asset.Width))
+    };
+
+    // Return the resized image as a file
+    FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(response);
+    return fileContentResult;
+}
 
     public Task<IActionResult> GetAssetResizedByFactor(string productId, int priority, int scaleFactor)
     {

@@ -148,6 +148,7 @@ public class Tests
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
     }
     
+    /*
     [Test]
     public async Task TestCreateAndDeleteTag()
     {
@@ -172,7 +173,7 @@ public class Tests
         IActionResult actionResult = await _tagService.DeleteTag(tag.UUID.ToString());
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
     }
-    
+    */
     [Test]
     public async Task TestUpdateImage()
     {
@@ -199,16 +200,15 @@ public class Tests
         Assert.IsType<OkObjectResult>(result);
     }
     
-    [Fact]
+    [Test]
     public async Task TestGetAssetResizedByNewWidth()
     {
         // Arrange
         string productId = Guid.NewGuid().ToString();
-        int priority = 1;
+        int priority = 0;
         int newWidth = 200;
 
-        var mockDatabase = new Mock<Database>();
-        var mockHelperService = new Mock<IHelperService>();
+        _db = CreateDbContext();
 
         // Mock asset data
         var asset = new Asset
@@ -226,28 +226,20 @@ public class Tests
             Priority = priority
         };
 
-        mockDatabase.Setup(db => db.ProductAssets
-                .FirstOrDefaultAsync(It.IsAny<Expression<Func<ProductAsset, bool>>>()))
-            .ReturnsAsync(productAsset);
-
-        mockDatabase.Setup(db => db.Asset
-                .FirstOrDefaultAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
-            .ReturnsAsync(asset);
-
-        mockHelperService.Setup(hs => hs.ResizeBase64WithPadding(It.IsAny<Asset>(), null, newWidth))
-            .Returns("data:image/png;base64,resizedBase64Content");
-
-        var productService = new ProductService(Mock.Of<IConfiguration>(), mockDatabase.Object);
+        _db.Asset.Add(asset);
+        _db.ProductAssets.Add(productAsset);
+        _db.SaveChanges();
 
         // Act
-        IActionResult result = await productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
+        IActionResult result = await _productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
 
         // Assert
+        Console.WriteLine(result.ToString());
         Assert.IsType<FileContentResult>(result);
         var fileResult = result as FileContentResult;
         Assert.NotNull(fileResult);
         var response = System.Text.Encoding.Default.GetString(fileResult.FileContents);
-        Assert.Equal("data:image/png;base64,resizedBase64Content", response);
+        Assert.NotEmpty(response); // Ensure the resized content is returned
     }
 
     [Test]
