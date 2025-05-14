@@ -118,15 +118,13 @@ public class AssetService : IAssetService
 
         if (height.HasValue || width.HasValue)
         {
-            finalAsset.Content = HelperService.ResizeBase64WithPadding(finalAsset, height, width);
+            finalAsset.Content = HelperService.ResizeBase64WithPadding(finalAsset, width, height);
         }
 
         FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(finalAsset);
         return fileContentResult;
     }
-
-
-
+	
     public async Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest requestParams)
     {
         Guid? assetUuid = HelperService.ParseStringGuid(assetId);
@@ -367,7 +365,42 @@ public class AssetService : IAssetService
         return new OkObjectResult("Tag removed from asset");
     }
 
+    public async Task<IActionResult> GetCountOfAssets(string? searchString, string? selectedTagIds)
+    {
+	    // Start with all assets query
+	    IQueryable<Asset> query = _database.Asset;
 
+	    // Filter by UUID if searchString is provided
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(img => img.UUID.ToString().Contains(searchString));
+	    }
+
+	    // Filter by selected tags if provided
+	    if (!string.IsNullOrEmpty(selectedTagIds))
+	    {
+		    // Split the comma-separated string and parse to GUIDs
+		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
+			    .Select(id => HelperService.ParseStringGuid(id))
+			    .Where(guid => guid.HasValue)
+			    .Select(guid => guid.Value)
+			    .ToList();
+
+		    if (tagUUIDs.Any())
+		    {
+			    // Get assets that have ANY of the specified tags
+			    query = query.Where(img =>
+				    _database.AssetTags
+					    .Any(it => it.AssetUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
+		    }
+	    }
+
+	    // Count total matching assets
+	    int count = await query.CountAsync();
+
+	    return new OkObjectResult(count);
+    }
+    
     // This method should probably be in the helper service
     private Asset GetDefaultAsset()
     {
@@ -379,4 +412,5 @@ public class AssetService : IAssetService
 
         return asset;
     }
+	
 }

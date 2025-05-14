@@ -48,7 +48,7 @@ public partial class Edit : ComponentBase
 
         _allTags = await ReadService.GetAllTags();
         
-        _assetGallery = await ReadService.GetAssetsNotOnProduct(_productId);
+        UpdateAssetGallery();
     }
 
     private void OnSearchInputChanged (ChangeEventArgs e)

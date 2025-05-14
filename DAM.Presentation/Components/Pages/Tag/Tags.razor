@@ -8,7 +8,7 @@
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col">
-            <button class="btn btn-outline-secondary" @onclick="NavigateToHome">
+            <button class="btn btn-outline-secondary" @onclick="@(_ => Navigation.NavigateTo("/dam"))">
                 <i class="bi bi-arrow-left"></i> Back to Home
             </button>
         </div>
@@ -28,6 +28,9 @@
                         value="@_searchText"
                         @oninput="OnSearchInputChanged"
                         placeholder="Search for tags by name or uuid (case sensitive)" />
+                    <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+                    <span class="mx-2">@_currentPageNumber</span>
+                    <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
                 </div>
 
                 <div class="input-group">

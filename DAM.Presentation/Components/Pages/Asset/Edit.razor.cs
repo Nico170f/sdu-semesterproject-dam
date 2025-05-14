@@ -32,7 +32,7 @@ public partial class Edit : ComponentBase
 
         _assetTags = await ReadService.GetTagsByAsset(_assetId);
 
-        _tagGallery = await ReadService.GetTagsNotOnAsset(_assetId);
+        UpdateTagList();
 
     }
 

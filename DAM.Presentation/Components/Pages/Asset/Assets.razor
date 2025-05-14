@@ -18,11 +18,16 @@
         <div class="col-lg-8 offset-lg-2">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">Assets Gallery</h2>
-                <div>
+                <div class="d-flex align-items-center">
                     <button class="btn btn-outline-primary me-2" @onclick="ToggleTagMenu">
                         <i class="bi bi-tags"></i> Select Tags
                     </button>
-                    <InputFile OnChange="UploadAsset" accept="image/*" class="btn btn-primary" />
+                    <InputFile OnChange="UploadAsset" accept="image/*" class="btn btn-primary me-2" />
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+                        <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+                        <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
+                    </div>
                 </div>
             </div>
 

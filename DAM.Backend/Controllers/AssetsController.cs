@@ -48,7 +48,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetAsset(string assetId, [FromQuery] int? height, [FromQuery] int? width)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetById(assetId, height, width);
+        return await _assetService.GetAssetById(assetId, width, height);
     }
     
     
@@ -145,6 +145,17 @@ public class AssetsController : ApiController
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _assetService.RemoveAssetTag(assetId, tagId);
+    }
+    
+    /*
+     * GET /assets/count
+     * 
+     */
+    [HttpGet("count")]
+    public async Task<IActionResult> GetCountOfAssets([FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _assetService.GetCountOfAssets(searchString, selectedTagIds);
     }
 }
 
