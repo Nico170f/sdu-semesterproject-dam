@@ -91,17 +91,19 @@ public class AssetService : IAssetService
     
 	    // Apply pagination (page starts at 1)
 	    List<Guid> uuids = await query
-		    .OrderBy(img => img.UUID) // Ensure consistent pagination order
+		    .OrderBy(img => img.CreatedAt) // Ensure consistent pagination order
 		    .Skip((currentPage - 1) * itemsPerPage)
 		    .Take(itemsPerPage)
 		    .Select(img => img.UUID)
 		    .ToListAsync();
-    
+	    
+	    uuids.Reverse();
+	    
 	    return new OkObjectResult(uuids);
     }
 
 
-    public async Task<IActionResult> GetAssetById(string assetId, int? height, int? width)
+    public async Task<IActionResult> GetAssetById(string assetId, int? width, int? height)
     {
         Asset? finalAsset = null;
         Guid? assetUuid = HelperService.ParseStringGuid(assetId);
@@ -113,20 +115,21 @@ public class AssetService : IAssetService
 
         if (finalAsset == null)
         {
-            finalAsset = GetDefaultAsset();
+            finalAsset = new Asset
+            {
+                Content = HelperService.DefaultImage
+            };
         }
 
         if (height.HasValue || width.HasValue)
         {
-            finalAsset.Content = HelperService.ResizeBase64WithPadding(finalAsset, height, width);
+            finalAsset.Content = HelperService.ResizeBase64WithPadding(finalAsset, width, height);
         }
 
         FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(finalAsset);
         return fileContentResult;
     }
-
-
-
+	
     public async Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest requestParams)
     {
         Guid? assetUuid = HelperService.ParseStringGuid(assetId);
@@ -367,16 +370,38 @@ public class AssetService : IAssetService
         return new OkObjectResult("Tag removed from asset");
     }
 
-
-    // This method should probably be in the helper service
-    private Asset GetDefaultAsset()
+    public async Task<IActionResult> GetCountOfAssets(string? searchString, string? selectedTagIds)
     {
-        Asset asset = new Asset
-        {
-            Content = _configuration.GetSection("DefaultImages")["NotFound"] ??
-                      throw new Exception("No default asset found")
-        };
+	    // Start with all assets query
+	    IQueryable<Asset> query = _database.Asset;
 
-        return asset;
+	    // Filter by UUID if searchString is provided
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(img => img.UUID.ToString().Contains(searchString));
+	    }
+
+	    // Filter by selected tags if provided
+	    if (!string.IsNullOrEmpty(selectedTagIds))
+	    {
+		    // Split the comma-separated string and parse to GUIDs
+		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
+			    .Select(id => HelperService.ParseStringGuid(id))
+			    .Where(guid => guid.HasValue)
+			    .Select(guid => guid.Value)
+			    .ToList();
+
+		    if (tagUUIDs.Any())
+		    {
+			    // Get assets that have ANY of the specified tags
+			    query = query.Where(img =>
+				    _database.AssetTags
+					    .Any(it => it.AssetUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
+		    }
+	    }
+
+	    // Count total matching assets
+	    int count = await query.CountAsync();
+	    return new OkObjectResult(count);
     }
 }

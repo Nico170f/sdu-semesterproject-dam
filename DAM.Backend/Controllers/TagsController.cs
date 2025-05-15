@@ -25,6 +25,13 @@ public class TagsController : ApiController
         return await _tagService.GetTags(searchString, amount, page);
     }
     
+    [HttpGet("count")]
+    public async Task<IActionResult> GetTagsCount([FromQuery] string? searchString = null, [FromQuery] string? assetId = null)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _tagService.GetCountOfTags(searchString, assetId);
+    }
+    
     
     /*
      * POST /tags

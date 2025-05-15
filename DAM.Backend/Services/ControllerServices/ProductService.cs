@@ -11,10 +11,8 @@ namespace DAM.Backend.Services.ControllerServices;
 
 public class ProductService : IProductService
 {
-    
     private readonly Database _database;
     private readonly IConfiguration _configuration;
-
     
     public ProductService(IConfiguration configuration, Database database)
     {
@@ -169,7 +167,10 @@ public class ProductService : IProductService
         {
             if(finalAsset == null)
             {
-                finalAsset = GetDefaultAsset();
+                finalAsset = new Asset
+                {
+	                Content = HelperService.DefaultImage
+                };
             }
         }
         return HelperService.ConvertAssetToFileContent(finalAsset);
@@ -404,17 +405,6 @@ public class ProductService : IProductService
         
         return new OkObjectResult(assets);
     }
-    
-    // This method should probably be in the helper service
-    private Asset GetDefaultAsset()
-    {
-        Asset asset = new Asset
-        {
-            Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default asset found")
-        };
-        
-        return asset;
-    }
 
     public async Task<IActionResult> GetProductsFromPIM ()
     {
@@ -462,70 +452,137 @@ public class ProductService : IProductService
         context.SaveChanges();
     }
 
-  public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority, int newWidth)
-{
-    Guid? productUUID = HelperService.ParseStringGuid(productId);
-    if (productUUID == null)
-    {
-        return new BadRequestObjectResult("Invalid product UUID format");
-    }
+  public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority, int? newWidth)
+	{
+	    Guid? productUUID = HelperService.ParseStringGuid(productId);
+	    if (productUUID == null)
+	    {
+	        return new BadRequestObjectResult("Invalid product UUID format");
+	    }
 
-    if (newWidth <= 0)
-    {
-        return new BadRequestObjectResult("New width must be greater than zero");
-    }
+	    if (newWidth <= 0)
+	    {
+	        return new BadRequestObjectResult("New width must be greater than zero");
+	    }
 
-    // Log productUUID and priority
-    Console.WriteLine($"ProductUUID: {productUUID}, Priority: {priority}");
+	    // Log productUUID and priority
+	    Console.WriteLine($"ProductUUID: {productUUID}, Priority: {priority}");
 
-    // Find the product image by product ID and priority
-    ProductAsset? productAsset = await _database.ProductAssets
-        .Where(pi => pi.ProductUUID == productUUID && pi.Priority == priority)
-        .FirstOrDefaultAsync();
+	    // Find the product image by product ID and priority
+	    ProductAsset? productAsset = await _database.ProductAssets
+	        .Where(pi => pi.ProductUUID == productUUID && pi.Priority == priority)
+	        .FirstOrDefaultAsync();
 
-    if (productAsset == null)
-    {
-        Console.WriteLine("No ProductAsset found for the given productId and priority.");
-        return new NotFoundObjectResult("No image found for the given product and priority");
-    }
+	    if (productAsset == null)
+	    {
+	        Console.WriteLine("No ProductAsset found for the given productId and priority.");
+	        return new NotFoundObjectResult("No image found for the given product and priority");
+	    }
 
-    Asset? asset = await _database.Asset
-        .Where(i => i.UUID == productAsset.AssetUUID)
-        .FirstOrDefaultAsync();
+	    Asset? asset = await _database.Asset
+	        .Where(i => i.UUID == productAsset.AssetUUID)
+	        .FirstOrDefaultAsync();
 
-    if (asset == null)
-    {
-        Console.WriteLine("No Asset found for the given AssetUUID.");
-        return new NotFoundObjectResult("Image not found");
-    }
+	    if (asset == null)
+	    {
+	        Console.WriteLine("No Asset found for the given AssetUUID.");
+	        return new NotFoundObjectResult("Image not found");
+	    }
 
-    // Resize the image
-    string resizedImageContent;
-    try
-    {
-        resizedImageContent = await HelperService.ResizeAssetByNewWidth(asset.Content, newWidth);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error resizing image: {ex.Message}");
-        return new BadRequestObjectResult($"Failed to resize image: {ex.Message}");
-    }
+	    // Resize the image
+	    string resizedImageContent;
+	    try
+	    {
+	        resizedImageContent = await HelperService.ResizeAssetByNewWidth(asset.Content, (int)newWidth);
+	    }
+	    catch (Exception ex)
+	    {
+	        Console.WriteLine($"Error resizing image: {ex.Message}");
+	        return new BadRequestObjectResult($"Failed to resize image: {ex.Message}");
+	    }
 
-    var response = new Asset()
-    {
-        Content = resizedImageContent,
-        UUID = asset.UUID,
-        Width = newWidth,
-        Height = (int)(asset.Height * ((double)newWidth / asset.Width))
-    };
+	    var response = new Asset()
+	    {
+	        Content = resizedImageContent,
+	        UUID = asset.UUID,
+	        Width = (int)newWidth,
+	        Height = (int)(asset.Height * ((double)newWidth / asset.Width))
+	    };
 
-    // Return the resized image as a file
-    FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(response);
-    return fileContentResult;
-}
+	    // Return the resized image as a file
+	    FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(response);
+	    return fileContentResult;
+	}
 
     public Task<IActionResult> GetAssetResizedByFactor(string productId, int priority, int scaleFactor)
     {
         throw new NotImplementedException();
+    }
+    
+    public async Task<IActionResult> GetCountOfAssetsNotOnProduct(string? productId, string? searchString, string? selectedTagIds)
+    {
+	    // Check if productId is valid
+	    Guid? productUUID = HelperService.ParseStringGuid(productId);
+	    if (productUUID == null)
+	    {
+		    return new BadRequestObjectResult("Invalid product UUID format");
+	    }
+
+	    // Verify the product exists
+	    var product = await _database.Products
+		    .FirstOrDefaultAsync(p => p.UUID == productUUID);
+
+	    if (product == null)
+	    {
+		    return new NotFoundObjectResult("Product not found");
+	    }
+
+	    // Get the assets already associated with this product
+	    var assetsOnProduct = _database.ProductAssets
+		    .Where(pa => pa.ProductUUID == productUUID)
+		    .Select(pa => pa.AssetUUID);
+
+	    // Start with query for assets not on the product
+	    IQueryable<Asset> query = _database.Asset
+		    .Where(a => !assetsOnProduct.Contains(a.UUID));
+
+	    // Filter by UUID if searchString is provided
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(asset => asset.UUID.ToString().Contains(searchString));
+	    }
+
+	    // Filter by selected tags if provided
+	    if (!string.IsNullOrEmpty(selectedTagIds))
+	    {
+		    // Split the comma-separated string and parse to GUIDs
+		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
+			    .Select(id => HelperService.ParseStringGuid(id))
+			    .Where(guid => guid.HasValue)
+			    .Select(guid => guid.Value)
+			    .ToList();
+
+		    if (tagUUIDs.Any())
+		    {
+			    // Get assets that have ANY of the specified tags
+			    query = query.Where(asset =>
+				    _database.AssetTags
+					    .Any(it => it.AssetUUID == asset.UUID && tagUUIDs.Contains(it.TagUUID)));
+		    }
+	    }
+
+	    // Count total matching assets
+	    int count = await query.CountAsync();
+
+	    return new OkObjectResult(count);
+    }
+
+    public async Task<IActionResult> GetCountOfProducts(string searchString)
+    {
+	    List<Product> products = new List<Product>();
+
+	    products = await _database.Products.Where(p => p.Name.Contains(searchString) || p.UUID.ToString().Contains(searchString)).ToListAsync();
+
+	    return new OkObjectResult(products.Count);
     }
 }

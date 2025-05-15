@@ -17,19 +17,31 @@ using System.IO;
 
 public static class HelperService
 {
-    public static FileContentResult ConvertAssetToFileContent(DAM.Backend.Data.Models.Asset finalAsset)
-    { 
-        var assetParts = finalAsset.Content.Split(";base64,");
-        var assetType = assetParts[0].Substring(5);
-        
-        byte[] bytes = Convert.FromBase64String(assetParts[1]);
-        return new FileContentResult(bytes, assetType);
-    }
+	public static string DefaultImage = "";
+	
+	public static FileContentResult ConvertAssetToFileContent(DAM.Backend.Data.Models.Asset finalAsset)
+	{
+		string content = finalAsset.Content;
+		string contentType;
+		string base64Data;
     
-    private static bool IsValidId(string id)
-    {
-        return Guid.TryParse(id, out Guid _);
-    }
+		// Check if content has the data URL format (data:type;base64,...)
+		if (content.Contains(";base64,"))
+		{
+			var assetParts = content.Split(";base64,");
+			contentType = assetParts[0].Substring(5); // Remove "data:" prefix
+			base64Data = assetParts[1];
+		}
+		else
+		{
+			// Assume it's raw base64 data with default content type
+			contentType = "image/png";
+			base64Data = content;
+		}
+    
+		byte[] bytes = Convert.FromBase64String(base64Data);
+		return new FileContentResult(bytes, contentType);
+	}
     
     public static (int Width, int Height) GetAssetDimensions(string base64Asset)
     {
@@ -67,44 +79,18 @@ public static class HelperService
 
         return null;
     }
-    
-    public static async Task<string> ResizeAssetByFactor(string base64Asset, int scaleFactor)
-    {
-        if (scaleFactor <= 0)
-            throw new ArgumentOutOfRangeException(nameof(scaleFactor), "Scale factor must be greater than 0");
-        
-        byte[] assetBytes = Convert.FromBase64String(base64Asset);
-        
-        using (var inputStream = new MemoryStream(assetBytes))
-        using (SixLabors.ImageSharp.Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
-        {
-            int newWidth = (int)(asset.Width * scaleFactor);
-            int newHeight = (int)(asset.Height * scaleFactor);
-            
-            asset.Mutate(x=> x.Resize(newWidth, newHeight));
-
-            using (var outputStream = new MemoryStream())
-            {
-                var format = asset.Metadata.DecodedImageFormat;
-                IImageEncoder encoder = GetEncoder(format);
-
-                await asset.SaveAsync(outputStream, encoder);
-                return Convert.ToBase64String(outputStream.ToArray());
-            }
-        }
-    }
         
     public static async Task<string> ResizeAssetByNewWidth(string base64Asset, int newWidth)
     {
         byte[] assetBytes = Convert.FromBase64String(base64Asset);
         
         using (var inputStream = new MemoryStream(assetBytes))
-        using (SixLabors.ImageSharp.Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
+        using (Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
         {
-            // var aspectRatio = (double)image.Height / image.Width;
-            // int newHeight = (int)(newWidth * aspectRatio);
+            var aspectRatio = (double)asset.Height / asset.Width;
+            int newHeight = (int)(newWidth * aspectRatio);
 
-            // image.Mutate(x => x.Resize(newWidth, newHeight));
+            asset.Mutate(x => x.Resize(newWidth, newHeight));
             
             using (var outputStream = new MemoryStream())
             {
@@ -114,64 +100,58 @@ public static class HelperService
         } 
     }
     
-    private static IImageEncoder GetEncoder(IImageFormat format)
-    {
-        if (format == JpegFormat.Instance)
-            return new JpegEncoder { Quality = 85 };
-        if (format == PngFormat.Instance)
-            return new PngEncoder();
-        if (format == WebpFormat.Instance)
-            return new WebpEncoder();
-        
-        throw new NotSupportedException($"Unsupported asset format: {format.Name}");
-    }
     
     
     public static string ResizeBase64WithPadding(
-        DAM.Backend.Data.Models.Asset currentAsset,
-        int? newWidth = null,
-        int? newHeight = null)
+	    DAM.Backend.Data.Models.Asset currentAsset,
+	    int? newWidth = null,
+	    int? newHeight = null)
     {
-        if (newWidth is null && newHeight is null)
-            throw new ArgumentException("At least one of newWidth or newHeight must be provided.");
+	    if (newWidth is null && newHeight is null)
+		    throw new ArgumentException("At least one of newWidth or newHeight must be provided.");
+    
+	    // Extract the base64 data portion after the comma
+	    string content = currentAsset.Content;
+	    string base64Data = content.Contains(",") ? content.Split(',')[1] : content;
+    
+	    byte[] assetBytes = Convert.FromBase64String(base64Data);
+	    using var asset = Image.Load<Rgba32>(assetBytes);
 
-        byte[] assetBytes = Convert.FromBase64String(currentAsset.Content);
-        using var asset = Image.Load<Rgba32>(assetBytes);
+	    // Rest of the method remains the same
+	    int originalWidth = asset.Width;
+	    int originalHeight = asset.Height;
 
-        int originalWidth = asset.Width;
-        int originalHeight = asset.Height;
+	    float ratio;
 
-        float ratio;
+	    if (newWidth.HasValue && newHeight.HasValue)
+	    {
+		    ratio = Math.Min((float)newWidth.Value / originalWidth, (float)newHeight.Value / originalHeight);
+	    }
+	    else if (newWidth.HasValue)
+	    {
+		    ratio = (float)newWidth.Value / originalWidth;
+		    newHeight = (int)(originalHeight * ratio);
+	    }
+	    else // only newHeight.HasValue
+	    {
+		    ratio = (float)newHeight.Value / originalHeight;
+		    newWidth = (int)(originalWidth * ratio);
+	    }
 
-        if (newWidth.HasValue && newHeight.HasValue)
-        {
-            ratio = Math.Min((float)newWidth.Value / originalWidth, (float)newHeight.Value / originalHeight);
-        }
-        else if (newWidth.HasValue)
-        {
-            ratio = (float)newWidth.Value / originalWidth;
-            newHeight = (int)(originalHeight * ratio);
-        }
-        else // only newHeight.HasValue
-        {
-            ratio = (float)newHeight.Value / originalHeight;
-            newWidth = (int)(originalWidth * ratio);
-        }
+	    int resizedWidth = (int)(originalWidth * ratio);
+	    int resizedHeight = (int)(originalHeight * ratio);
 
-        int resizedWidth = (int)(originalWidth * ratio);
-        int resizedHeight = (int)(originalHeight * ratio);
+	    asset.Mutate(x => x.Resize(resizedWidth, resizedHeight));
 
-        asset.Mutate(x => x.Resize(resizedWidth, resizedHeight));
+	    using var canvas = new Image<Rgba32>(newWidth.Value, newHeight.Value, new Rgba32(0, 0, 0, 0));
 
-        using var canvas = new Image<Rgba32>(newWidth.Value, newHeight.Value, new Rgba32(0, 0, 0, 0));
+	    int posX = (newWidth.Value - resizedWidth) / 2;
+	    int posY = (newHeight.Value - resizedHeight) / 2;
 
-        int posX = (newWidth.Value - resizedWidth) / 2;
-        int posY = (newHeight.Value - resizedHeight) / 2;
+	    canvas.Mutate(x => x.DrawImage(asset, new Point(posX, posY), 1f));
 
-        canvas.Mutate(x => x.DrawImage(asset, new Point(posX, posY), 1f));
-
-        using var ms = new MemoryStream();
-        canvas.Save(ms, new PngEncoder());
-        return Convert.ToBase64String(ms.ToArray());
+	    using var ms = new MemoryStream();
+	    canvas.Save(ms, new PngEncoder());
+	    return Convert.ToBase64String(ms.ToArray());
     }
 }

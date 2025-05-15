@@ -21,7 +21,10 @@ public partial class Edit : ComponentBase
     
     private List<Models.Tag> _assetTags = [];
     private List<Models.Tag> _tagGallery = [];
-        
+
+    private int _currentPageNumber = 1;
+    private int _totalPageCount = 0;
+    private int _amount = 50;
     protected override async Task OnInitializedAsync ()
     {
         var uri = new Uri(Navigation.Uri);
@@ -32,7 +35,7 @@ public partial class Edit : ComponentBase
 
         _assetTags = await ReadService.GetTagsByAsset(_assetId);
 
-        _tagGallery = await ReadService.GetTagsNotOnAsset(_assetId);
+        UpdateTagList();
 
     }
 
@@ -44,7 +47,8 @@ public partial class Edit : ComponentBase
 
     private async void UpdateTagList ()
     {
-	    _tagGallery = await ReadService.GetTagsNotOnAsset(_assetId, _searchText);
+	    (_tagGallery, int totalAmount) = await ReadService.GetTagsNotOnAsset(_assetId, _searchText, amount: _amount, page: _currentPageNumber);
+	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
 	    StateHasChanged();
     }
     
@@ -98,4 +102,17 @@ public partial class Edit : ComponentBase
         // Insert at new position
         _tagGallery.Insert(indices.newIndex, item);
     }
+
+    private void NextPage ()
+    {
+	    _currentPageNumber = int.Min(_totalPageCount, _currentPageNumber + 1);
+	    UpdateTagList();
+    }
+
+    private void PreviousPage ()
+    {
+	    _currentPageNumber = int.Max(1, _currentPageNumber - 1);
+	    UpdateTagList();
+    }
+    
 }

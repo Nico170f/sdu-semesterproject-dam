@@ -21,12 +21,16 @@ public partial class Assets : ComponentBase
     private string _searchText = "";
     private bool _showTagMenu = false;
     private List<Models.Tag> _allTags = [];
-    private HashSet<Guid> _selectedTagIds = []; 
+    private HashSet<Guid> _selectedTagIds = [];
+
+    private int _amount = 20;
+    private int _currentPageNumber = 1;
+    private int _totalPageCount = 0;
     
     protected override async Task OnInitializedAsync()
     {
-        _assetIds = await ReadService.GetAllAssetIds();
         _allTags = await ReadService.GetAllTags();
+        UpdateAssetList();
     }
 
     private async Task DeleteAsset (Guid assetId)
@@ -60,7 +64,8 @@ public partial class Assets : ComponentBase
 
     private async void UpdateAssetList ()
     {
-	    _assetIds = await ReadService.GetAssetIds(searchString: _searchText, selectedTags: _selectedTagIds);
+	    (_assetIds, int totalAmount) = await ReadService.GetAssetIds(searchString: _searchText, selectedTags: _selectedTagIds, amount: _amount, page: _currentPageNumber);
+	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
 	    StateHasChanged();
     }
 
@@ -73,6 +78,18 @@ public partial class Assets : ComponentBase
     private async void UploadAsset (InputFileChangeEventArgs e)
     {
 	    await CreateService.UploadImage(e);
+	    UpdateAssetList();
+    }
+
+    private void NextPage ()
+    {
+	    _currentPageNumber = int.Min(_totalPageCount, _currentPageNumber + 1);
+	    UpdateAssetList();
+    }
+
+    private void PreviousPage ()
+    {
+	    _currentPageNumber = int.Max(1, _currentPageNumber - 1);
 	    UpdateAssetList();
     }
 }

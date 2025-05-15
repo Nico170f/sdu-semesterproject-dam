@@ -184,6 +184,9 @@
             <button class="btn btn-outline-primary" @onclick="ToggleTagMenu">
                 <i class="bi bi-tags"></i> Filter by Tags
             </button>
+            <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+            <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+            <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>  
         </div>
 
         @if (_showTagMenu)

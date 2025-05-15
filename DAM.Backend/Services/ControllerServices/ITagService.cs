@@ -10,4 +10,5 @@ public interface ITagService
     Task<IActionResult> CreateTag(CreateTagRequest body);
     Task<IActionResult> DeleteTag(string tagId);
     Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest body);
+    Task<IActionResult> GetCountOfTags(string? searchString, string? assetId);
 }
