@@ -91,12 +91,14 @@ public class AssetService : IAssetService
     
 	    // Apply pagination (page starts at 1)
 	    List<Guid> uuids = await query
-		    .OrderBy(img => img.UUID) // Ensure consistent pagination order
+		    .OrderBy(img => img.CreatedAt) // Ensure consistent pagination order
 		    .Skip((currentPage - 1) * itemsPerPage)
 		    .Take(itemsPerPage)
 		    .Select(img => img.UUID)
 		    .ToListAsync();
-    
+	    
+	    uuids.Reverse();
+	    
 	    return new OkObjectResult(uuids);
     }
 

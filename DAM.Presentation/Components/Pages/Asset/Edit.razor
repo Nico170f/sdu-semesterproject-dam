@@ -54,7 +54,7 @@
     }
 
     /* Tag galleries */
-    .tag-gallery {
+    .tag-gallery > div{
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 16px;
@@ -163,14 +163,14 @@
     <section class="section-container">
         <h2 class="section-title">Available Tags</h2>
 
-        <div class="search-controls">
+        <div class="search-controls align-items-center">
             <input type="text"
                    class="form-control"
                    value="@_searchText"
                    @oninput="OnSearchInputChanged"
                    placeholder="Search for tags by name or id" />
             <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
-            <span class="mx-2">@_currentPageNumber</span>
+            <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
             <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
         </div>
 

@@ -21,16 +21,19 @@
             </div>
 
             <div class="mt-4">
-                <div class="input-group mb-3">
+                <div class="input-group mb-3 align-items-center">
                     <input
                         type="text"
                         class="form-control"
                         value="@_searchText"
                         @oninput="OnSearchInputChanged"
+                        style="border-radius: 6px;"
                         placeholder="Search for tags by name or uuid (case sensitive)" />
-                    <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
-                    <span class="mx-2">@_currentPageNumber</span>
-                    <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
+                    <div class="d-flex align-items-center justify-content-center rounded px-2">
+                        <button class="btn btn-outline-primary btn-sm mx-2" @onclick="PreviousPage">⬅️</button>
+                        <span class="mx-2 text-center">@_currentPageNumber / @_totalPageCount</span>
+                        <button class="btn btn-outline-primary btn-sm mx-2" @onclick="NextPage">➡️</button>
+                    </div>
                 </div>
 
                 <div class="input-group">

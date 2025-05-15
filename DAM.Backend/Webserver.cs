@@ -103,7 +103,7 @@ public sealed class Webserver
         builder.Services.AddDbContext<Database>();
 
         var config = builder.Configuration.GetSection("DefaultImages");
-        var notFoundImage = config["NotFoundImage"];
+        var notFoundImage = config["NotFound"];
         if (notFoundImage != null)
         {
             HelperService.DefaultImage = notFoundImage;

@@ -28,8 +28,8 @@ public class TagService : ITagService
     
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(t => t.Name.Contains(searchString) || 
-		                             t.UUID.ToString().Contains(searchString));
+		    query = query.Where(t => EF.Functions.Like(t.Name, "%" + searchString + "%") || 
+		                             EF.Functions.Like(t.UUID.ToString(), "%" + searchString + "%"));
 	    }
     
 	    var tags = await query
@@ -122,7 +122,7 @@ public class TagService : ITagService
 	    // Filter by UUID if searchString is provided
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(tag => tag.UUID.ToString().Contains(searchString));
+		    query = query.Where(tag => EF.Functions.Like(tag.UUID.ToString(), "%" + searchString + "%"));
 	    }
 
 	    if (assetId != null)
