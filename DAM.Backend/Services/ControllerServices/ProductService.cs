@@ -11,10 +11,8 @@ namespace DAM.Backend.Services.ControllerServices;
 
 public class ProductService : IProductService
 {
-    
     private readonly Database _database;
     private readonly IConfiguration _configuration;
-
     
     public ProductService(IConfiguration configuration, Database database)
     {
@@ -169,7 +167,10 @@ public class ProductService : IProductService
         {
             if(finalAsset == null)
             {
-                finalAsset = GetDefaultAsset();
+                finalAsset = new Asset
+                {
+	                Content = HelperService.DefaultImage
+                };
             }
         }
         return HelperService.ConvertAssetToFileContent(finalAsset);
@@ -403,17 +404,6 @@ public class ProductService : IProductService
             .ToListAsync();
         
         return new OkObjectResult(assets);
-    }
-    
-    // This method should probably be in the helper service
-    private Asset GetDefaultAsset()
-    {
-        Asset asset = new Asset
-        {
-            Content = _configuration.GetSection("DefaultImages")["NotFound"] ?? throw new Exception("No default asset found")
-        };
-        
-        return asset;
     }
 
     public async Task<IActionResult> GetProductsFromPIM ()

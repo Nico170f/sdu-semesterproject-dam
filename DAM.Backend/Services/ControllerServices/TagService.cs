@@ -135,7 +135,6 @@ public class TagService : ITagService
 
 	    // Count total matching assets
 	    int count = await query.CountAsync();
-
 	    return new OkObjectResult(count);
     }
     

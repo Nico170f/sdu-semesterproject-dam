@@ -113,7 +113,10 @@ public class AssetService : IAssetService
 
         if (finalAsset == null)
         {
-            finalAsset = GetDefaultAsset();
+            finalAsset = new Asset
+            {
+                Content = HelperService.DefaultImage
+            };
         }
 
         if (height.HasValue || width.HasValue)
@@ -397,20 +400,6 @@ public class AssetService : IAssetService
 
 	    // Count total matching assets
 	    int count = await query.CountAsync();
-
 	    return new OkObjectResult(count);
     }
-    
-    // This method should probably be in the helper service
-    private Asset GetDefaultAsset()
-    {
-        Asset asset = new Asset
-        {
-            Content = _configuration.GetSection("DefaultImages")["NotFound"] ??
-                      throw new Exception("No default asset found")
-        };
-
-        return asset;
-    }
-	
 }

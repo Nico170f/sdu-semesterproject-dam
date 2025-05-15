@@ -17,6 +17,8 @@ using System.IO;
 
 public static class HelperService
 {
+	public static string DefaultImage = "";
+	
 	public static FileContentResult ConvertAssetToFileContent(DAM.Backend.Data.Models.Asset finalAsset)
 	{
 		string content = finalAsset.Content;
@@ -40,11 +42,6 @@ public static class HelperService
 		byte[] bytes = Convert.FromBase64String(base64Data);
 		return new FileContentResult(bytes, contentType);
 	}
-    
-    private static bool IsValidId(string id)
-    {
-        return Guid.TryParse(id, out Guid _);
-    }
     
     public static (int Width, int Height) GetAssetDimensions(string base64Asset)
     {
@@ -82,32 +79,6 @@ public static class HelperService
 
         return null;
     }
-    
-    public static async Task<string> ResizeAssetByFactor(string base64Asset, int scaleFactor)
-    {
-        if (scaleFactor <= 0)
-            throw new ArgumentOutOfRangeException(nameof(scaleFactor), "Scale factor must be greater than 0");
-        
-        byte[] assetBytes = Convert.FromBase64String(base64Asset);
-        
-        using (var inputStream = new MemoryStream(assetBytes))
-        using (SixLabors.ImageSharp.Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
-        {
-            int newWidth = (int)(asset.Width * scaleFactor);
-            int newHeight = (int)(asset.Height * scaleFactor);
-            
-            asset.Mutate(x=> x.Resize(newWidth, newHeight));
-
-            using (var outputStream = new MemoryStream())
-            {
-                var format = asset.Metadata.DecodedImageFormat;
-                IImageEncoder encoder = GetEncoder(format);
-
-                await asset.SaveAsync(outputStream, encoder);
-                return Convert.ToBase64String(outputStream.ToArray());
-            }
-        }
-    }
         
     public static async Task<string> ResizeAssetByNewWidth(string base64Asset, int newWidth)
     {
@@ -129,17 +100,6 @@ public static class HelperService
         } 
     }
     
-    private static IImageEncoder GetEncoder(IImageFormat format)
-    {
-        if (format == JpegFormat.Instance)
-            return new JpegEncoder { Quality = 85 };
-        if (format == PngFormat.Instance)
-            return new PngEncoder();
-        if (format == WebpFormat.Instance)
-            return new WebpEncoder();
-        
-        throw new NotSupportedException($"Unsupported asset format: {format.Name}");
-    }
     
     
     public static string ResizeBase64WithPadding(
