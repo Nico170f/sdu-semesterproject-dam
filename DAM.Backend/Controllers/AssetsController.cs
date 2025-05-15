@@ -158,19 +158,3 @@ public class AssetsController : ApiController
 	    return await _assetService.GetCountOfAssets(searchString, selectedTagIds);
     }
 }
-
-
-// [HttpGet("getProductsFromPIM")]
-// public async Task<IActionResult> GetProductsFromPIM()
-// {
-//     if (!ModelState.IsValid) return BadRequest(ModelState);
-//     return await _assetService.GetProductsFromPIM();
-// }
-//
-//
-// [HttpDelete("delete-all-products")]
-// public async Task<IActionResult> DeleteAllProducts()
-// {
-//     if(!ModelState.IsValid) return BadRequest(ModelState);
-//     return await _assetService.DeleteAllProducts();
-// }
