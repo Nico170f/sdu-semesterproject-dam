@@ -2,12 +2,8 @@ using System.Net.Http.Json;
 
 namespace DAM.Presentation.Services;
 
-public class UpdateService : BaseService
+public class UpdateService(IHttpClientFactory httpClientFactory) : BaseService(httpClientFactory)
 {
-
-	public UpdateService (IHttpClientFactory httpClientFactory) : base(httpClientFactory)
-	{
-	}
 
 	/// <summary>
 	/// Updates the relationship priority between a product and an asset.
@@ -28,8 +24,8 @@ public class UpdateService : BaseService
 			}
 		};
 
-		var response = await _httpClient.PatchAsJsonAsync($"api/v1/products/{productId}/assets/{assetId}", patchOperation);
-
+		var response = await HttpClient.PatchAsJsonAsync($"api/v1/products/{productId}/assets/{assetId}", patchOperation);
+		
 		if (response.IsSuccessStatusCode)
 		{
 			Console.WriteLine("Priority updated successfully.");

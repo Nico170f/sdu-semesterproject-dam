@@ -1,7 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace DAM.Shared.Requests;
 
 public class AddProductAssetRequest
 {
-    public string AssetId { get; set; }
-    public string Priority { get; set; }
+    [Required] public Guid AssetId { get; set; }
+    public int Priority { get; set; }
 }

@@ -47,8 +47,8 @@ public class ProductsController(IProductService productService) : ApiController
      * GET /products/{productId}
      * Get product by id
      */
-    [HttpGet("{productId}")]
-    public async Task<IActionResult> GetProduct(string productId)
+    [HttpGet("{productId:guid}")]
+    public async Task<IActionResult> GetProduct(Guid productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.GetProduct(productId);
@@ -59,9 +59,9 @@ public class ProductsController(IProductService productService) : ApiController
      * GET /products/{productId}/assets
      * List all asset IDs associated with a specific product.
      */
-    [HttpGet("{productId}/assets")]
+    [HttpGet("{productId:guid}/assets")]
     //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAssets(string productId)
+    public async Task<IActionResult> GetProductAssets(Guid productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.GetProductAssets(productId);
@@ -71,9 +71,9 @@ public class ProductsController(IProductService productService) : ApiController
      * GET /products/{productId}/assets/count
      * Get the total number of assets for a product.
      */
-    [HttpGet("{productId}/count")]
+    [HttpGet("{productId:guid}/count")]
     //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAssetsAmount(string productId)
+    public async Task<IActionResult> GetProductAssetsAmount(Guid productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.GetProductAssetsAmount(productId);
@@ -84,9 +84,9 @@ public class ProductsController(IProductService productService) : ApiController
      * GET /products/{productId}/assets/{priority}
      * Get a product's asset by priority.
      */
-    [HttpGet("{productId}/assets/{priority}")]
+    [HttpGet("{productId:guid}/assets/{priority:int}")]
     //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAsset(string productId, string priority)
+    public async Task<IActionResult> GetProductAsset(Guid productId, int priority)
     {
 	    //TODO Change this method, so it can use the resizing algorithm
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -97,8 +97,8 @@ public class ProductsController(IProductService productService) : ApiController
      * POST /products/{productId}/assets
      * Associate an existing asset with a product
      */
-    [HttpPost("{productId}/assets")]
-    public async Task<IActionResult> AssignProductAsset(string productId, [FromBody] AddProductAssetRequest body)
+    [HttpPost("{productId:guid}/assets")]
+    public async Task<IActionResult> AssignProductAsset(Guid productId, [FromBody] AddProductAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.AssignProductAsset(productId, body);
@@ -108,8 +108,8 @@ public class ProductsController(IProductService productService) : ApiController
      * DELETE /products/{productId}/assets/{assetId}
      * Remove an asset from a product.
      */
-    [HttpDelete("{productId}/assets/{assetId}")]
-    public async Task<IActionResult> RemoveProductAsset(string productId, string assetId)
+    [HttpDelete("{productId:guid}/assets/{assetId:guid}")]
+    public async Task<IActionResult> RemoveProductAsset(Guid productId, Guid assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.UnassignProductAsset(productId, assetId);
@@ -120,8 +120,8 @@ public class ProductsController(IProductService productService) : ApiController
      * PATCH /products/{productId}/assets/{assetId}
      * Update relationship metadata (like priority) between product and asset.
      */
-    [HttpPatch("{productId}/assets/{assetId}")]
-    public async Task<IActionResult> PatchProductAsset(string productId, string assetId, [FromBody] JsonPatchDocument<ProductAsset> patchDoc)
+    [HttpPatch("{productId:guid}/assets/{assetId:guid}")]
+    public async Task<IActionResult> PatchProductAsset(Guid productId, Guid assetId, [FromBody] JsonPatchDocument<ProductAsset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.PatchProductAsset(productId, assetId, patchDoc);
@@ -132,8 +132,8 @@ public class ProductsController(IProductService productService) : ApiController
      * GET /products/{productId}/assets/gallery
      * Gets all assets that are not associated with a specific product.
     */
-    [HttpGet("{productId}/assets/gallery")]
-    public async Task<IActionResult> GetProductGallery(string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
+    [HttpGet("{productId:guid}/assets/gallery")]
+    public async Task<IActionResult> GetProductGallery(Guid productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
 	    return await productService.GetProductGallery(productId, searchString, selectedTagIds, amount, page);
@@ -147,8 +147,8 @@ public class ProductsController(IProductService productService) : ApiController
 	    return await productService.GetProductsFromPIM();
     }
 
-    [HttpGet("{productId}/{priority}")]
-    public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority,
+    [HttpGet("{productId:guid}/{priority:int}")]
+    public async Task<IActionResult> GetAssetResizedByNewWidth(Guid productId, int priority,
 	    [FromQuery] int? newWidth = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -162,8 +162,8 @@ public class ProductsController(IProductService productService) : ApiController
 	    return await productService.GetCountOfProducts(searchString);
     }
     
-    [HttpGet("{productId}/assets/gallery/count")]
-    public async Task<IActionResult> GetCountOfAssetsNotOnProduct (string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
+    [HttpGet("{productId:guid}/assets/gallery/count")]
+    public async Task<IActionResult> GetCountOfAssetsNotOnProduct (Guid? productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
 	    return await productService.GetCountOfAssetsNotOnProduct(productId, searchString, selectedTagIds);

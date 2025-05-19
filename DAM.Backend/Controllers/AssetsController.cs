@@ -37,8 +37,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * GET /assets/{assetId}
      * Retrieves an asset by its UUID.
      */
-    [HttpGet("{assetId}")]
-    public async Task<IActionResult> GetAsset(string assetId, [FromQuery] int? width, [FromQuery] int? height)
+    [HttpGet("{assetId:guid}")]
+    public async Task<IActionResult> GetAsset(Guid assetId, [FromQuery] int? width, [FromQuery] int? height)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.GetAssetById(assetId, width, height);
@@ -49,8 +49,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * PUT /assets/{assetId}
      * Fully update an asset by ID.
      */
-    [HttpPut("{assetId}")]
-    public async Task<IActionResult> PutUpdateAsset(string assetId, [FromBody] UpdateAssetRequest body)
+    [HttpPut("{assetId:guid}")]
+    public async Task<IActionResult> PutUpdateAsset(Guid assetId, [FromBody] UpdateAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.UpdateAsset(assetId, body);
@@ -62,8 +62,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * PATCH /assets/{assetId}
      * Partially updates an asset using JSON Patch document.
      */
-    [HttpPatch("{assetId}")]
-    public async Task<IActionResult> PatchAsset(string assetId, [FromBody] JsonPatchDocument<Asset> patchDoc)
+    [HttpPatch("{assetId:guid}")]
+    public async Task<IActionResult> PatchAsset(Guid assetId, [FromBody] JsonPatchDocument<Asset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.PatchAsset(assetId, patchDoc);
@@ -74,8 +74,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * DELETE /assets/{assetId}
      * Deletes an asset by its ID.
      */
-    [HttpDelete("{assetId}")]
-    public async Task<IActionResult> DeleteAsset(string assetId)
+    [HttpDelete("{assetId:guid}")]
+    public async Task<IActionResult> DeleteAsset(Guid assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.DeleteAsset(assetId);
@@ -98,8 +98,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * GET assets/{assetId}/tags/gallery
      * Gets all tags that are not already associated with an asset with optional searching for name/uuid and pagination
      */
-    [HttpGet("{assetId}/tags/gallery")]
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId, [FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
+    [HttpGet("{assetId:guid}/tags/gallery")]
+    public async Task<IActionResult> GetAssetTagsGallery(Guid assetId, [FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.GetAssetTagsGallery(assetId, searchString, amount, page);
@@ -110,8 +110,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * GET assets/{assetId}/tags
      * Gets all tags associated with an asset
      */
-    [HttpGet("{assetId}/tags")]
-    public async Task<IActionResult> GetAssetTags(string assetId)
+    [HttpGet("{assetId:guid}/tags")]
+    public async Task<IActionResult> GetAssetTags(Guid assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.GetAssetTags(assetId);
@@ -121,8 +121,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * POST /assets/{assetId}/tags/{tagId}
      * Adds a tag to an asset.
      */
-    [HttpPost("{assetId}/tags/{tagId}")]
-    public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
+    [HttpPost("{assetId:guid}/tags/{tagId:guid}")]
+    public async Task<IActionResult> AddAssetTag(Guid assetId, Guid tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.AddAssetTag(assetId, tagId);
@@ -133,8 +133,8 @@ public class AssetsController(IAssetService assetService) : ApiController
      * DELETE /assets/{assetId}/tags/{tagId}
      * Removes a tag from an asset.
      */
-    [HttpDelete("{assetId}/tags/{tagId}")]
-    public async Task<IActionResult> DeleteAssetTag(string assetId, string tagId)
+    [HttpDelete("{assetId:guid}/tags/{tagId:guid}")]
+    public async Task<IActionResult> DeleteAssetTag(Guid assetId, Guid tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await assetService.RemoveAssetTag(assetId, tagId);

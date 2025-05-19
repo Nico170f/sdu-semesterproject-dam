@@ -1,11 +1,6 @@
 namespace DAM.Presentation.Services;
 
-public abstract class BaseService
+public abstract class BaseService(IHttpClientFactory httpClientFactory)
 {
-	protected readonly HttpClient _httpClient;
-
-	protected BaseService(IHttpClientFactory httpClientFactory)
-	{
-		_httpClient = httpClientFactory.CreateClient("DAMApi");
-	}
+	protected readonly HttpClient HttpClient = httpClientFactory.CreateClient("DAMApi");
 }

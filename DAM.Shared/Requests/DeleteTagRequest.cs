@@ -4,5 +4,5 @@ namespace DAM.Shared.Requests;
 
 public class DeleteTagRequest
 {
-    [Required] public string TagUUID { get; set; }
+    [Required] public Guid TagUUID { get; set; }
 }

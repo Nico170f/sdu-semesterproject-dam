@@ -4,16 +4,10 @@ using DAM.Shared.Requests;
 
 namespace DAM.Backend.Controllers;
 
-public class TagsController : ApiController
+public class TagsController(ITagService tagService) : ApiController
 {
-    private readonly ITagService _tagService;
 
-    public TagsController(ITagService tagService)
-    {
-        _tagService = tagService;
-    }
-
-    /*
+	/*
      * GET /tags
      * Gets tags with optional search parameters
      */
@@ -21,14 +15,14 @@ public class TagsController : ApiController
     public async Task<IActionResult> GetTags([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetTags(searchString, amount, page);
+        return await tagService.GetTags(searchString, amount, page);
     }
     
     [HttpGet("count")]
-    public async Task<IActionResult> GetTagsCount([FromQuery] string? searchString = null, [FromQuery] string? assetId = null)
+    public async Task<IActionResult> GetTagsCount([FromQuery] string? searchString = null, [FromQuery] Guid? assetId = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _tagService.GetCountOfTags(searchString, assetId);
+	    return await tagService.GetCountOfTags(searchString, assetId);
     }
     
     
@@ -40,7 +34,7 @@ public class TagsController : ApiController
     public async Task<IActionResult> CreateTag([FromBody] CreateTagRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.CreateTag(body);
+        return await tagService.CreateTag(body);
     }
     
     
@@ -48,11 +42,11 @@ public class TagsController : ApiController
      * DELETE /tags/{tagId}
      * Deletes a tag by ID
      */
-    [HttpDelete("{tagId}")]
-    public async Task<IActionResult> DeleteTag(string tagId)
+    [HttpDelete("{tagId:guid}")]
+    public async Task<IActionResult> DeleteTag(Guid tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.DeleteTag(tagId);
+        return await tagService.DeleteTag(tagId);
     }
 
 }

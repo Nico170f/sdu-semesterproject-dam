@@ -67,12 +67,12 @@ public class TagService : ITagService
     /// otherwise, <see cref="OkObjectResult"/> if the tag is deleted successfully;
     /// or <see cref="BadRequestObjectResult"/> if an error occurs.
     /// </returns>
-    public async Task<IActionResult> DeleteTag(string tagId)
+    public async Task<IActionResult> DeleteTag(Guid tagId)
     {
 	    try
 	    { 
 		    Tag? existingTag = await _database.Tags
-			    .FirstOrDefaultAsync(t => t.UUID.ToString() == tagId);
+			    .FirstOrDefaultAsync(t => t.UUID == tagId);
 		    
 		    if (existingTag is null) 
 		    {
@@ -120,7 +120,7 @@ public class TagService : ITagService
 		public int TotalCount { get; set; }
 	}
     
-    public async Task<IActionResult> GetCountOfTags(string? searchString, string? assetId)
+    public async Task<IActionResult> GetCountOfTags(string? searchString, Guid? assetId)
     {
 	    // Start with all assets query
 	    IQueryable<Tag> query = _database.Tags;
@@ -135,7 +135,7 @@ public class TagService : ITagService
 	    {
 		    query = query
 			    .Join(_database.AssetTags, t => t.UUID, at => at.TagUUID, (t, at) => new { Tag = t, AssetTag = at })
-			    .Where(joined => !joined.Tag.UUID.ToString().Equals(joined.AssetTag.AssetUUID.ToString()))
+			    .Where(joined => !joined.Tag.UUID.Equals(joined.AssetTag.AssetUUID))
 			    .Select(joined => joined.Tag);
 	    }
 

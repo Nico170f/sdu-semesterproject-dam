@@ -4,12 +4,8 @@ using DAM.Shared.Responses;
 
 namespace DAM.Presentation.Services;
 
-public class ReadService : BaseService
+public class ReadService(IHttpClientFactory httpClientFactory) : BaseService(httpClientFactory)
 {
-
-	public ReadService(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
-	{
-	}
 
 	/// <summary>
 	/// Converts a assetId into a url for that asset.
@@ -22,14 +18,14 @@ public class ReadService : BaseService
 	{
 		if (width == default || height == default)
 		{
-			return $"{_httpClient.BaseAddress}api/v1/assets/{assetId}";
+			return $"{HttpClient.BaseAddress}api/v1/assets/{assetId}";
 		}
-		return $"{_httpClient.BaseAddress}api/v1/assets/{assetId}?width={width}&height={height}";
+		return $"{HttpClient.BaseAddress}api/v1/assets/{assetId}?width={width}&height={height}";
 	}
 	
 	public string GetAssetContentByProductId(Guid productId)
 	{
-		return $"{_httpClient.BaseAddress}api/v1/products/{productId}/assets/{0}";
+		return $"{HttpClient.BaseAddress}api/v1/products/{productId}/assets/{0}";
 	}
 	
 	/// <summary>
@@ -39,7 +35,7 @@ public class ReadService : BaseService
 	/// <returns></returns>
 	public async Task<List<Guid>> GetAssetsByProduct(Guid productId)
 	{
-		var response = await _httpClient.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
+		var response = await HttpClient.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
 		return response?.AssetIds ?? [];
 	}
 	
@@ -49,7 +45,7 @@ public class ReadService : BaseService
 	/// <returns></returns>
 	public async Task<List<Guid>> GetAllAssetIds ()
 	{
-		List<Guid>? guids = await _httpClient.GetFromJsonAsync<List<Guid>>("api/v1/assets");
+		List<Guid>? guids = await HttpClient.GetFromJsonAsync<List<Guid>>("api/v1/assets");
 		return guids ?? [];
 	}
 	
@@ -59,7 +55,7 @@ public class ReadService : BaseService
 	/// <returns></returns>
 	public async Task<List<Tag>> GetAllTags()
 	{
-		List<Tag>? tags = await _httpClient.GetFromJsonAsync<List<Tag>>("api/v1/tags");
+		List<Tag>? tags = await HttpClient.GetFromJsonAsync<List<Tag>>("api/v1/tags");
 		return tags ?? [];
 	}
 	
@@ -71,7 +67,7 @@ public class ReadService : BaseService
 	/// <returns></returns>
 	public async Task<List<Tag>> GetTagsByAsset (Guid assetId)
 	{
-		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags");
+		List<Tag>? response = await HttpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags");
 		return response ?? [];
 	}
 
@@ -80,6 +76,8 @@ public class ReadService : BaseService
 	/// </summary>
 	/// <param name="assetId">The ID of the asset to check for unassigned tags.</param>
 	/// <param name="searchString"></param>
+	/// <param name="amount"></param>
+	/// <param name="page"></param>
 	/// <returns>A list of tags not present on the asset, or empty list if none found.</returns>
 	public async Task<(List<Tag> tagList, int totalAmount)> GetTagsNotOnAsset(Guid assetId, string searchString = "", int amount = 20, int page = 1)
 	{
@@ -92,14 +90,14 @@ public class ReadService : BaseService
 		}
 		
 		string amountApiUrl = $"api/v1/tags/count?assetId={assetId}&" + string.Join('&', parameters); 
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 		
-		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
+		List<Tag>? response = await HttpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
 		return (response ?? [], totalAmount);
 	}
 
@@ -108,7 +106,7 @@ public class ReadService : BaseService
 	/// </summary>
 	/// <param name="productId">The ID of the product to check for unassigned assets.</param>
 	/// <param name="searchString"></param>
-	/// <param name="selectedTags"></param>
+	/// <param name="selectedTagIds"></param>
 	/// <param name="amount"></param>
 	/// <param name="page"></param>
 	/// <returns>A list of assets not present on the product, or an empty list if none found.</returns>
@@ -127,14 +125,14 @@ public class ReadService : BaseService
 			parameters.Add($"selectedTagIds={string.Join(',', selectedTagIds)}");
 		}
 		string amountApiUrl = $"api/v1/products/{productId}/assets/gallery/count";
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 		
-		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
+		List<Asset>? response = await HttpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
 		return (response ?? [], totalAmount);
 	}
 	
@@ -145,13 +143,13 @@ public class ReadService : BaseService
 	/// <returns>The name of the product. If not exist, "No product found!"</returns>
 	public async Task<string> GetProductName(Guid productGuid)
 	{
-		var response = await _httpClient.GetFromJsonAsync<GetProductResponse>($"api/v1/products/{productGuid}");
+		var response = await HttpClient.GetFromJsonAsync<GetProductResponse>($"api/v1/products/{productGuid}");
 		return response?.Name ?? "No product found!";
 	}
 
 	public async Task<List<Product>> GetAllProducts()
 	{
-		List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
+		List<Product> products = await HttpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
 		return products;
 	}
 
@@ -170,14 +168,14 @@ public class ReadService : BaseService
 			parameters.Add($"selectedTagIds={string.Join(',', selectedTags)}");
 		}
 		string amountApiUrl = "api/v1/assets/count?" + string.Join('&', parameters);
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 
-		List<Guid>? assetIds = await _httpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
+		List<Guid>? assetIds = await HttpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
 		return (assetIds ?? [], totalAmount);
 	}
 
@@ -192,21 +190,21 @@ public class ReadService : BaseService
 		}
 
 		string amountApiUrl = "api/v1/products/count?" + string.Join('&', parameters);
-		int total = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int total = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 
-		List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>(apiUrl) ?? [];
+		List<Product> products = await HttpClient.GetFromJsonAsync<List<Product>>(apiUrl) ?? [];
 		
 		return (products, total);
 	}
 
 	public async Task SyncWithPim ()
 	{
-		var response = await _httpClient.GetAsync("api/v1/products/syncWithPim");
+		var response = await HttpClient.GetAsync("api/v1/products/syncWithPim");
 		Console.WriteLine(response.Content);
 	}
 
@@ -221,14 +219,14 @@ public class ReadService : BaseService
 		}
 		
 		string amountApiUrl = "api/v1/tags/count?" + string.Join('&', parameters);
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 		
 		apiUrl += string.Join('&', parameters);
 		
-		var response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
+		var response = await HttpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
 		return (response ?? [], totalAmount);
 	}
 }

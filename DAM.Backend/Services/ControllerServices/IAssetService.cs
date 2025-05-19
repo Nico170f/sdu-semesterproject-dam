@@ -10,14 +10,14 @@ public interface IAssetService
 {
     Task<IActionResult> CreateAsset(CreateAssetRequest body);
     Task<IActionResult> GetAssets(string? searchString, string? selectedTagIds, int? amount, int? page);
-    Task<IActionResult> GetAssetById(string assetId, int? width, int? height);
-    Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest body);
-    Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Asset> patchDoc);
-    Task<IActionResult> DeleteAsset(string assetId);
+    Task<IActionResult> GetAssetById(Guid assetId, int? width, int? height);
+    Task<IActionResult> UpdateAsset(Guid assetId, UpdateAssetRequest body);
+    Task<IActionResult> PatchAsset(Guid assetId, JsonPatchDocument<Asset> patchDoc);
+    Task<IActionResult> DeleteAsset(Guid assetId);
     Task<IActionResult> GetAssetIdPileFromSearch(int size, int offset, string? searchQuery);
-    Task<IActionResult> GetAssetTagsGallery(string assetId, string? searchString, int? amount, int? page);
-    Task<IActionResult> GetAssetTags(string assetId);
-    Task<IActionResult> AddAssetTag(string assetId, string tagId);
-    Task<IActionResult> RemoveAssetTag(string assetId, string tagId);
+    Task<IActionResult> GetAssetTagsGallery(Guid assetId, string? searchString, int? amount, int? page);
+    Task<IActionResult> GetAssetTags(Guid assetId);
+    Task<IActionResult> AddAssetTag(Guid assetId, Guid tagId);
+    Task<IActionResult> RemoveAssetTag(Guid assetId, Guid tagId);
     Task<IActionResult> GetCountOfAssets(string? searchString, string? selectedTagIds);
 }

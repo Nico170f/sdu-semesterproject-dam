@@ -1,10 +1,7 @@
 namespace DAM.Presentation.Services;
 
-public class DeleteService : BaseService
+public class DeleteService(IHttpClientFactory httpClientFactory) : BaseService(httpClientFactory)
 {
-	public DeleteService (IHttpClientFactory httpClientFactory) : base(httpClientFactory)
-	{
-	}
 
 	/// <summary>
 	/// Deletes a tag from the database via the api.
@@ -12,7 +9,7 @@ public class DeleteService : BaseService
 	/// <param name="tagId"></param>
 	public async Task DeleteTag(Guid tagId)
 	{
-		var response = await _httpClient.DeleteAsync($"api/v1/tags/{tagId}");
+		var response = await HttpClient.DeleteAsync($"api/v1/tags/{tagId}");
     
 		if (response.IsSuccessStatusCode)
 		{
@@ -32,7 +29,7 @@ public class DeleteService : BaseService
 	/// <param name="tagId"></param>
 	public async Task RemoveTagFromAsset(Guid assetId, Guid tagId)
 	{
-		var response = await _httpClient.DeleteAsync($"api/v1/assets/{assetId}/tags/{tagId}");
+		var response = await HttpClient.DeleteAsync($"api/v1/assets/{assetId}/tags/{tagId}");
     
 		if (response.IsSuccessStatusCode)
 		{
@@ -52,7 +49,7 @@ public class DeleteService : BaseService
 	/// <param name="assetId"></param>
 	public async Task RemoveAssetFromProduct(Guid productId, Guid assetId)
 	{
-		var response = await _httpClient.DeleteAsync($"api/v1/products/{productId}/assets/{assetId}");
+		var response = await HttpClient.DeleteAsync($"api/v1/products/{productId}/assets/{assetId}");
 
 		if (response.IsSuccessStatusCode) {
 			Console.WriteLine($"Asset \"{assetId}\" removed from product \"{productId}\" successfully.");
@@ -65,7 +62,7 @@ public class DeleteService : BaseService
 
 	public async Task DeleteAsset(Guid assetId)
 	{
-		var response = await _httpClient.DeleteAsync($"api/v1/Assets/{assetId}");
+		var response = await HttpClient.DeleteAsync($"api/v1/Assets/{assetId}");
 
 		if (response.IsSuccessStatusCode)
 		{

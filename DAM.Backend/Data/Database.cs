@@ -130,7 +130,6 @@ public sealed class Database : DbContext
             .HasForeignKey(pi => pi.AssetUUID)
             .OnDelete(DeleteBehavior.Cascade);
         
-        
         base.OnModelCreating(modelBuilder);
     }
 	

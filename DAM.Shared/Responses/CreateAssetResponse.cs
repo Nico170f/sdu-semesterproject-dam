@@ -4,10 +4,10 @@ namespace DAM.Shared.Responses;
 
 public class CreateAssetResponse
 {
-    public string AssetId { get; set; }
+    public Guid AssetId { get; set; }
 
     public CreateAssetResponse(Asset asset)
     {
-        AssetId = asset.UUID.ToString();
+        AssetId = asset.UUID;
     }
 }

@@ -104,23 +104,13 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetAssetById(string assetId, int? width, int? height)
+    public async Task<IActionResult> GetAssetById(Guid assetId, int? width, int? height)
     {
-        Asset? finalAsset = null;
-        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
-        if (assetUuid != null)
+        Asset finalAsset = await _database.Asset
+	        .FirstOrDefaultAsync(i => i.UUID == assetId) ?? new Asset
         {
-            finalAsset = await _database.Asset
-                .FirstOrDefaultAsync(i => i.UUID == assetUuid);
-        }
-
-        if (finalAsset == null)
-        {
-            finalAsset = new Asset
-            {
-                Content = HelperService.DefaultImage
-            };
-        }
+	        Content = HelperService.DefaultImage
+        };
 
         if (height.HasValue || width.HasValue)
         {
@@ -131,16 +121,10 @@ public class AssetService : IAssetService
         return fileContentResult;
     }
 	
-    public async Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest requestParams)
+    public async Task<IActionResult> UpdateAsset(Guid assetId, UpdateAssetRequest requestParams)
     {
-        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
-        if (assetUuid == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
         Asset? asset = await _database.Asset
-            .FirstOrDefaultAsync(i => i.UUID == assetUuid);
+            .FirstOrDefaultAsync(i => i.UUID == assetId);
         if (asset == null)
         {
             return new NotFoundObjectResult("No asset found by that UUID");
@@ -164,21 +148,10 @@ public class AssetService : IAssetService
 
 
 
-    public async Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Asset> patchDoc)
+    public async Task<IActionResult> PatchAsset(Guid assetId, JsonPatchDocument<Asset> patchDoc)
     {
-        if (patchDoc == null)
-        {
-            return new BadRequestObjectResult("Patch document cannot be null");
-        }
-
-        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
-        if (assetUuid == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
-        Asset? asset = await _database.Asset
-            .FirstOrDefaultAsync(i => i.UUID == assetUuid);
+	    Asset? asset = await _database.Asset
+            .FirstOrDefaultAsync(i => i.UUID == assetId);
 
         if (asset == null)
         {
@@ -202,35 +175,27 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> DeleteAsset(string assetId)
+    public async Task<IActionResult> DeleteAsset(Guid assetId)
     {
-        Guid? assetUuid = HelperService.ParseStringGuid(assetId);
-        if (assetUuid == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
-        var asset = await _database.Asset.FindAsync(assetUuid);
-        if (asset == null)
+        Asset? asset = await _database.Asset.FindAsync(assetId);
+        if (asset is null)
         {
             return new NotFoundObjectResult("No asset found by that UUID");
         }
 
-        var deleted = await _database.Delete(asset);
+        bool deleted = await _database.Delete(asset);
         if (!deleted)
         {
             return new BadRequestObjectResult("Failed to delete asset");
         }
 
-        var productAssets = await _database.ProductAssets
-            .Where(pi => pi.AssetUUID == assetUuid)
+        List<ProductAsset> productAssets = await _database.ProductAssets
+            .Where(pi => pi.AssetUUID == assetId)
             .ToListAsync();
-        if (productAssets.Any())
+        
+        foreach (ProductAsset productAsset in productAssets)
         {
-            foreach (var productAsset in productAssets)
-            {
-                await _database.Delete(productAsset);
-            }
+	        await _database.Delete(productAsset);
         }
 
         return new OkObjectResult("Asset deleted successfully");
@@ -239,7 +204,8 @@ public class AssetService : IAssetService
 
     public async Task<IActionResult> GetAssetIdPileFromSearch(int size, int offset, string? searchquery)
     {
-	    searchquery = searchquery ?? "";
+	    searchquery ??= "";
+	    
         List<Guid> assetIds = await _database.ProductAssets
             .Join(_database.Products,
                 pi => pi.ProductUUID,
@@ -256,21 +222,21 @@ public class AssetService : IAssetService
     }
 
 
-    public async Task<IActionResult> GetAssetTagsGallery(string assetId, string? searchString, int? amount, int? page)
+    public async Task<IActionResult> GetAssetTagsGallery(Guid assetId, string? searchString, int? amount, int? page)
     {
 	    int itemsPerPage = amount ?? 20;
 	    int currentPage = page ?? 1;
 	    
 	    IQueryable<Tag> query = _database.Tags
 	        .Where(tag => !_database.AssetTags
-	            .Any(it => it.AssetUUID.ToString() == assetId && it.TagUUID == tag.UUID));
+	            .Any(it => it.AssetUUID == assetId && it.TagUUID == tag.UUID));
 	    
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
 	        query = query.Where(tag => tag.Name.Contains(searchString) || tag.UUID.ToString().Contains(searchString));
 	    }
 	    
-	    var tagsNotOnAsset = await query
+	    List<Tag> tagsNotOnAsset = await query
 	        .OrderBy(tag => tag.Name)
 	        .Skip((currentPage - 1) * itemsPerPage)
 	        .Take(itemsPerPage)
@@ -280,51 +246,35 @@ public class AssetService : IAssetService
     }
     
 
-    public async Task<IActionResult> GetAssetTags(string assetId)
+    public async Task<IActionResult> GetAssetTags(Guid assetId)
     {
-        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
-        if (assetUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
-        List<Tag> assetTagsList = new List<Tag>();
-
-        assetTagsList = await _database.Tags
-            .Where(tag => _database.AssetTags
-                .Any(it => it.AssetUUID == assetUUID && it.TagUUID == tag.UUID))
-            .ToListAsync();
+	    List<Tag> assetTagsList = await _database.Tags
+	        .Where(tag => _database.AssetTags
+		        .Any(it => it.AssetUUID == assetId && it.TagUUID == tag.UUID))
+	        .ToListAsync();
 
         return new OkObjectResult(assetTagsList);
     }
 
 
-    public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
+    public async Task<IActionResult> AddAssetTag(Guid assetId, Guid tagId)
     {
-        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
-        Guid? tagUUID = HelperService.ParseStringGuid(tagId);
-
-        if (assetUUID == null || tagUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
         try
         {
-            var asset = await _database.Asset.FindAsync(assetUUID);
+            var asset = await _database.Asset.FindAsync(assetId);
             if (asset == null)
             {
                 return new BadRequestObjectResult("Asset not found");
             }
 
-            var tag = await _database.Tags.FindAsync(tagUUID);
+            var tag = await _database.Tags.FindAsync(tagId);
             if (tag == null)
             {
                 return new NotFoundObjectResult("Tag not found");
             }
 
             var existingRelationship = await _database.AssetTags
-                .FirstOrDefaultAsync(it => it.AssetUUID == assetUUID && it.TagUUID == tagUUID);
+                .FirstOrDefaultAsync(it => it.AssetUUID == assetId && it.TagUUID == tagId);
             if (existingRelationship != null)
             {
                 return new OkObjectResult("Tag is already associated with asset");
@@ -332,8 +282,8 @@ public class AssetService : IAssetService
 
             var assetTag = new AssetTags()
             {
-                AssetUUID = (Guid)assetUUID,
-                TagUUID = (Guid)tagUUID
+                AssetUUID = assetId,
+                TagUUID = tagId
             };
 
             await _database.AssetTags.AddAsync(assetTag);
@@ -347,18 +297,10 @@ public class AssetService : IAssetService
         }
     }
 
-    public async Task<IActionResult> RemoveAssetTag(string assetId, string tagId)
+    public async Task<IActionResult> RemoveAssetTag(Guid assetId, Guid tagId)
     {
-        Guid? assetUUID = HelperService.ParseStringGuid(assetId);
-        Guid? tagUUID = HelperService.ParseStringGuid(tagId);
-
-        if (assetUUID == null || tagUUID == null)
-        {
-            return new BadRequestObjectResult("Invalid UUID format");
-        }
-
         var assetTag = await _database.AssetTags
-            .FirstOrDefaultAsync(it => it.AssetUUID == assetUUID && it.TagUUID == tagUUID);
+            .FirstOrDefaultAsync(it => it.AssetUUID == assetId && it.TagUUID == tagId);
 
         if (assetTag == null)
         {

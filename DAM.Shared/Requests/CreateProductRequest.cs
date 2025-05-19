@@ -8,5 +8,5 @@ namespace DAM.Shared.Requests;
 public class CreateProductRequest
 {
 	[Required] public string Name { get; set; }
-	[Required] public Guid UUID { get; set; }
+	[Required] public Guid ProductUUID { get; set; }
 }
