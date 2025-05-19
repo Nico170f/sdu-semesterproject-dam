@@ -11,37 +11,17 @@ public class ProductsController(IProductService productService) : ApiController
 
 	/*
      * GET /products
-     * Gets products with optional search parameters
+     * Gets products
      */
     [HttpGet()]
-    public async Task<IActionResult> GetProducts([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
+    public async Task<IActionResult> GetProducts(
+	    [FromQuery] string? searchString = null, 
+	    [FromQuery] int? amount = null, 
+	    [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
 	    return await productService.GetProducts(searchString, amount, page);
     }
-        
-    /*
-     * POST /products/mock
-     * Add a mock product.
-     */
-    [HttpPost("mock")]
-    public async Task<IActionResult> CreateMockProduct([FromBody] CreateMockProductRequest body)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await productService.CreateMockProduct(body);
-    }
-    
-    /*
-     * POST /products/add
-     * Add a product with both name and uuid
-     */
-    [HttpPost("add")]
-    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest body)
-    {
-	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await productService.CreateProduct(body);
-    }
-    
     
     /*
      * GET /products/{productId}
@@ -53,7 +33,6 @@ public class ProductsController(IProductService productService) : ApiController
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await productService.GetProduct(productId);
     }
-    
     
     /*
      * GET /products/{productId}/assets
@@ -79,19 +58,21 @@ public class ProductsController(IProductService productService) : ApiController
         return await productService.GetProductAssetsAmount(productId);
     }
     
-    
     /*
      * GET /products/{productId}/assets/{priority}
      * Get a product's asset by priority.
      */
     [HttpGet("{productId:guid}/assets/{priority:int}")]
-    //[AllowAnonymous]
-    public async Task<IActionResult> GetProductAsset(Guid productId, int priority)
+    public async Task<IActionResult> GetProductAsset(
+	    Guid productId, 
+	    int priority, 
+	    [FromQuery] int? width = null, 
+	    [FromQuery] int? height = null)
     {
-	    //TODO Change this method, so it can use the resizing algorithm
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await productService.GetProductAsset(productId, priority);
+        return await productService.GetProductAsset(productId, priority, width, height);
     }
+    
     
     /*
      * POST /products/{productId}/assets
@@ -115,7 +96,6 @@ public class ProductsController(IProductService productService) : ApiController
         return await productService.UnassignProductAsset(productId, assetId);
     }
     
-    
     /*
      * PATCH /products/{productId}/assets/{assetId}
      * Update relationship metadata (like priority) between product and asset.
@@ -128,18 +108,10 @@ public class ProductsController(IProductService productService) : ApiController
     }
     
     
-     /*
-     * GET /products/{productId}/assets/gallery
-     * Gets all assets that are not associated with a specific product.
-    */
-    [HttpGet("{productId:guid}/assets/gallery")]
-    public async Task<IActionResult> GetProductGallery(Guid productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
-    {
-	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await productService.GetProductGallery(productId, searchString, selectedTagIds, amount, page);
-    }
-
-
+	/*
+	 * GET /products/syncWithPim
+	 * Triggers backend to sync up products with pim
+	 */
     [HttpGet("syncWithPim")]
     public async Task<IActionResult> SynchronizeWithPim ()
     {
@@ -147,25 +119,30 @@ public class ProductsController(IProductService productService) : ApiController
 	    return await productService.GetProductsFromPIM();
     }
 
-    [HttpGet("{productId:guid}/{priority:int}")]
-    public async Task<IActionResult> GetAssetResizedByNewWidth(Guid productId, int priority,
-	    [FromQuery] int? newWidth = null)
-    {
-	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
-    }
 
-    [HttpGet("count")]
-    public async Task<IActionResult> GetCountOfProducts([FromQuery] string? searchString = null)
+    #region Testing/Unused
+
+    /*
+     * POST /products/mock
+     * Add a mock product.
+     */
+    [HttpPost("mock")]
+    public async Task<IActionResult> CreateMockProduct([FromBody] CreateMockProductRequest body)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await productService.GetCountOfProducts(searchString);
+	    return await productService.CreateMockProduct(body);
     }
     
-    [HttpGet("{productId:guid}/assets/gallery/count")]
-    public async Task<IActionResult> GetCountOfAssetsNotOnProduct (Guid? productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
+    /*
+     * POST /products/add
+     * Add a product with both name and uuid
+     */
+    [HttpPost("add")]
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest body)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await productService.GetCountOfAssetsNotOnProduct(productId, searchString, selectedTagIds);
+	    return await productService.CreateProduct(body);
     }
+    
+    #endregion
 }

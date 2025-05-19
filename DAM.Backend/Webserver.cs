@@ -2,7 +2,6 @@ using DAM.Backend.Services.ControllerServices;
 using DAM.Backend.Services.Formatters;
 using DAM.Backend.Data;
 using DAM.Backend.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace DAM.Backend;
 

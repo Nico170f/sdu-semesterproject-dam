@@ -1,13 +1,6 @@
-
 namespace DAM.Shared.Responses;
 
-
-public class GetProductAssetAmountResponse {
-    public int Amount { get; set; }
-
-    public GetProductAssetAmountResponse(int amount)
-    {
-        Amount = amount;
-    }
-
+public class GetProductAssetAmountResponse 
+{
+	public required int Amount { get; set; }
 }

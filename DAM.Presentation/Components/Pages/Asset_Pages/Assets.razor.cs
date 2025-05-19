@@ -18,11 +18,11 @@ public partial class Assets : ComponentBase
 	#pragma warning restore CS8618
 	#endregion
 	
-    private List<Guid> _assetIds = [];
+    private List<Asset> _assets = [];
     private string _searchText = "";
     private bool _showTagMenu = false;
     private List<Tag> _allTags = [];
-    private HashSet<Guid> _selectedTagIds = [];
+    private HashSet<Tag> _selectedTags = [];
 
     private int _amount = 20;
     private int _currentPageNumber = 1;
@@ -30,7 +30,7 @@ public partial class Assets : ComponentBase
     
     protected override async Task OnInitializedAsync()
     {
-        _allTags = await ReadService.GetAllTags();
+        _allTags = (await ReadService.GetTags())?.Tags ?? [];
         UpdateAssetList();
     }
 
@@ -50,23 +50,33 @@ public partial class Assets : ComponentBase
         _showTagMenu = !_showTagMenu;
     }
 
-    private void OnTagFilterChanged(Guid tagId, bool isChecked)
+    private void OnTagFilterChanged(Tag tag, bool isChecked)
     {
 	    if (isChecked)
 	    {
-	        _selectedTagIds.Add(tagId);
+	        _selectedTags.Add(tag);
 	    }
 	    else
 	    {
-	        _selectedTagIds.Remove(tagId);
+	        _selectedTags.Remove(tag);
 	    }
 	    UpdateAssetList();
     }
 
     private async void UpdateAssetList ()
     {
-	    (_assetIds, int totalAmount) = await ReadService.GetAssetIds(searchString: _searchText, selectedTags: _selectedTagIds, amount: _amount, page: _currentPageNumber);
-	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
+	    var response = await ReadService.GetAssets(searchString: _searchText, selectedTags: _selectedTags, amount: _amount, page: _currentPageNumber);
+	    
+	    if(response is null) return;
+		
+	    _assets = response.Assets;
+	    
+	    if (response.TotalCount.HasValue)
+	    {
+		    int totalAmount = response.TotalCount.Value;
+		    _totalPageCount = (int) Math.Ceiling((totalAmount * 1.0f) / _amount);
+	    }
+	    
 	    StateHasChanged();
     }
 

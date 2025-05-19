@@ -34,7 +34,10 @@ public partial class Edit : ComponentBase
         if (queryParams.TryGetValue("assetId", out var id))
 	        _assetId = new Guid(id);
 
-        _assetTags = await ReadService.GetTagsByAsset(_assetId);
+        var response = await ReadService.GetTags(assetIdParent: _assetId);
+		
+        if(response is not null)
+			_assetTags = response.Tags;
 
         UpdateTagList();
 
@@ -48,9 +51,16 @@ public partial class Edit : ComponentBase
 
     private async void UpdateTagList ()
     {
-	    (_tagGallery, int totalAmount) = await ReadService.GetTagsNotOnAsset(_assetId, _searchText, amount: _amount, page: _currentPageNumber);
-	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
-	    StateHasChanged();
+	    var response = await ReadService.GetTags(assetIdToAvoid: _assetId, searchString: _searchText, amount: _amount, page: _currentPageNumber);
+
+	    if (response is not null && response.TotalCount is not null)
+	    {
+		    _tagGallery = response.Tags;
+		    int totalAmount = response.TotalCount.Value;
+
+		    _totalPageCount = (int) Math.Ceiling((totalAmount * 1.0f) / _amount);
+		    StateHasChanged();
+	    }
     }
     
     private async Task ImageTagsRemove((int oldIndex, int newIndex) indices)
@@ -75,7 +85,7 @@ public partial class Edit : ComponentBase
         // add it to the new index in list 1
         _assetTags.Insert(indices.newIndex, tag);
         
-        await CreateService.AddTagToImage(_assetId, tag.UUID);
+        await CreateService.AddTagToAsset(_assetId, tag.UUID);
        // remove the item from the old index in list 2
        _tagGallery.Remove(_tagGallery[indices.oldIndex]);
     }

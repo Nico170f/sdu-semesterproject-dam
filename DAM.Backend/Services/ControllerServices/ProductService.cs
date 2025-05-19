@@ -5,7 +5,6 @@ using DAM.Shared.Models;
 using DAM.Shared.Requests;
 using DAM.Shared.Responses;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 
 namespace DAM.Backend.Services.ControllerServices;
@@ -21,6 +20,22 @@ public class ProductService : IProductService
         _configuration = configuration;
     }
 
+    public async Task<IActionResult> GetProduct(Guid productId)
+    {
+	    Product? product = await _database.Products
+		    .Where(p => p.UUID == productId)
+		    .FirstOrDefaultAsync();
+
+	    if (product is null) return new NotFoundObjectResult("No product found with UUID: " + productId + ".");
+
+	    var response = new GetProductResponse
+	    {
+		    Product = product
+	    };
+	    
+	    return new OkObjectResult(response);
+    }
+    
     public async Task<IActionResult> GetProducts(string? searchString = null, int? amount = null, int? page = null)
     {
         int itemsPerPage = amount ?? 20;
@@ -30,68 +45,28 @@ public class ProductService : IProductService
     
         if (!string.IsNullOrEmpty(searchString))
         {
-			query = query.Where(p => p.Name.Contains(searchString) || 
-			                         p.UUID.ToString().Contains(searchString));
+			query = query.Where(product => 
+				EF.Functions.Like(product.Name, $"%{searchString}%") ||
+				EF.Functions.Like(product.UUID.ToString(), $"%{searchString}%"));
         }
+
+        Task<int> count = query.CountAsync();
     
-        var products = await query
+        Task<List<Product>> products = query
             .OrderBy(p => p.Name)
             .Skip((currentPage - 1) * itemsPerPage)
             .Take(itemsPerPage)
             .ToListAsync();
-        
-        return new OkObjectResult(products);
-    }
 
-    public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest body)
-    {
-        Product mockProduct = new Product
+        await Task.WhenAll(count, products);
+
+        var response = new GetProductsResponse
         {
-            UUID = Guid.NewGuid(),
-            Name = body.Name
+	        Products = products.Result,
+	        TotalCount = count.Result
         };
-
-        _database.Products.Add(mockProduct);
         
-        int productCreated = await _database.SaveChangesAsync();
-        if (productCreated <= 0)
-        {
-            return new BadRequestObjectResult("Failed to create product");
-        }
-
-        CreateMockProductResponse response = new CreateMockProductResponse(mockProduct);
         return new OkObjectResult(response);
-    }
-
-    public async Task<IActionResult> CreateProduct(CreateProductRequest body)
-    {
-	    Product product = new Product()
-	    {
-		    Name = body.Name,
-		    UUID = body.ProductUUID
-	    };
-
-	    _database.Products.Add(product);
-	    
-	    int productCreated = await _database.SaveChangesAsync();
-	    if (productCreated <= 0)
-	    {
-		    return new BadRequestObjectResult("Failed to create product");
-	    }
-
-	    return new OkObjectResult(product);
-    }
-
-    public async Task<IActionResult> GetProduct(Guid productId)
-    {
-	    Product? product = await _database.Products
-		    .Where(p => p.UUID == productId)
-		    .FirstOrDefaultAsync();
-
-	    if (product is null) return new NotFoundObjectResult("No product found with UUID: " + productId + ".");
-
-	    GetProductResponse response = new GetProductResponse(product.Name, product.UUID);
-	    return new OkObjectResult(response);
     }
 
     public async Task<IActionResult> GetProductAssets(Guid productId)
@@ -102,7 +77,11 @@ public class ProductService : IProductService
             .Select(i => i.AssetUUID)
             .ToListAsync();
 
-        var response = new GetProductAssetsIdsResponse(assetIds);
+        var response = new GetProductAssetsIdsResponse
+        {
+	        AssetIds = assetIds
+        };
+        
         return new OkObjectResult(response);
     }
 
@@ -112,38 +91,30 @@ public class ProductService : IProductService
             .Where(i => i.ProductUUID == productId)
             .CountAsync();
 
-        GetProductAssetAmountResponse response = new GetProductAssetAmountResponse(assetCount);
+        var response = new GetProductAssetAmountResponse
+        {
+	        Amount = assetCount
+        };
+        
         return new OkObjectResult(response);
     }
 
-    public async Task<IActionResult> GetProductAsset(Guid productId, int priority)
+    public async Task<IActionResult> GetProductAsset(Guid productId, int priority, int? width = null, int? height = null)
     {
-        Asset? finalAsset = null;
-        
-        try {
-            ProductAsset? productAsset = await _database.ProductAssets
-                //.Include()
-                .Where(i => i.ProductUUID == productId && i.Priority == priority)
-                .FirstOrDefaultAsync();
+	    Asset finalAsset = await _database.Asset.Where(asset => _database.ProductAssets.Any(productAsset =>
+			    productAsset.ProductUUID.Equals(productId) && productAsset.AssetUUID.Equals(asset.UUID) && productAsset.Priority.Equals(priority)))
+		    .FirstOrDefaultAsync() ?? new Asset
+	    {
+		    Content = HelperService.DefaultImage
+	    };
 
-            if (productAsset == null) throw new Exception("No asset found by that priority");
+	    if (width.HasValue || height.HasValue)
+	    {
+		    finalAsset.Content = HelperService.ResizeBase64WithPadding(finalAsset, width, height);
+	    }
 
-            finalAsset = await _database.Asset
-                .Where(i => i.UUID == productAsset.AssetUUID)
-                .FirstOrDefaultAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
-        finally
-        {
-	        finalAsset ??= new Asset
-	        {
-		        Content = HelperService.DefaultImage
-	        };
-        }
-        return HelperService.ConvertAssetToFileContent(finalAsset);
+	    FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(finalAsset);
+	    return fileContentResult;
     }
 
     public async Task<IActionResult> AssignProductAsset(Guid productId, AddProductAssetRequest body)
@@ -175,7 +146,7 @@ public class ProductService : IProductService
             return new BadRequestObjectResult("Invalid priority format");
         }
         
-        List<ProductAsset>? productAssets = await _database.ProductAssets
+        List<ProductAsset> productAssets = await _database.ProductAssets
             .Where(pi => pi.ProductUUID == productId)
             .OrderBy(pi => pi.Priority)
             .ToListAsync();
@@ -236,7 +207,7 @@ public class ProductService : IProductService
             return new BadRequestObjectResult("Could not delete asset");
         }
     
-        List<ProductAsset>? productAssets = await _database.ProductAssets
+        List<ProductAsset> productAssets = await _database.ProductAssets
             .Where(pi => pi.ProductUUID == productId)
             .OrderBy(pi => pi.Priority)
             .ToListAsync();
@@ -310,47 +281,6 @@ public class ProductService : IProductService
         return new OkObjectResult("Asset updated successfully");
     }
 
-    public async Task<IActionResult> GetProductGallery(Guid productId, string? searchString, string? selectedTagIds, int? amount, int? page)
-    {
-        int itemsPerPage = amount ?? 20;
-        int currentPage = page ?? 1;
-        
-        IQueryable<Asset> query = _database.Asset
-            .Where(i => !_database.ProductAssets
-                .Any(pi => pi.AssetUUID == i.UUID && pi.ProductUUID == productId));
-        
-        // Filter by searchString if provided
-        if (!string.IsNullOrEmpty(searchString))
-        {
-            query = query.Where(i => i.UUID.ToString().Contains(searchString));
-        }
-        
-        // Filter by selectedTagIds if provided
-        if (!string.IsNullOrEmpty(selectedTagIds))
-        {
-            var tagGuids = selectedTagIds
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(id => HelperService.ParseStringGuid(id))
-                .Where(guid => guid.HasValue)
-                .Select(guid => guid.Value)
-                .ToList();
-        
-            if (tagGuids.Count > 0)
-            {
-                query = query.Where(asset =>
-                    _database.AssetTags.Any(at => at.AssetUUID == asset.UUID && tagGuids.Contains(at.TagUUID)));
-            }
-        }
-        
-        var assets = await query
-            .OrderBy(i => i.CreatedAt)
-            .Skip((currentPage - 1) * itemsPerPage)
-            .Take(itemsPerPage)
-            .ToListAsync();
-        
-        return new OkObjectResult(assets);
-    }
-
     public async Task<IActionResult> GetProductsFromPIM ()
     {
 	    HttpClientHandler handler = new HttpClientHandler();
@@ -396,118 +326,46 @@ public class ProductService : IProductService
     
         context.SaveChanges();
     }
-
-  public async Task<IActionResult> GetAssetResizedByNewWidth(Guid productId, int priority, int? newWidth)
-	{
-	    if (newWidth <= 0)
+    
+    public async Task<IActionResult> CreateMockProduct(CreateMockProductRequest body)
+    {
+	    Product mockProduct = new Product
 	    {
-	        return new BadRequestObjectResult("New width must be greater than zero");
-	    }
-
-	    // Log productUUID and priority
-	    Console.WriteLine($"ProductUUID: {productId}, Priority: {priority}");
-
-	    // Find the product image by product ID and priority
-	    ProductAsset? productAsset = await _database.ProductAssets
-	        .Where(pi => pi.ProductUUID == productId && pi.Priority == priority)
-	        .FirstOrDefaultAsync();
-
-	    if (productAsset == null)
-	    {
-	        Console.WriteLine("No ProductAsset found for the given productId and priority.");
-	        return new NotFoundObjectResult("No image found for the given product and priority");
-	    }
-
-	    Asset? asset = await _database.Asset
-	        .Where(i => i.UUID == productAsset.AssetUUID)
-	        .FirstOrDefaultAsync();
-
-	    if (asset == null)
-	    {
-	        Console.WriteLine("No Asset found for the given AssetUUID.");
-	        return new NotFoundObjectResult("Image not found");
-	    }
-
-	    // Resize the image
-	    string resizedImageContent;
-	    try
-	    {
-	        resizedImageContent = await HelperService.ResizeAssetByNewWidth(asset.Content, (int)newWidth);
-	    }
-	    catch (Exception ex)
-	    {
-	        Console.WriteLine($"Error resizing image: {ex.Message}");
-	        return new BadRequestObjectResult($"Failed to resize image: {ex.Message}");
-	    }
-
-	    var response = new Asset()
-	    {
-	        Content = resizedImageContent,
-	        UUID = asset.UUID,
-	        Width = (int)newWidth,
-	        Height = (int)(asset.Height * ((double)newWidth / asset.Width))
+		    UUID = Guid.NewGuid(),
+		    Name = body.Name
 	    };
 
-	    // Return the resized image as a file
-	    FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(response);
-	    return fileContentResult;
-	}
-  
-    public async Task<IActionResult> GetCountOfAssetsNotOnProduct(Guid? productId, string? searchString, string? selectedTagIds)
-    {
-	    // Verify the product exists
-	    var product = await _database.Products
-		    .FirstOrDefaultAsync(p => p.UUID == productId);
-
-	    if (product == null)
+	    _database.Products.Add(mockProduct);
+        
+	    int productCreated = await _database.SaveChangesAsync();
+	    if (productCreated <= 0)
 	    {
-		    return new NotFoundObjectResult("Product not found");
+		    return new BadRequestObjectResult("Failed to create product");
 	    }
 
-	    // Get the assets already associated with this product
-	    var assetsOnProduct = _database.ProductAssets
-		    .Where(pa => pa.ProductUUID == productId)
-		    .Select(pa => pa.AssetUUID);
-
-	    // Start with query for assets not on the product
-	    IQueryable<Asset> query = _database.Asset
-		    .Where(a => !assetsOnProduct.Contains(a.UUID));
-
-	    // Filter by UUID if searchString is provided
-	    if (!string.IsNullOrEmpty(searchString))
+	    CreateMockProductResponse response = new CreateMockProductResponse
 	    {
-		    query = query.Where(asset => asset.UUID.ToString().Contains(searchString));
-	    }
-
-	    // Filter by selected tags if provided
-	    if (!string.IsNullOrEmpty(selectedTagIds))
-	    {
-		    // Split the comma-separated string and parse to GUIDs
-		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
-			    .Select(id => HelperService.ParseStringGuid(id))
-			    .Where(guid => guid.HasValue)
-			    .Select(guid => guid.Value)
-			    .ToList();
-
-		    if (tagUUIDs.Any())
-		    {
-			    // Get assets that have ANY of the specified tags
-			    query = query.Where(asset =>
-				    _database.AssetTags
-					    .Any(it => it.AssetUUID == asset.UUID && tagUUIDs.Contains(it.TagUUID)));
-		    }
-	    }
-
-	    // Count total matching assets
-	    int count = await query.CountAsync();
-
-	    return new OkObjectResult(count);
+		    ProductId = mockProduct.UUID
+	    };
+	    return new OkObjectResult(response);
     }
 
-    public async Task<IActionResult> GetCountOfProducts(string? searchString)
+    public async Task<IActionResult> CreateProduct(CreateProductRequest body)
     {
-	    searchString ??= "";
-	    List<Product> products = await _database.Products.Where(p => p.Name.Contains(searchString) || p.UUID.ToString().Contains(searchString)).ToListAsync();
-	    return new OkObjectResult(products.Count);
+	    Product product = new Product()
+	    {
+		    Name = body.Name,
+		    UUID = body.ProductId
+	    };
+
+	    _database.Products.Add(product);
+	    
+	    int productCreated = await _database.SaveChangesAsync();
+	    if (productCreated <= 0)
+	    {
+		    return new BadRequestObjectResult("Failed to create product");
+	    }
+
+	    return new OkObjectResult(product);
     }
 }

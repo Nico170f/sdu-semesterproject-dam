@@ -37,8 +37,18 @@ public partial class Products : ComponentBase
     
     private async void UpdateProductList ()
     {
-	    (_products, int totalAmount) = await ReadService.GetProducts(searchString: _searchText, amount: _amount, page: _currentPageNumber);
-	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
+	    var response = await ReadService.GetProducts(searchString: _searchText, amount: _amount, page: _currentPageNumber);
+
+	    if(response is null) return;
+
+	    _products = response.Products;
+	    
+	    if (response.TotalCount.HasValue)
+	    {
+		    int totalAmount = response.TotalCount.Value;
+		    _totalPageCount = (int)Math.Ceiling(totalAmount * 1.0f / _amount);
+	    }
+	    
 	    StateHasChanged();
     }
 

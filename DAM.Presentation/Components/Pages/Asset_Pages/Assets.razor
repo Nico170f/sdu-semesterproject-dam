@@ -62,8 +62,8 @@
                                         <input class="form-check-input" 
                                                type="checkbox" 
                                                id="tag-@tag.UUID"
-                                               checked="@_selectedTagIds.Contains(tag.UUID)"
-                                               @onchange="(e) => OnTagFilterChanged(tag.UUID, (bool?) e.Value == true)" />
+                                               checked="@_selectedTags.Contains(tag)"
+                                               @onchange="(e) => OnTagFilterChanged(tag, (bool?) e.Value == true)" />
                                         <label class="form-check-label" for="tag-@tag.UUID">
                                             @tag.Name
                                         </label>
@@ -80,21 +80,21 @@
     <div class="row">
         <div class="col-lg-10 offset-lg-1">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                @foreach (Guid assetId in _assetIds)
+                @foreach (Asset asset in _assets)
                 {
                     <div class="col">
                         <div class="card h-100 asset-card">
-                            <div class="image-container" @onclick="@(_ => Navigation.NavigateTo($"/dam/assets/edit?assetId={assetId}"))">
+                            <div class="image-container" @onclick="@(_ => Navigation.NavigateTo($"/dam/assets/edit?assetId={asset.UUID}"))">
                                 <img 
                                     loading="lazy"
-                                    src="@ReadService.GetAssetContentByAssetId(assetId, 250, 250)"
+                                    src="@ReadService.GetAssetContentByAssetId(asset.UUID, (250, 250))"
                                     class="asset-image"
                                     alt="Asset" />
                             </div>
                             <div class="card-body">
-                                <p class="card-text text-muted small">@assetId</p>
+                                <p class="card-text text-muted small">@asset.UUID</p>
                                 <div class="text-end">
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="(_ => DeleteAsset(assetId))">
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="(_ => DeleteAsset(asset.UUID))">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>

@@ -4,5 +4,5 @@ namespace DAM.Shared.Requests;
 
 public class GetAssetsTagsRequest
 {
-    [Required] public List<Guid> TagList { get; set; }
+	[Required] public required List<Guid> TagList { get; set; }
 }

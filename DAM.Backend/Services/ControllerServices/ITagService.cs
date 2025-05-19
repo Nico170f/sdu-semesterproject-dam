@@ -7,6 +7,8 @@ public interface ITagService
 {
     Task<IActionResult> CreateTag(CreateTagRequest body);
     Task<IActionResult> DeleteTag(Guid tagId);
+    
     Task<IActionResult> GetTags(string? searchString, int? amount, int? page);
-    Task<IActionResult> GetCountOfTags(string? searchString, Guid? assetId);
+    Task<IActionResult> GetTagsOnAsset(Guid assetId);
+    Task<IActionResult> GetTagsGallery(Guid assetIdToAvoid, string? searchString, int? amount, int? page);
 }

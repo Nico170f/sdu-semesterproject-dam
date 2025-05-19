@@ -32,8 +32,18 @@ public partial class Tags : ComponentBase
 
 	private async void UpdateTagList ()
 	{
-		(_tags, int totalAmount) = await ReadService.GetTags(searchString: _searchText,amount: _amount,page: _currentPageNumber);
-		_totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
+		var response = await ReadService.GetTags(searchString: _searchText, amount: _amount, page: _currentPageNumber);
+		
+		if(response is null) return;
+		
+		_tags = response.Tags;
+		
+		if (response.TotalCount.HasValue)
+		{
+			int totalAmount = response.TotalCount.Value;
+			_totalPageCount = (int) Math.Ceiling((totalAmount * 1.0f) / _amount);
+		}
+		
 		StateHasChanged();
 	}
 	

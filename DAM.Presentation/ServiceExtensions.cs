@@ -1,8 +1,6 @@
 using DAM.Presentation.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Http;
 
 namespace DAM.Presentation {
     public static class ServiceExtensions

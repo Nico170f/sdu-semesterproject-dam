@@ -2,12 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using DAM.Shared.Models;
 using DAM.Shared.Requests;
 using DAM.Shared.Responses;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DAM.Backend.Services.ControllerServices;
 
@@ -22,8 +19,7 @@ public class AssetService : IAssetService
         _configuration = configuration;
         _database = database;
     }
-
-
+    
     public async Task<IActionResult> CreateAsset(CreateAssetRequest body)
     {
         if (body.Content.Length < 30)
@@ -51,60 +47,139 @@ public class AssetService : IAssetService
             return new BadRequestObjectResult("Failed to create asset");
         }
 
-        CreateAssetResponse response = new CreateAssetResponse(asset);
+        var response = new CreateAssetResponse
+        {
+	        AssetId = asset.UUID
+        };
+        
         return new OkObjectResult(response);
     }
 
-
-    public async Task<IActionResult> GetAssets(string? searchString, string? selectedTagIds, int? amount, int? page)
+    public async Task<IActionResult> DeleteAsset(Guid assetId)
     {
-	    // Set default values if parameters are null
+	    Asset? asset = await _database.Asset.FindAsync(assetId);
+	    if (asset is null)
+	    {
+		    return new NotFoundObjectResult("No asset found by that UUID");
+	    }
+
+	    bool deleted = await _database.Delete(asset);
+	    if (!deleted)
+	    {
+		    return new BadRequestObjectResult("Failed to delete asset");
+	    }
+
+	    List<ProductAsset> productAssets = await _database.ProductAssets
+		    .Where(pi => pi.AssetUUID == assetId)
+		    .ToListAsync();
+        
+	    foreach (ProductAsset productAsset in productAssets)
+	    {
+		    await _database.Delete(productAsset);
+	    }
+
+	    return new OkObjectResult("Asset deleted successfully");
+    }
+    
+
+    public async Task<IActionResult> GetAssets(string? searchString, string? selectedTags, int? amount, int? page)
+    {
 	    int itemsPerPage = amount ?? 20;
 	    int currentPage = page ?? 1;
     
-	    // Start with all assets query
 	    IQueryable<Asset> query = _database.Asset;
     
-	    // Filter by UUID if searchString is provided
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(img => img.UUID.ToString().Contains(searchString));
+		    query = query.Where(asset => EF.Functions.Like(asset.UUID.ToString(), $"%{searchString}%"));
 	    }
-    
-	    // Filter by selected tags if provided
-	    if (!string.IsNullOrEmpty(selectedTagIds))
+
+	    if (!string.IsNullOrEmpty(selectedTags))
 	    {
-		    // Split the comma-separated string and parse to GUIDs
-		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
-			    .Select(id => HelperService.ParseStringGuid(id))
-			    .Where(guid => guid.HasValue)
-			    .Select(guid => guid.Value)
-			    .ToList();
-        
-		    if (tagUUIDs.Any())
-		    {
-			    // Get assets that have ANY of the specified tags
-			    query = query.Where(img => 
-				    _database.AssetTags
-					    .Any(it => it.AssetUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
-		    }
+		    HashSet<Guid> tagIds = new HashSet<Guid>(selectedTags.Split(',').Select(id => new Guid(id)));
+
+		    query = query.Where(asset => _database.AssetTags
+			    .Any(assetTag => assetTag.AssetUUID.Equals(asset.UUID) && tagIds.Contains(assetTag.TagUUID)));
 	    }
-    
-	    // Apply pagination (page starts at 1)
-	    List<Guid> uuids = await query
-		    .OrderBy(img => img.CreatedAt) // Ensure consistent pagination order
+	    
+	    Task<int> count = query.CountAsync();
+	    
+	    Task<List<Asset>> assets = query
+		    .OrderByDescending(asset => asset.CreatedAt)
 		    .Skip((currentPage - 1) * itemsPerPage)
 		    .Take(itemsPerPage)
-		    .Select(img => img.UUID)
 		    .ToListAsync();
-	    
-	    uuids.Reverse();
-	    
-	    return new OkObjectResult(uuids);
+
+	    await Task.WhenAll(count, assets);
+
+	    var response = new GetAssetsResponse()
+	    {
+		    Assets = assets.Result,
+		    TotalCount = count.Result
+	    };
+        
+	    return new OkObjectResult(response);
     }
 
+    public async Task<IActionResult> GetAssetsOnProduct(Guid productId)
+    {
+	    IQueryable<Asset> query = _database.Asset
+		    .Where(asset => _database.ProductAssets
+			    .Any(productAsset => productAsset.ProductUUID.Equals(productId) && productAsset.AssetUUID.Equals(asset.UUID)));
+	    
+	    List<Asset> assets = await query.ToListAsync();
 
-    public async Task<IActionResult> GetAssetById(Guid assetId, int? width, int? height)
+	    var response = new GetAssetsResponse()
+	    {
+		    Assets = assets
+	    };
+	    
+	    return new OkObjectResult(response);
+    }
+
+    public async Task<IActionResult> GetAssetsGallery(Guid productIdToAvoid, string? searchString, string? selectedTags, int? amount, int? page)
+    {
+	    int itemsPerPage = amount ?? 20;
+	    int currentPage = page ?? 1;
+    
+	    IQueryable<Asset> query = _database.Asset
+		    .Where(asset => !_database.ProductAssets
+			    .Any(productAsset => productAsset.ProductUUID.Equals(productIdToAvoid) && productAsset.AssetUUID.Equals(asset.UUID)));
+    
+	    if (!string.IsNullOrEmpty(searchString))
+	    {
+		    query = query.Where(asset => EF.Functions.Like(asset.UUID.ToString(), $"%{searchString}%"));
+	    }
+
+	    if (!string.IsNullOrEmpty(selectedTags))
+	    {
+		    HashSet<Guid> tagIds = new HashSet<Guid>(selectedTags.Split(',').Select(id => new Guid(id)));
+
+		    query = query.Where(asset => _database.AssetTags
+			    .Any(assetTag => assetTag.AssetUUID.Equals(asset.UUID) && tagIds.Contains(assetTag.TagUUID)));
+	    }
+	    
+	    Task<int> count = query.CountAsync();
+	    
+	    Task<List<Asset>> assets = query
+		    .OrderByDescending(asset => asset.CreatedAt)
+		    .Skip((currentPage - 1) * itemsPerPage)
+		    .Take(itemsPerPage)
+		    .ToListAsync();
+
+	    await Task.WhenAll(count, assets);
+
+	    var response = new GetAssetsResponse()
+	    {
+		    Assets = assets.Result,
+		    TotalCount = count.Result
+	    };
+        
+	    return new OkObjectResult(response);
+    }
+    
+    
+    public async Task<IActionResult> GetAssetContent(Guid assetId, int? width, int? height)
     {
         Asset finalAsset = await _database.Asset
 	        .FirstOrDefaultAsync(i => i.UUID == assetId) ?? new Asset
@@ -120,143 +195,8 @@ public class AssetService : IAssetService
         FileContentResult fileContentResult = HelperService.ConvertAssetToFileContent(finalAsset);
         return fileContentResult;
     }
-	
-    public async Task<IActionResult> UpdateAsset(Guid assetId, UpdateAssetRequest requestParams)
-    {
-        Asset? asset = await _database.Asset
-            .FirstOrDefaultAsync(i => i.UUID == assetId);
-        if (asset == null)
-        {
-            return new NotFoundObjectResult("No asset found by that UUID");
-        }
-
-        asset.Content = requestParams.Content;
-        asset.UpdatedAt = DateTime.Now;
-
-        (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
-        asset.Width = dimensions.Width;
-        asset.Height = dimensions.Height;
-
-        bool assetUpdated = await _database.Update(asset);
-        if (!assetUpdated)
-        {
-            return new BadRequestObjectResult("Failed to update asset");
-        }
-
-        return new OkObjectResult("Asset updated successfully");
-    }
-
-
-
-    public async Task<IActionResult> PatchAsset(Guid assetId, JsonPatchDocument<Asset> patchDoc)
-    {
-	    Asset? asset = await _database.Asset
-            .FirstOrDefaultAsync(i => i.UUID == assetId);
-
-        if (asset == null)
-        {
-            return new NotFoundObjectResult("No asset found by that UUID");
-        }
-
-        patchDoc.ApplyTo(asset);
-        asset.UpdatedAt = DateTime.Now;
-
-        (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
-        asset.Width = dimensions.Width;
-        asset.Height = dimensions.Height;
-
-        bool updateResult = await _database.SaveChangesAsync() > 0;
-        if (!updateResult)
-        {
-            return new BadRequestObjectResult("Failed to update asset");
-        }
-
-        return new OkObjectResult("Asset updated successfully");
-    }
-
-
-    public async Task<IActionResult> DeleteAsset(Guid assetId)
-    {
-        Asset? asset = await _database.Asset.FindAsync(assetId);
-        if (asset is null)
-        {
-            return new NotFoundObjectResult("No asset found by that UUID");
-        }
-
-        bool deleted = await _database.Delete(asset);
-        if (!deleted)
-        {
-            return new BadRequestObjectResult("Failed to delete asset");
-        }
-
-        List<ProductAsset> productAssets = await _database.ProductAssets
-            .Where(pi => pi.AssetUUID == assetId)
-            .ToListAsync();
-        
-        foreach (ProductAsset productAsset in productAssets)
-        {
-	        await _database.Delete(productAsset);
-        }
-
-        return new OkObjectResult("Asset deleted successfully");
-    }
-
-
-    public async Task<IActionResult> GetAssetIdPileFromSearch(int size, int offset, string? searchquery)
-    {
-	    searchquery ??= "";
-	    
-        List<Guid> assetIds = await _database.ProductAssets
-            .Join(_database.Products,
-                pi => pi.ProductUUID,
-                p => p.UUID,
-                (pi, p) => new { ProductAsset = pi, Product = p })
-            .Where(joined => joined.Product.Name.Contains(searchquery))
-            .OrderBy(joined => joined.Product.Name)
-            .Skip(offset)
-            .Take(size)
-            .Select(joined => joined.ProductAsset.AssetUUID)
-            .ToListAsync();
-
-        return new OkObjectResult(assetIds);
-    }
-
-
-    public async Task<IActionResult> GetAssetTagsGallery(Guid assetId, string? searchString, int? amount, int? page)
-    {
-	    int itemsPerPage = amount ?? 20;
-	    int currentPage = page ?? 1;
-	    
-	    IQueryable<Tag> query = _database.Tags
-	        .Where(tag => !_database.AssetTags
-	            .Any(it => it.AssetUUID == assetId && it.TagUUID == tag.UUID));
-	    
-	    if (!string.IsNullOrEmpty(searchString))
-	    {
-	        query = query.Where(tag => tag.Name.Contains(searchString) || tag.UUID.ToString().Contains(searchString));
-	    }
-	    
-	    List<Tag> tagsNotOnAsset = await query
-	        .OrderBy(tag => tag.Name)
-	        .Skip((currentPage - 1) * itemsPerPage)
-	        .Take(itemsPerPage)
-	        .ToListAsync();
-	    
-	    return new OkObjectResult(tagsNotOnAsset);
-    }
     
-
-    public async Task<IActionResult> GetAssetTags(Guid assetId)
-    {
-	    List<Tag> assetTagsList = await _database.Tags
-	        .Where(tag => _database.AssetTags
-		        .Any(it => it.AssetUUID == assetId && it.TagUUID == tag.UUID))
-	        .ToListAsync();
-
-        return new OkObjectResult(assetTagsList);
-    }
-
-
+    
     public async Task<IActionResult> AddAssetTag(Guid assetId, Guid tagId)
     {
         try
@@ -312,39 +252,56 @@ public class AssetService : IAssetService
 
         return new OkObjectResult("Tag removed from asset");
     }
-
-    public async Task<IActionResult> GetCountOfAssets(string? searchString, string? selectedTagIds)
+    
+	
+    public async Task<IActionResult> UpdateAsset(Guid assetId, UpdateAssetRequest requestParams)
     {
-	    // Start with all assets query
-	    IQueryable<Asset> query = _database.Asset;
-
-	    // Filter by UUID if searchString is provided
-	    if (!string.IsNullOrEmpty(searchString))
+	    Asset? asset = await _database.Asset
+		    .FirstOrDefaultAsync(i => i.UUID == assetId);
+	    if (asset == null)
 	    {
-		    query = query.Where(img => img.UUID.ToString().Contains(searchString));
+		    return new NotFoundObjectResult("No asset found by that UUID");
 	    }
 
-	    // Filter by selected tags if provided
-	    if (!string.IsNullOrEmpty(selectedTagIds))
-	    {
-		    // Split the comma-separated string and parse to GUIDs
-		    List<Guid> tagUUIDs = selectedTagIds.Split(',')
-			    .Select(id => HelperService.ParseStringGuid(id))
-			    .Where(guid => guid.HasValue)
-			    .Select(guid => guid.Value)
-			    .ToList();
+	    asset.Content = requestParams.Content;
+	    asset.UpdatedAt = DateTime.Now;
 
-		    if (tagUUIDs.Any())
-		    {
-			    // Get assets that have ANY of the specified tags
-			    query = query.Where(img =>
-				    _database.AssetTags
-					    .Any(it => it.AssetUUID == img.UUID && tagUUIDs.Contains(it.TagUUID)));
-		    }
+	    (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
+	    asset.Width = dimensions.Width;
+	    asset.Height = dimensions.Height;
+
+	    bool assetUpdated = await _database.Update(asset);
+	    if (!assetUpdated)
+	    {
+		    return new BadRequestObjectResult("Failed to update asset");
 	    }
 
-	    // Count total matching assets
-	    int count = await query.CountAsync();
-	    return new OkObjectResult(count);
+	    return new OkObjectResult("Asset updated successfully");
+    }
+    
+    public async Task<IActionResult> PatchAsset(Guid assetId, JsonPatchDocument<Asset> patchDoc)
+    {
+	    Asset? asset = await _database.Asset
+		    .FirstOrDefaultAsync(i => i.UUID == assetId);
+
+	    if (asset == null)
+	    {
+		    return new NotFoundObjectResult("No asset found by that UUID");
+	    }
+
+	    patchDoc.ApplyTo(asset);
+	    asset.UpdatedAt = DateTime.Now;
+
+	    (int Width, int Height) dimensions = HelperService.GetAssetDimensions(asset.Content);
+	    asset.Width = dimensions.Width;
+	    asset.Height = dimensions.Height;
+
+	    bool updateResult = await _database.SaveChangesAsync() > 0;
+	    if (!updateResult)
+	    {
+		    return new BadRequestObjectResult("Failed to update asset");
+	    }
+
+	    return new OkObjectResult("Asset updated successfully");
     }
 }

@@ -4,5 +4,5 @@ namespace DAM.Shared.Requests;
 
 public class CreateAssetRequest
 {
-    [Required] public string Content { get; set; }
+    [Required] public required string Content { get; set; }
 }

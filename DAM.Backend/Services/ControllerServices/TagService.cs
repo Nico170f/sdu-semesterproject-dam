@@ -2,9 +2,9 @@ using DAM.Backend.Data;
 using DAM.Backend.Services.ControllerServices;
 using DAM.Shared.Models;
 using DAM.Shared.Requests;
+using DAM.Shared.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace DAM.Backend.Services;
 
@@ -19,16 +19,6 @@ public class TagService : ITagService
         _database = database;
     }
 
-
-    /// <summary>
-	/// Creates a new tag if a tag with the same name does not already exist (case-insensitive).
-	/// </summary>
-	/// <param name="requestParams">The request parameters containing the tag name.</param>
-	/// <returns>
-	/// <see cref="BadRequestObjectResult"/> if a tag with the same name exists; 
-	/// otherwise, <see cref="OkObjectResult"/> with the created tag;
-	/// or <see cref="BadRequestObjectResult"/> if an error occurs.
-	/// </returns>
 	public async Task<IActionResult> CreateTag(CreateTagRequest requestParams)
 	{
 		try
@@ -57,16 +47,7 @@ public class TagService : ITagService
 			return new BadRequestObjectResult("Error occured when adding tag: " + e.Message);
 		}
 	}
-    
-    /// <summary>
-    /// Deletes a tag by its unique identifier.
-    /// </summary>
-    /// <param name="tagId">The UUID of the tag to delete, as a string.</param>
-    /// <returns>
-    /// <see cref="NotFoundObjectResult"/> if the tag does not exist;
-    /// otherwise, <see cref="OkObjectResult"/> if the tag is deleted successfully;
-    /// or <see cref="BadRequestObjectResult"/> if an error occurs.
-    /// </returns>
+
     public async Task<IActionResult> DeleteTag(Guid tagId)
     {
 	    try
@@ -90,6 +71,7 @@ public class TagService : ITagService
 	    }
     }
     
+    
     public async Task<IActionResult> GetTags(string? searchString, int? amount, int? page)
     {
 	    int itemsPerPage = amount ?? 20;
@@ -99,49 +81,76 @@ public class TagService : ITagService
     
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(t => EF.Functions.Like(t.Name, "%" + searchString + "%") || 
-		                             EF.Functions.Like(t.UUID.ToString(), "%" + searchString + "%"));
+		    query = query.Where(tag => EF.Functions.Like(tag.Name, $"%{searchString}%") || 
+		                               EF.Functions.Like(tag.UUID.ToString(), $"%{searchString}%"));
 	    }
 
-	    int tagCount = await query.CountAsync();
+	    Task<int> count = query.CountAsync();
 	    
-	    List<Tag> tags = await query
+	    Task<List<Tag>> tags = query
 		    .OrderBy(t => t.Name)
 		    .Skip((currentPage - 1) * itemsPerPage)
 		    .Take(itemsPerPage)
 		    .ToListAsync();
-        
-	    return new OkObjectResult(tags);
-    }
-    
-    class TagsSearchResponse 
-	{
-		public List<Tag> Tags { get; set; }
-		public int TotalCount { get; set; }
-	}
-    
-    public async Task<IActionResult> GetCountOfTags(string? searchString, Guid? assetId)
-    {
-	    // Start with all assets query
-	    IQueryable<Tag> query = _database.Tags;
 
-	    // Filter by UUID if searchString is provided
+	    await Task.WhenAll(count, tags);
+
+	    var response = new GetTagsResponse
+	    {
+		    Tags = tags.Result,
+		    TotalCount = count.Result
+	    };
+        
+	    return new OkObjectResult(response);
+    }
+
+    public async Task<IActionResult> GetTagsOnAsset(Guid assetId)
+    {
+	    IQueryable<Tag> query = _database.Tags
+		    .Where(tag => _database.AssetTags
+			    .Any(assetTag => assetTag.AssetUUID.Equals(assetId) && assetTag.TagUUID.Equals(tag.UUID)));
+	    
+	    List<Tag> tags = await query.ToListAsync();
+
+	    var response = new GetTagsResponse
+	    {
+		    Tags = tags
+	    };
+	    
+	    return new OkObjectResult(response);
+    }
+
+    public async Task<IActionResult> GetTagsGallery(Guid assetIdToAvoid, string? searchString, int? amount, int? page)
+    {
+	    int itemsPerPage = amount ?? 20;
+	    int currentPage = page ?? 1;
+    
+	    IQueryable<Tag> query = _database.Tags
+		    .Where(tag => !_database.AssetTags
+			    .Any(assetTag => assetTag.AssetUUID.Equals(assetIdToAvoid) && assetTag.TagUUID.Equals(tag.UUID)));
+    
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(tag => EF.Functions.Like(tag.UUID.ToString(), "%" + searchString + "%"));
+		    query = query.Where(tag => EF.Functions.Like(tag.Name, $"%{searchString}%") || 
+		                             EF.Functions.Like(tag.UUID.ToString(), $"%{searchString}%"));
 	    }
 
-	    if (assetId != null)
+	    Task<int> count = query.CountAsync();
+	    
+	    Task<List<Tag>> tags = query
+		    .OrderBy(t => t.Name)
+		    .Skip((currentPage - 1) * itemsPerPage)
+		    .Take(itemsPerPage)
+		    .ToListAsync();
+
+	    await Task.WhenAll(count, tags);
+
+	    var response = new GetTagsResponse
 	    {
-		    query = query
-			    .Join(_database.AssetTags, t => t.UUID, at => at.TagUUID, (t, at) => new { Tag = t, AssetTag = at })
-			    .Where(joined => !joined.Tag.UUID.Equals(joined.AssetTag.AssetUUID))
-			    .Select(joined => joined.Tag);
-	    }
-
-	    // Count total matching assets
-	    int count = await query.CountAsync();
-	    return new OkObjectResult(count);
+		    Tags = tags.Result,
+		    TotalCount = count.Result
+	    };
+        
+	    return new OkObjectResult(response);
     }
-    
 }

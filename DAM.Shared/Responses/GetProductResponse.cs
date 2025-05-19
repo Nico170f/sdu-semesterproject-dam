@@ -1,13 +1,7 @@
-﻿namespace DAM.Shared.Responses;
+﻿using DAM.Shared.Models;
+
+namespace DAM.Shared.Responses;
 
 public class GetProductResponse {
-    public string Name { get; set; }
-    public Guid UUID { get; set; }
-
-    public GetProductResponse(string name, Guid uuid)
-    {
-        Name = name;
-        UUID = uuid;
-    }
-
+	public required Product Product { get; set; }
 }

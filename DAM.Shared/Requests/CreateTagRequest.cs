@@ -4,5 +4,5 @@ namespace DAM.Shared.Requests;
 
 public class CreateTagRequest
 {
-    [Required] public string Name { get; set; }
+	[Required] public required string Name { get; set; }
 }

@@ -50,7 +50,7 @@ public partial class Edit : ComponentBase
 	        });
         }
 
-        _allTags = await ReadService.GetAllTags();
+        _allTags = (await ReadService.GetTags())?.Tags ?? [];
         
         UpdateAssetGallery();
     }

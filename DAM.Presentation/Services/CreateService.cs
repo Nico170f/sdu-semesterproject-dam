@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using DAM.Shared.Models;
 using DAM.Shared.Requests;
 using Microsoft.AspNetCore.Components.Forms;
 
@@ -9,9 +8,9 @@ public class CreateService(IHttpClientFactory httpClientFactory) : BaseService(h
 {
 	
 	/// <summary>
-	/// Uploads an image to the database via the api.
+	/// Uploads an image to the database via the API.
 	/// </summary>
-	/// <param name="e"></param>
+	/// <param name="e">The file change event arguments containing the image file.</param>
 	public async Task UploadImage(InputFileChangeEventArgs e)
 	{
 		// Select a file 
@@ -47,9 +46,9 @@ public class CreateService(IHttpClientFactory httpClientFactory) : BaseService(h
 	}
 	
 	/// <summary>
-	/// Uploads a tag to the database via the api. 
+	/// Uploads a tag to the database via the API.
 	/// </summary>
-	/// <param name="tagName"></param>
+	/// <param name="tagName">The name of the tag to upload.</param>
 	public async Task UploadTag(string tagName)
 	{
 		var payload = new CreateTagRequest
@@ -65,17 +64,17 @@ public class CreateService(IHttpClientFactory httpClientFactory) : BaseService(h
 		}
 		else
 		{
-			var error = await response.Content.ReadAsStringAsync();
+			string error = await response.Content.ReadAsStringAsync();
 			Console.WriteLine($"Error: {response.StatusCode} - {error}");
 		}
 	}
 	
 	/// <summary>
-	/// Makes a relationship between an asset and a tag via the api.
+	/// Creates a relationship between an asset and a tag via the API.
 	/// </summary>
-	/// <param name="assetId"></param>
-	/// <param name="tagId"></param>
-	public async Task AddTagToImage(Guid assetId, Guid tagId)
+	/// <param name="assetId">The ID of the asset.</param>
+	/// <param name="tagId">The ID of the tag.</param>
+	public async Task AddTagToAsset(Guid assetId, Guid tagId)
 	{
 		var response = await HttpClient.PostAsync($"api/v1/assets/{assetId}/tags/{tagId}", null);
 		
@@ -83,17 +82,17 @@ public class CreateService(IHttpClientFactory httpClientFactory) : BaseService(h
 			Console.WriteLine($"Tag \"{tagId}\" added to asset \"{assetId}\" successfully.");
 		} 
 		else {
-			var error = await response.Content.ReadAsStringAsync();
+			string error = await response.Content.ReadAsStringAsync();
 			Console.WriteLine($"Error: {response.StatusCode} - {error}");
 		}
 	}
 	
 	/// <summary>
-	/// Makes a relationship with the specified priority between a product and an asset via the api.
+	/// Creates a relationship with the specified priority between a product and an asset via the API.
 	/// </summary>
-	/// <param name="productId"></param>
-	/// <param name="assetId"></param>
-	/// <param name="priority"></param>
+	/// <param name="productId">The ID of the product.</param>
+	/// <param name="assetId">The ID of the asset.</param>
+	/// <param name="priority">The priority of the relationship.</param>
 	public async Task AddAssetToProduct(Guid productId, Guid assetId, int priority)
 	{
 		var payload = new AddProductAssetRequest()
@@ -108,8 +107,9 @@ public class CreateService(IHttpClientFactory httpClientFactory) : BaseService(h
 			Console.WriteLine($"Asset \"{assetId}\" added to product \"{productId}\" successfully.");
 		} 
 		else {
-			var error = await response.Content.ReadAsStringAsync();
+			string error = await response.Content.ReadAsStringAsync();
 			Console.WriteLine($"Error: {response.StatusCode} - {error}");
 		}
 	}
 }
+

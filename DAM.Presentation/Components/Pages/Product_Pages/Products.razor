@@ -50,7 +50,7 @@
                         <a href="/dam/products/edit?productId=@product.UUID" class="div-link" title="@product.Name"></a>
                         <div class="image-container">
                             <img
-                                src="@(ReadService.GetAssetContentByProductId(product.UUID))"
+                                src="@(ReadService.GetAssetContentByProductId(product.UUID, 0, (250, 250)))"
                                 class="product-image"
                                 alt="@product.Name">
                         </div>

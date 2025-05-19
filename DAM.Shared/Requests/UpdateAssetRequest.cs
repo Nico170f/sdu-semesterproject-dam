@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace DAM.Shared.Requests;
 
-public class UpdateAssetRequest : CreateAssetRequest
+public class UpdateAssetRequest
 {
-    public string Content { get; set; }
+	[Required] public required string Content { get; set; }
 }

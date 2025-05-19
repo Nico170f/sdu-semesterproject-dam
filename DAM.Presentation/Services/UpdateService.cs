@@ -6,11 +6,11 @@ public class UpdateService(IHttpClientFactory httpClientFactory) : BaseService(h
 {
 
 	/// <summary>
-	/// Updates the relationship priority between a product and an asset.
+	/// Updates the relationship priority between a product and an asset via the API.
 	/// </summary>
-	/// <param name="productId"></param>
-	/// <param name="assetId"></param>
-	/// <param name="newPriority"></param>
+	/// <param name="productId">The ID of the product.</param>
+	/// <param name="assetId">The ID of the asset.</param>
+	/// <param name="newPriority">The new priority value to set.</param>
 	public async Task UpdatePriority(Guid productId, Guid assetId, int newPriority)
 	{
 		// Create an array of operations in the correct JSON Patch format

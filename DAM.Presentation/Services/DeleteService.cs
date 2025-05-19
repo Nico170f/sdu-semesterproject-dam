@@ -4,9 +4,9 @@ public class DeleteService(IHttpClientFactory httpClientFactory) : BaseService(h
 {
 
 	/// <summary>
-	/// Deletes a tag from the database via the api.
+	/// Deletes a tag from the database via the API.
 	/// </summary>
-	/// <param name="tagId"></param>
+	/// <param name="tagId">The ID of the tag to delete.</param>
 	public async Task DeleteTag(Guid tagId)
 	{
 		var response = await HttpClient.DeleteAsync($"api/v1/tags/{tagId}");
@@ -23,10 +23,10 @@ public class DeleteService(IHttpClientFactory httpClientFactory) : BaseService(h
 	}
 	
 	/// <summary>
-	/// Removes a relationship between an asset and a tag via the api.
+	/// Removes a relationship between an asset and a tag via the API.
 	/// </summary>
-	/// <param name="assetId"></param>
-	/// <param name="tagId"></param>
+	/// <param name="assetId">The ID of the asset.</param>
+	/// <param name="tagId">The ID of the tag.</param>
 	public async Task RemoveTagFromAsset(Guid assetId, Guid tagId)
 	{
 		var response = await HttpClient.DeleteAsync($"api/v1/assets/{assetId}/tags/{tagId}");
@@ -43,10 +43,10 @@ public class DeleteService(IHttpClientFactory httpClientFactory) : BaseService(h
 	}
 	
 	/// <summary>
-	/// Removes the relationship between a product and an asset via the api.
+	/// Removes the relationship between a product and an asset via the API.
 	/// </summary>
-	/// <param name="productId"></param>
-	/// <param name="assetId"></param>
+	/// <param name="productId">The ID of the product.</param>
+	/// <param name="assetId">The ID of the asset.</param>
 	public async Task RemoveAssetFromProduct(Guid productId, Guid assetId)
 	{
 		var response = await HttpClient.DeleteAsync($"api/v1/products/{productId}/assets/{assetId}");
@@ -60,6 +60,10 @@ public class DeleteService(IHttpClientFactory httpClientFactory) : BaseService(h
 		}
 	}
 
+	/// <summary>
+	/// Deletes an asset from the database via the API.
+	/// </summary>
+	/// <param name="assetId">The ID of the asset to delete.</param>
 	public async Task DeleteAsset(Guid assetId)
 	{
 		var response = await HttpClient.DeleteAsync($"api/v1/Assets/{assetId}");
