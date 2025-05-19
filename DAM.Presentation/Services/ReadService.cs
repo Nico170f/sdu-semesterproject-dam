@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
-using DAM.Presentation.EnhancedModels;
-using DAM.Presentation.Models;
-using DAM.Presentation.Services.API;
+using DAM.Shared.Models;
+using DAM.Shared.Responses;
 
 namespace DAM.Presentation.Services;
 
@@ -19,13 +18,18 @@ public class ReadService : BaseService
 	/// <param name="width"></param>
 	/// <param name="height"></param>
 	/// <returns>The url that points to that asset.</returns>
-	public string GetAssetContentById(Guid assetId, int width = default, int height = default)
+	public string GetAssetContentByAssetId(Guid assetId, int width = default, int height = default)
 	{
 		if (width == default || height == default)
 		{
-			return $"http://localhost:5115/api/v1/assets/{assetId}";
+			return $"{_httpClient.BaseAddress}api/v1/assets/{assetId}";
 		}
-		return $"http://localhost:5115/api/v1/assets/{assetId}?width={width}&height={height}";
+		return $"{_httpClient.BaseAddress}api/v1/assets/{assetId}?width={width}&height={height}";
+	}
+	
+	public string GetAssetContentByProductId(Guid productId)
+	{
+		return $"{_httpClient.BaseAddress}api/v1/products/{productId}/assets/{0}";
 	}
 	
 	/// <summary>
@@ -59,23 +63,6 @@ public class ReadService : BaseService
 		return tags ?? [];
 	}
 	
-	/// <summary>
-	/// Returns a list of assetIds based on a list of tagIds
-	/// </summary>
-	/// <param name="selectedTagsIds"></param>
-	/// <returns></returns>
-	public async Task<List<Guid>> GetAssetsByTags(List<Guid> selectedTagsIds)
-	{
-		string tagQuery = string.Join(",", selectedTagsIds);
-		string apiUrl = $"api/v1/tags/search?tagList={tagQuery}";
-
-		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
-
-		List<Guid> assetIds = [];
-		assetIds.AddRange((response ?? []).Select(asset => asset.UUID));
-
-		return assetIds;
-	}
 	
 	/// <summary>
 	/// Returns a list of tags based on an assetId
@@ -162,31 +149,10 @@ public class ReadService : BaseService
 		return response?.Name ?? "No product found!";
 	}
 
-	public async Task<List<EnhancedProduct>> GetAllProducts()
+	public async Task<List<Product>> GetAllProducts()
 	{
-		List<EnhancedProduct> enhancedProducts = [];
 		List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
-
-		foreach (Product product in products)
-		{
-			var enhancedProduct = new EnhancedProduct
-			{
-				UUID = product.UUID,
-				Name = product.Name,
-			};
-
-			var assets = await GetAssetsByProduct(product.UUID);
-			Guid assetId = Guid.Empty;
-			if (assets.Count > 0)
-			{
-				assetId = assets[0];
-			}
-			enhancedProduct.MainAssetUUID = assetId;
-			
-			enhancedProducts.Add(enhancedProduct);
-		}
-
-		return enhancedProducts;
+		return products;
 	}
 
 	public async Task<(List<Guid> assetIds, int totalAmount)> GetAssetIds(string searchString = "", HashSet<Guid>? selectedTags = null, int amount = 20, int page = 1)
@@ -215,7 +181,7 @@ public class ReadService : BaseService
 		return (assetIds ?? [], totalAmount);
 	}
 
-	public async Task<(List<EnhancedProduct> productList, int totalAmount)> GetProducts(string searchString = "", int amount = 20, int page = 1)
+	public async Task<(List<Product> productList, int totalAmount)> GetProducts(string searchString = "", int amount = 20, int page = 1)
 	{
 		string apiUrl = "api/v1/products?";
 		List<string> parameters = [];
@@ -233,30 +199,9 @@ public class ReadService : BaseService
 
 		apiUrl += string.Join('&', parameters);
 
-		List<Product>? products = await _httpClient.GetFromJsonAsync<List<Product>>(apiUrl);
+		List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>(apiUrl) ?? [];
 		
-		List<EnhancedProduct> enhancedProducts = [];
-
-		foreach (var product in products ?? [])
-		{
-			var enhancedProduct = new EnhancedProduct
-			{
-				UUID = product.UUID,
-				Name = product.Name,
-			};
-
-			var assets = await GetAssetsByProduct(product.UUID);
-			Guid assetId = Guid.Empty;
-			if (assets.Count > 0)
-			{
-				assetId = assets[0];
-			}
-			enhancedProduct.MainAssetUUID = assetId;
-			
-			enhancedProducts.Add(enhancedProduct);
-		}
-		
-		return (enhancedProducts, amount);
+		return (products, total);
 	}
 
 	public async Task SyncWithPim ()

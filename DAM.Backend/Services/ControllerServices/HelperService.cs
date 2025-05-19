@@ -1,25 +1,18 @@
-using DAM.Backend.Data.Models;
+using DAM.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-namespace DAM.Backend.Services;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats.Png;
-using System.IO;
+namespace DAM.Backend.Services.ControllerServices;
 
 public static class HelperService
 {
 	public static string DefaultImage = "";
 	
-	public static FileContentResult ConvertAssetToFileContent(DAM.Backend.Data.Models.Asset finalAsset)
+	public static FileContentResult ConvertAssetToFileContent(Asset finalAsset)
 	{
 		string content = finalAsset.Content;
 		string contentType;
@@ -103,7 +96,7 @@ public static class HelperService
     
     
     public static string ResizeBase64WithPadding(
-	    DAM.Backend.Data.Models.Asset currentAsset,
+	    Asset currentAsset,
 	    int? newWidth = null,
 	    int? newHeight = null)
     {

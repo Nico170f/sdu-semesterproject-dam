@@ -1,0 +1,190 @@
+﻿@page "/dam/assets/edit"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@using BlazorSortableList
+
+<PageTitle>Asset Edit</PageTitle>
+
+<style>
+    /* Common styles */
+    .section-container {
+        margin: 2rem 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+
+    /* Asset information */
+    .asset-info {
+        background-color: #f5f5f5;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .asset-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .image-container {
+        width: 100%;
+        max-width: 400px;
+        aspect-ratio: 1/1;
+        position: relative;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #dee2e6;
+    }
+
+    .asset-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+        object-fit: contain;
+    }
+
+    /* Tag galleries */
+    .tag-gallery > div{
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        padding: 1rem 0;
+    }
+
+    .tag-card {
+        border-radius: 8px;
+        cursor: grab;
+        padding: 8px;
+    }
+
+    .tag-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .tag-card:active {
+        cursor: grabbing;
+    }
+
+    /* Search controls */
+    .search-controls {
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 8px;
+    }
+
+    .search-controls input {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+
+    /* Fix for drag and drop */
+    [draggable="true"] {
+        cursor: grab;
+    }
+
+    /* Styles for dragging elements */
+    .sortable-drag {
+        position: absolute !important;
+        opacity: 0.8;
+        z-index: 1000;
+        pointer-events: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f0f0f0;
+    }
+
+    .sortable-chosen {
+        background-color: #f8f8f8;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="@(_ => Navigation.NavigateTo("/dam/assets"))">
+                <i class="bi bi-arrow-left"></i> Back to Assets
+            </button>     
+            </div>
+    </div>
+
+    <section class="section-container">
+        <h2 class="section-title">Asset Details</h2>
+        <div class="asset-info">
+            <div class="row">
+                <div class="col-md-6 asset-preview">
+                    <div class="image-container">
+                        <img src="@ReadService.GetAssetContentByAssetId(_assetId)" alt="Asset image" class="asset-image" />
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                    <div>
+                        <h4>Asset Information</h4>
+                        <p><strong>Image ID:</strong> @_assetId</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-container">
+        <h2 class="section-title">Image Tags</h2>
+        <div class="tag-gallery">
+            <SortableList Group="sharedLists" Items="_assetTags" Context="tag"
+                          OnRemove="ImageTagsRemove" OnUpdate="ImageTagsReorder">
+                <SortableItemTemplate>
+                    <div class="card tag-card">
+                        <div class="card-body">
+                            <h5 class="card-title">@tag.Name</h5>
+                            <p class="card-text text-muted small">@tag.UUID</p>
+                        </div>
+                    </div>
+                </SortableItemTemplate>
+            </SortableList>
+        </div>
+    </section>
+
+    <section class="section-container">
+        <h2 class="section-title">Available Tags</h2>
+
+        <div class="search-controls align-items-center">
+            <input type="text"
+                   class="form-control"
+                   value="@_searchText"
+                   @oninput="OnSearchInputChanged"
+                   placeholder="Search for tags by name or id" />
+            <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+            <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+            <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
+        </div>
+
+        <div class="tag-gallery">
+            <SortableList Group="sharedLists" Items="_tagGallery" Context="tag"
+                          OnRemove="ListRemove" OnUpdate="ListReorder">
+                <SortableItemTemplate>
+                    <div class="card tag-card">
+                        <div class="card-body">
+                            <h5 class="card-title">@tag.Name</h5>
+                            <p class="card-text text-muted small">@tag.UUID</p>
+                        </div>
+                    </div>
+                </SortableItemTemplate>
+            </SortableList>
+        </div>
+    </section>
+</div>

@@ -1,6 +1,4 @@
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.JsonPatch;
-using DAM.Presentation.Models;
 
 namespace DAM.Presentation.Services;
 

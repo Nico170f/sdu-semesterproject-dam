@@ -1,21 +1,15 @@
-using DAM.Backend.Controllers.API;
-using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DAM.Backend.Controllers;
 
-public class ProductsController : ApiController
+public class ProductsController(IProductService productService) : ApiController
 {
 
-    private readonly IProductService _productService;
-    public ProductsController(IProductService productService)
-    {
-        _productService = productService;
-    }
-    
-    /*
+	/*
      * GET /products
      * Gets products with optional search parameters
      */
@@ -23,7 +17,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> GetProducts([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetProducts(searchString, amount, page);
+	    return await productService.GetProducts(searchString, amount, page);
     }
         
     /*
@@ -34,7 +28,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> CreateMockProduct([FromBody] CreateMockProductRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.CreateMockProduct(body);
+        return await productService.CreateMockProduct(body);
     }
     
     /*
@@ -45,7 +39,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest body)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.CreateProduct(body);
+	    return await productService.CreateProduct(body);
     }
     
     
@@ -57,7 +51,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> GetProduct(string productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.GetProduct(productId);
+        return await productService.GetProduct(productId);
     }
     
     
@@ -70,7 +64,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> GetProductAssets(string productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.GetProductAssets(productId);
+        return await productService.GetProductAssets(productId);
     }
     
     /*
@@ -82,7 +76,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> GetProductAssetsAmount(string productId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.GetProductAssetsAmount(productId);
+        return await productService.GetProductAssetsAmount(productId);
     }
     
     
@@ -96,7 +90,7 @@ public class ProductsController : ApiController
     {
 	    //TODO Change this method, so it can use the resizing algorithm
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.GetProductAsset(productId, priority);
+        return await productService.GetProductAsset(productId, priority);
     }
     
     /*
@@ -107,7 +101,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> AssignProductAsset(string productId, [FromBody] AddProductAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.AssignProductAsset(productId, body);
+        return await productService.AssignProductAsset(productId, body);
     }
     
     /*
@@ -118,7 +112,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> RemoveProductAsset(string productId, string assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.UnassignProductAsset(productId, assetId);
+        return await productService.UnassignProductAsset(productId, assetId);
     }
     
     
@@ -130,7 +124,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> PatchProductAsset(string productId, string assetId, [FromBody] JsonPatchDocument<ProductAsset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _productService.PatchProductAsset(productId, assetId, patchDoc);
+        return await productService.PatchProductAsset(productId, assetId, patchDoc);
     }
     
     
@@ -142,7 +136,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> GetProductGallery(string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetProductGallery(productId, searchString, selectedTagIds, amount, page);
+	    return await productService.GetProductGallery(productId, searchString, selectedTagIds, amount, page);
     }
 
 
@@ -150,7 +144,7 @@ public class ProductsController : ApiController
     public async Task<IActionResult> SynchronizeWithPim ()
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetProductsFromPIM();
+	    return await productService.GetProductsFromPIM();
     }
 
     [HttpGet("{productId}/{priority}")]
@@ -158,20 +152,20 @@ public class ProductsController : ApiController
 	    [FromQuery] int? newWidth = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
+	    return await productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
     }
 
     [HttpGet("count")]
     public async Task<IActionResult> GetCountOfProducts([FromQuery] string? searchString = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetCountOfProducts(searchString);
+	    return await productService.GetCountOfProducts(searchString);
     }
     
     [HttpGet("{productId}/assets/gallery/count")]
     public async Task<IActionResult> GetCountOfAssetsNotOnProduct (string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _productService.GetCountOfAssetsNotOnProduct(productId, searchString, selectedTagIds);
+	    return await productService.GetCountOfAssetsNotOnProduct(productId, searchString, selectedTagIds);
     }
 }

@@ -1,0 +1,143 @@
+@page "/dam/assets"
+@using global::DAM.Shared.Models
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<PageTitle>Assets Overview</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="NavigateToHome">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </button>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-4">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Assets Gallery</h2>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-primary me-2" @onclick="ToggleTagMenu">
+                        <i class="bi bi-tags"></i> Select Tags
+                    </button>
+                    <InputFile OnChange="UploadAsset" accept="image/*" class="btn btn-primary me-2" />
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+                        <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+                        <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="@_searchText"
+                        @oninput="OnSearchInputChanged"
+                        placeholder="Search for assets by uuid" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (_showTagMenu)
+    {
+        <div class="row mb-4">
+            <div class="col-lg-6 offset-lg-3">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Filter with Tags</h5>
+                        <button type="button" class="btn-close" @onclick="ToggleTagMenu"></button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (Tag tag in _allTags)
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="tag-@tag.UUID"
+                                               checked="@_selectedTagIds.Contains(tag.UUID)"
+                                               @onchange="(e) => OnTagFilterChanged(tag.UUID, (bool?) e.Value == true)" />
+                                        <label class="form-check-label" for="tag-@tag.UUID">
+                                            @tag.Name
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                @foreach (Guid assetId in _assetIds)
+                {
+                    <div class="col">
+                        <div class="card h-100 asset-card">
+                            <div class="image-container" @onclick="@(_ => Navigation.NavigateTo($"/dam/assets/edit?assetId={assetId}"))">
+                                <img 
+                                    loading="lazy"
+                                    src="@ReadService.GetAssetContentByAssetId(assetId, 250, 250)"
+                                    class="asset-image"
+                                    alt="Asset" />
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted small">@assetId</p>
+                                <div class="text-end">
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="(_ => DeleteAsset(assetId))">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+    .asset-card {
+        position: relative;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .asset-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        padding-top: 100%; /* Creates a perfect square */
+        background-color: #f8f9fa; /* Light background for letterboxing */
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .asset-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+        object-fit: contain; /* Maintains aspect ratio with letterboxing */
+    }
+</style>

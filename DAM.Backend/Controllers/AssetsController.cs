@@ -1,22 +1,15 @@
-using DAM.Backend.Controllers.API;
-using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DAM.Backend.Controllers;
 
-public class AssetsController : ApiController
+public class AssetsController(IAssetService assetService) : ApiController
 {
-    private readonly IAssetService _assetService;
-
-    public AssetsController(IAssetService assetService)
-    {
-        _assetService = assetService;
-    }
-    
-    
-    /*
+	
+	/*
      * POST /assets
      * Upload a new asset (expects base64 asset content).
      */
@@ -24,7 +17,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> PostCreateAsset([FromBody] CreateAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.CreateAsset(body);
+        return await assetService.CreateAsset(body);
     }
     
     
@@ -36,7 +29,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetAssetsWithOptionalParameters([FromQuery] string? searchString, [FromQuery] string? selectedTagIds, [FromQuery] int? amount, [FromQuery] int? page)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssets(searchString, selectedTagIds, amount, page);
+        return await assetService.GetAssets(searchString, selectedTagIds, amount, page);
     }
     
     
@@ -48,7 +41,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetAsset(string assetId, [FromQuery] int? width, [FromQuery] int? height)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetById(assetId, width, height);
+        return await assetService.GetAssetById(assetId, width, height);
     }
     
     
@@ -60,7 +53,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> PutUpdateAsset(string assetId, [FromBody] UpdateAssetRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.UpdateAsset(assetId, body);
+        return await assetService.UpdateAsset(assetId, body);
     }
     
     
@@ -73,7 +66,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> PatchAsset(string assetId, [FromBody] JsonPatchDocument<Asset> patchDoc)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.PatchAsset(assetId, patchDoc);
+        return await assetService.PatchAsset(assetId, patchDoc);
     }
     
     
@@ -85,7 +78,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> DeleteAsset(string assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.DeleteAsset(assetId);
+        return await assetService.DeleteAsset(assetId);
     }
     
     
@@ -97,7 +90,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> SearchAssets([FromQuery] int size, [FromQuery] int page, [FromQuery] string? searchQuery = null) 
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetIdPileFromSearch(size, page * size, searchQuery);
+        return await assetService.GetAssetIdPileFromSearch(size, page * size, searchQuery);
     }
     
     
@@ -109,7 +102,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetAssetTagsGallery(string assetId, [FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetTagsGallery(assetId, searchString, amount, page);
+        return await assetService.GetAssetTagsGallery(assetId, searchString, amount, page);
     }
     
     
@@ -121,7 +114,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetAssetTags(string assetId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.GetAssetTags(assetId);
+        return await assetService.GetAssetTags(assetId);
     }
     
     /*
@@ -132,7 +125,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> AddAssetTag(string assetId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.AddAssetTag(assetId, tagId);
+        return await assetService.AddAssetTag(assetId, tagId);
     }
     
     
@@ -144,7 +137,7 @@ public class AssetsController : ApiController
     public async Task<IActionResult> DeleteAssetTag(string assetId, string tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _assetService.RemoveAssetTag(assetId, tagId);
+        return await assetService.RemoveAssetTag(assetId, tagId);
     }
     
     /*
@@ -155,6 +148,6 @@ public class AssetsController : ApiController
     public async Task<IActionResult> GetCountOfAssets([FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _assetService.GetCountOfAssets(searchString, selectedTagIds);
+	    return await assetService.GetCountOfAssets(searchString, selectedTagIds);
     }
 }

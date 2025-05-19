@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
-using DAM.Presentation.Models;
-using DAM.Presentation.Services.API;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace DAM.Presentation.Services;

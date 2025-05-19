@@ -1,7 +1,6 @@
-using DAM.Backend.Controllers.API;
 using DAM.Backend.Services.ControllerServices;
 using Microsoft.AspNetCore.Mvc;
-using DAM.Backend.Data.Models;
+using DAM.Shared.Requests;
 
 namespace DAM.Backend.Controllers;
 
@@ -56,20 +55,4 @@ public class TagsController : ApiController
         return await _tagService.DeleteTag(tagId);
     }
 
-    /*
-     * GET tags/search
-     * Gets all assets associated with tagList
-     * 
-     */
-    [HttpGet("search")]
-    public async Task<IActionResult> GetAssetsTags([FromQuery] string tagList)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        GetAssetsTagsRequest query = new GetAssetsTagsRequest
-        {
-            TagList = tagList.Split(",").Select(Guid.Parse).ToList()
-        };
-        
-        return await _tagService.GetAssetsTags(query);
-    }
 }

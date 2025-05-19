@@ -1,10 +1,11 @@
-using DAM.Backend.Controllers.API;
-using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
+using DAM.Shared.Responses;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 

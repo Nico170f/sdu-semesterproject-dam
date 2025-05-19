@@ -1,5 +1,5 @@
-using DAM.Backend.Controllers.API;
-using DAM.Backend.Data.Models;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 

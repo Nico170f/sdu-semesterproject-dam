@@ -1,7 +1,7 @@
-using DAM.Backend.Controllers.API;
 using DAM.Backend.Data;
-using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -18,6 +18,77 @@ public class TagService : ITagService
         _configuration = configuration;
         _database = database;
     }
+
+
+    /// <summary>
+	/// Creates a new tag if a tag with the same name does not already exist (case-insensitive).
+	/// </summary>
+	/// <param name="requestParams">The request parameters containing the tag name.</param>
+	/// <returns>
+	/// <see cref="BadRequestObjectResult"/> if a tag with the same name exists; 
+	/// otherwise, <see cref="OkObjectResult"/> with the created tag;
+	/// or <see cref="BadRequestObjectResult"/> if an error occurs.
+	/// </returns>
+	public async Task<IActionResult> CreateTag(CreateTagRequest requestParams)
+	{
+		try
+		{
+			Tag? existingTag = await _database.Tags
+				.FirstOrDefaultAsync(t => t.Name.Equals(requestParams.Name));
+
+			if (existingTag is not null)
+			{
+				return new BadRequestObjectResult("A tag with that name already exists.");
+			} 
+	    
+			var tag = new Tag
+			{
+				Name = requestParams.Name,
+				UUID = Guid.NewGuid()
+			};
+	    
+			await _database.Tags.AddAsync(tag);
+			await _database.SaveChangesAsync();
+	    
+			return new OkObjectResult(tag);
+		}
+		catch (Exception e)
+		{
+			return new BadRequestObjectResult("Error occured when adding tag: " + e.Message);
+		}
+	}
+    
+    /// <summary>
+    /// Deletes a tag by its unique identifier.
+    /// </summary>
+    /// <param name="tagId">The UUID of the tag to delete, as a string.</param>
+    /// <returns>
+    /// <see cref="NotFoundObjectResult"/> if the tag does not exist;
+    /// otherwise, <see cref="OkObjectResult"/> if the tag is deleted successfully;
+    /// or <see cref="BadRequestObjectResult"/> if an error occurs.
+    /// </returns>
+    public async Task<IActionResult> DeleteTag(string tagId)
+    {
+	    try
+	    { 
+		    Tag? existingTag = await _database.Tags
+			    .FirstOrDefaultAsync(t => t.UUID.ToString() == tagId);
+		    
+		    if (existingTag is null) 
+		    {
+			    return new NotFoundObjectResult("A tag with that ID doesn't exist");
+		    } 
+		    
+		    _database.Remove(existingTag);
+		    await _database.SaveChangesAsync();
+		    
+		    return new OkObjectResult("Tag removed successfully");
+	    }
+	    catch (Exception e)
+	    { 
+		    return new BadRequestObjectResult("Error occured when deleting tag: " + e.Message);
+	    }
+    }
     
     public async Task<IActionResult> GetTags(string? searchString, int? amount, int? page)
     {
@@ -31,8 +102,10 @@ public class TagService : ITagService
 		    query = query.Where(t => EF.Functions.Like(t.Name, "%" + searchString + "%") || 
 		                             EF.Functions.Like(t.UUID.ToString(), "%" + searchString + "%"));
 	    }
-    
-	    var tags = await query
+
+	    int tagCount = await query.CountAsync();
+	    
+	    List<Tag> tags = await query
 		    .OrderBy(t => t.Name)
 		    .Skip((currentPage - 1) * itemsPerPage)
 		    .Take(itemsPerPage)
@@ -41,78 +114,11 @@ public class TagService : ITagService
 	    return new OkObjectResult(tags);
     }
     
-    
-    public async Task<IActionResult> CreateTag(CreateTagRequest requestParams)
-    {
-        var existingTag = await _database.Tags
-            .FirstOrDefaultAsync(t => t.Name.ToLower() == requestParams.Name.ToLower());
-
-        if (existingTag != null)
-        {
-            return new BadRequestObjectResult("A tag with that name already exists.");
-        } 
-        
-        var tag = new Tag()
-        {
-            Name = requestParams.Name,
-            UUID = Guid.NewGuid()
-        };
-        
-        await _database.Tags.AddAsync(tag);
-        await _database.SaveChangesAsync();
-        return new OkObjectResult(tag);
-    }
-    
-    public async Task<IActionResult> DeleteTag(string tagId)
-    {
-        try
-        {
-            var existingTag = await _database.Tags
-                .FirstOrDefaultAsync(t => t.UUID.ToString() == tagId);
-
-            if (existingTag == null)
-            {
-                return new NotFoundObjectResult("A tag with that ID doesn't exist");
-            }
-            
-            await _database.Delete(existingTag);
-            return new OkObjectResult("Tag removed successfully");
-        }
-        catch
-        {
-            return new BadRequestObjectResult("Error occured");
-        }
-    }
-    
-    public async Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest query)
-    {
-        if (!query.TagList.Any())
-        {
-            return new BadRequestObjectResult("Tag list cannot be null or empty");
-        }
-
-        var assetsWithTags = await _database.AssetTags
-            .Where(it => query.TagList.Contains(it.TagUUID))
-            .GroupBy(it => it.AssetUUID)
-            .Where(group => group.Select(it => it.TagUUID).Distinct().Count() == query.TagList.Count)
-            .Select(group => group.Key)
-            .ToListAsync();
-
-        var assets = await _database.Asset
-            .Where(asset => assetsWithTags.Contains(asset.UUID))
-            .Select(asset => new Asset
-            {
-                UUID = asset.UUID,
-                Content = asset.Content,
-                Width = asset.Width,
-                Height = asset.Height,
-                CreatedAt = asset.CreatedAt,
-                UpdatedAt = asset.UpdatedAt
-            })
-            .ToListAsync();
-
-        return new OkObjectResult(assets);
-    }
+    class TagsSearchResponse 
+	{
+		public List<Tag> Tags { get; set; }
+		public int TotalCount { get; set; }
+	}
     
     public async Task<IActionResult> GetCountOfTags(string? searchString, string? assetId)
     {

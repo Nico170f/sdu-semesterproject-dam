@@ -1,8 +1,9 @@
-using DAM.Backend.Controllers.API;
-using DAM.Backend.Data.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using DAM.Backend.Data;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
+using DAM.Shared.Responses;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
@@ -114,7 +115,7 @@ public class ProductService : IProductService
             .Select(i => i.AssetUUID)
             .ToListAsync();
 
-        GetProductAssetsIdsResponse response = new GetProductAssetsIdsResponse(assetIds);
+        var response = new GetProductAssetsIdsResponse(assetIds);
         return new OkObjectResult(response);
     }
 

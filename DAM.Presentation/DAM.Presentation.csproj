@@ -6,6 +6,10 @@
     </PropertyGroup>
     
     <ItemGroup>
+        <ProjectReference Include="..\DAM.Shared\DAM.Shared.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
         <SupportedPlatform Include="browser" />
     </ItemGroup>
 

@@ -13,9 +13,10 @@ using Moq;
 using DAM.Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory;
-using DAM.Backend.Controllers.API;
-using DAM.Backend.Data.Models;
 using DAM.Backend.Services;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
+using DAM.Shared.Responses;
 using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
 
