@@ -94,6 +94,7 @@ public class ProductsController : ApiController
     //[AllowAnonymous]
     public async Task<IActionResult> GetProductAsset(string productId, string priority)
     {
+	    //TODO Change this method, so it can use the resizing algorithm
         if (!ModelState.IsValid) return BadRequest(ModelState);
         return await _productService.GetProductAsset(productId, priority);
     }
@@ -150,5 +151,27 @@ public class ProductsController : ApiController
     {
 	    if (!ModelState.IsValid) return BadRequest(ModelState);
 	    return await _productService.GetProductsFromPIM();
+    }
+
+    [HttpGet("{productId}/{priority}")]
+    public async Task<IActionResult> GetAssetResizedByNewWidth(string productId, int priority,
+	    [FromQuery] int? newWidth = null)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetAssetResizedByNewWidth(productId, priority, newWidth);
+    }
+
+    [HttpGet("count")]
+    public async Task<IActionResult> GetCountOfProducts([FromQuery] string? searchString = null)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetCountOfProducts(searchString);
+    }
+    
+    [HttpGet("{productId}/assets/gallery/count")]
+    public async Task<IActionResult> GetCountOfAssetsNotOnProduct (string productId, [FromQuery] string? searchString = null, [FromQuery] string? selectedTagIds = null)
+    {
+	    if (!ModelState.IsValid) return BadRequest(ModelState);
+	    return await _productService.GetCountOfAssetsNotOnProduct(productId, searchString, selectedTagIds);
     }
 }

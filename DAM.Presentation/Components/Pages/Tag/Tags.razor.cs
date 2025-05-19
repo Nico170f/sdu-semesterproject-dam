@@ -20,16 +20,22 @@ public partial class Tags : ComponentBase
 	private string _searchText = "";
 	private List<Models.Tag> _tags = [];
 
+	private int _amount = 50;
+	private int _currentPageNumber = 1;
+	private int _totalPageCount = 0;
+
 	protected override async Task OnInitializedAsync()
 	{
-		_tags = await ReadService.GetAllTags();
+		UpdateTagList();
 	}
 
 	private async void UpdateTagList ()
 	{
-		_tags = await ReadService.GetTags(searchString: _searchText);
+		(_tags, int totalAmount) = await ReadService.GetTags(searchString: _searchText,amount: _amount,page: _currentPageNumber);
+		_totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
 		StateHasChanged();
 	}
+	
 	private async Task AddTag ()
 	{
 		if(string.IsNullOrEmpty(_addTagText)) return;
@@ -49,10 +55,17 @@ public partial class Tags : ComponentBase
 		_searchText = e.Value?.ToString() ?? "";
 		UpdateTagList();
 	}
-
-	private void NavigateToHome()
+	
+	private void NextPage ()
 	{
-		Navigation.NavigateTo("/dam", true);
+		_currentPageNumber = int.Min(_totalPageCount, _currentPageNumber + 1);
+		UpdateTagList();
+	}
+
+	private void PreviousPage ()
+	{
+		_currentPageNumber = int.Max(1, _currentPageNumber - 1);
+		UpdateTagList();
 	}
 	
 }

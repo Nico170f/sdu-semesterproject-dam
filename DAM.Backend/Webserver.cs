@@ -101,5 +101,17 @@ public sealed class Webserver
 		// builder.Services.AddTransient<DbContext, Database>();
         
         builder.Services.AddDbContext<Database>();
+
+        var config = builder.Configuration.GetSection("DefaultImages");
+        var notFoundImage = config["NotFound"];
+        if (notFoundImage != null)
+        {
+            HelperService.DefaultImage = notFoundImage;
+        }
+        else
+        {
+            throw new Exception("Default image not found in configuration.");
+        }
+            
     }
 }

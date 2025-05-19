@@ -10,7 +10,7 @@ public interface IAssetService
 {
     Task<IActionResult> CreateAsset(CreateAssetRequest body);
     Task<IActionResult> GetAssets(string? searchString, string? selectedTagIds, int? amount, int? page);
-    Task<IActionResult> GetAssetById(string assetId, int? height, int? width);
+    Task<IActionResult> GetAssetById(string assetId, int? width, int? height);
     Task<IActionResult> UpdateAsset(string assetId, UpdateAssetRequest body);
     Task<IActionResult> PatchAsset(string assetId, JsonPatchDocument<Asset> patchDoc);
     Task<IActionResult> DeleteAsset(string assetId);
@@ -19,4 +19,5 @@ public interface IAssetService
     Task<IActionResult> GetAssetTags(string assetId);
     Task<IActionResult> AddAssetTag(string assetId, string tagId);
     Task<IActionResult> RemoveAssetTag(string assetId, string tagId);
+    Task<IActionResult> GetCountOfAssets(string? searchString, string? selectedTagIds);
 }

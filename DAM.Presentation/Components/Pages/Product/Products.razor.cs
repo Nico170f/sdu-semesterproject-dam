@@ -20,6 +20,10 @@ public partial class Products : ComponentBase
     private string _searchText = "";
     private List<EnhancedProduct> _products = [];
     
+    private int _amount = 20;
+    private int _currentPageNumber = 1;
+    private int _totalPageCount = 0;
+    
     protected override void OnInitialized ()
     {
 	    UpdateProductList();
@@ -33,7 +37,8 @@ public partial class Products : ComponentBase
     
     private async void UpdateProductList ()
     {
-	    _products = await ReadService.GetProducts(searchString: _searchText);
+	    (_products, int totalAmount) = await ReadService.GetProducts(searchString: _searchText, amount: _amount, page: _currentPageNumber);
+	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
 	    StateHasChanged();
     }
 
@@ -43,4 +48,15 @@ public partial class Products : ComponentBase
 	    UpdateProductList();
     }
     
+    private void NextPage ()
+    {
+	    _currentPageNumber = int.Min(_totalPageCount, _currentPageNumber + 1);
+	    UpdateProductList();
+    }
+
+    private void PreviousPage ()
+    {
+	    _currentPageNumber = int.Max(1, _currentPageNumber - 1);
+		UpdateProductList();
+    }
 }

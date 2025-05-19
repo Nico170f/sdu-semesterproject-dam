@@ -32,6 +32,10 @@
                         value="@_searchText"
                         @oninput="OnSearchInputChanged"
                         placeholder="Search for products by name or uuid" />
+                    
+                    <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+                    <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+                    <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
                 </div>
             </div>
         </div>
