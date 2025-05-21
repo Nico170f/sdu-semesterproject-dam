@@ -1,4 +1,0 @@
-#import ../CRUD/CreateImage.http
-#
-#run #CreateImage
-
