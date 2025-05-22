@@ -1,0 +1,117 @@
+﻿@page "/dam/products"
+@using global::DAM.Shared.Models
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<PageTitle>Products Overview</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="@(_ => NavigationManager.NavigateTo("/dam"))">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </button>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-4">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Product Gallery</h2>
+                <button class="btn btn-primary" @onclick="SyncWithPim">
+                    <i class="bi bi-arrow-repeat me-1"></i>Synchronize with PIM
+                </button>
+            </div>
+            
+            <div class="mt-4">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="@_searchText"
+                        @oninput="OnSearchInputChanged"
+                        placeholder="Search for products by name or uuid" />
+                    
+                    <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+                    <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+                    <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                @foreach(Product product in _products)
+                {
+                <div class="col">
+                    <div class="card h-100 product-card">
+                        <a href="/dam/products/edit?productId=@product.UUID" class="div-link" title="@product.Name"></a>
+                        <div class="image-container">
+                            <img
+                                src="@(ReadService.GetAssetContentByProductId(product.UUID, 0, (250, 250)))"
+                                class="product-image"
+                                alt="@product.Name">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate">@product.Name</h5>
+                            <p class="card-text text-muted small">@product.UUID</p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-card {
+        position: relative;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        padding-top: 100%; /* Creates a perfect square */
+        background-color: #f8f9fa; /* Light background for letterboxing */
+        overflow: hidden;
+    }
+
+    .product-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+        object-fit: contain; /* Maintains aspect ratio with letterboxing */
+    }
+
+    .div-link {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .card-body {
+        background-color: white;
+    }
+</style>

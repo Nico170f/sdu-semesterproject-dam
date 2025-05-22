@@ -7,6 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\DAM.Shared\DAM.Shared.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.3" />
       <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.3" />
       <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.3" />

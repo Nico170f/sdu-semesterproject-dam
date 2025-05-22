@@ -1,75 +1,55 @@
-using DAM.Backend.Controllers.API;
 using DAM.Backend.Services.ControllerServices;
 using Microsoft.AspNetCore.Mvc;
-using DAM.Backend.Data.Models;
+using DAM.Shared.Requests;
 
 namespace DAM.Backend.Controllers;
 
-public class TagsController : ApiController
+public class TagsController(ITagService tagService) : ApiController
 {
-    private readonly ITagService _tagService;
-
-    public TagsController(ITagService tagService)
-    {
-        _tagService = tagService;
-    }
-
-    /*
-     * GET /tags
-     * Gets tags with optional search parameters
-     */
-    [HttpGet()]
-    public async Task<IActionResult> GetTags([FromQuery] string? searchString = null, [FromQuery] int? amount = null, [FromQuery] int? page = null)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.GetTags(searchString, amount, page);
-    }
-    
-    [HttpGet("count")]
-    public async Task<IActionResult> GetTagsCount([FromQuery] string? searchString = null, [FromQuery] string? assetId = null)
-    {
-	    if (!ModelState.IsValid) return BadRequest(ModelState);
-	    return await _tagService.GetCountOfTags(searchString, assetId);
-    }
-    
     
     /*
      * POST /tags
      * Creates a new tag
      */
-    [HttpPost()]
+    [HttpPost]
     public async Task<IActionResult> CreateTag([FromBody] CreateTagRequest body)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.CreateTag(body);
+        return await tagService.CreateTag(body);
     }
-    
     
     /*
      * DELETE /tags/{tagId}
      * Deletes a tag by ID
      */
-    [HttpDelete("{tagId}")]
-    public async Task<IActionResult> DeleteTag(string tagId)
+    [HttpDelete("{tagId:guid}")]
+    public async Task<IActionResult> DeleteTag(Guid tagId)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        return await _tagService.DeleteTag(tagId);
+        return await tagService.DeleteTag(tagId);
     }
-
+    
     /*
-     * GET tags/search
-     * Gets all assets associated with tagList
-     * 
+     * GET /tags
+     * Gets tags
      */
-    [HttpGet("search")]
-    public async Task<IActionResult> GetAssetsTags([FromQuery] string tagList)
+    [HttpGet]
+    public async Task<IActionResult> GetTags(
+	    [FromQuery] Guid? assetIdParent = null,
+	    [FromQuery] Guid? assetIdToAvoid = null,
+	    [FromQuery] string? searchString = null, 
+	    [FromQuery] int? amount = null, 
+	    [FromQuery] int? page = null)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        GetAssetsTagsRequest query = new GetAssetsTagsRequest
-        {
-            TagList = tagList.Split(",").Select(Guid.Parse).ToList()
-        };
-        
-        return await _tagService.GetAssetsTags(query);
+	    if (!ModelState.IsValid) 
+		    return BadRequest(ModelState);
+
+	    if (assetIdParent is not null)
+		    return await tagService.GetTagsOnAsset(assetIdParent.Value);
+	    
+	    if (assetIdToAvoid is not null) 
+		    return await tagService.GetTagsGallery(assetIdToAvoid.Value, searchString, amount, page);
+	    
+	    return await tagService.GetTags(searchString, amount, page);
     }
 }

@@ -1,0 +1,223 @@
+﻿@page "/dam/products/edit"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@using BlazorSortableList
+@using global::DAM.Shared.Models
+
+<PageTitle>Edit Product</PageTitle>
+
+<style>
+    /* Common styles */
+    .section-container {
+        margin: 2rem 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+
+    /* Product information */
+    .product-info {
+        background-color: #f5f5f5;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    /* Product images - horizontal layout */
+    .product-showcase {
+        padding: 1rem 0;
+        overflow-x: auto;
+    }
+
+    .product-showcase > div {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 16px;
+        min-height: 220px;
+    }
+
+    .product-item {
+        flex: 0 0 180px;
+        min-width: 180px;
+        padding: 8px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: white;
+    }
+
+    /* Asset gallery - grid layout */
+    .asset-grid {
+        padding: 1rem 0;
+    }
+
+    .asset-grid > div {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+    }
+
+    .asset-item {
+        padding: 8px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: white;
+    }
+
+    /* Shared image styling */
+    .product-item img,
+    .asset-item img {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        border-radius: 6px;
+        padding: 0.5rem;
+    }
+
+    /* Search controls */
+    .search-controls {
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .search-controls input {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    
+    /* Tag menu */
+    .tag-menu {
+        background-color: #f5f5f5;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .tag-menu h4 {
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .tag-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+    }
+    
+    .tag-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px;
+    }
+
+    /* Fix for sortable items */
+    .sortable-drag {
+        position: absolute !important;
+        opacity: 0.8;
+        z-index: 1000;
+        pointer-events: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f0f0f0;
+    }
+
+    .sortable-chosen {
+        background-color: #f8f8f8;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary" @onclick="@(_ => Navigation.NavigateTo("/dam/products"))">
+                <i class="bi bi-arrow-left"></i> Back to Products
+            </button>
+        </div>
+    </div>
+
+    <section class="section-container">
+        <h2 class="section-title">Product Details</h2>
+        <div class="product-info">
+            <h3>@_productName</h3>
+            <p class="text-muted">ID: @_productId</p>
+        </div>
+    </section>
+
+    <section class="section-container">
+        <h2 class="section-title">Product Images</h2>
+        <div class="product-showcase">
+            <SortableList Group="sharedLists" Items="_productAssets" Context="asset"
+                          OnRemove="ProductImageRemove" OnUpdate="ProductImageReorder">
+                <SortableItemTemplate>
+                    <div class="product-item">
+                        <img src="@ReadService.GetAssetContentByAssetId(asset.UUID)" alt="Product image"/>
+                        <p class="text-muted small mt-1">@asset.UUID</p>
+                    </div>
+                </SortableItemTemplate>
+            </SortableList>
+        </div>
+    </section>
+
+    <section class="section-container">
+        <h2 class="section-title">Asset Gallery</h2>
+
+        <div class="search-controls">
+            <input 
+                class="form-control"
+                value="@_searchText" 
+                @oninput="OnSearchInputChanged" 
+                placeholder="Search for assets by uuid"/>
+            <button class="btn btn-outline-primary" @onclick="ToggleTagMenu">
+                <i class="bi bi-tags"></i> Filter by Tags
+            </button>
+            <button class="btn btn-outline-primary btn-sm" @onclick="PreviousPage">⬅️</button>
+            <span class="mx-2">@_currentPageNumber / @_totalPageCount</span>
+            <button class="btn btn-outline-primary btn-sm" @onclick="NextPage">➡️</button>  
+        </div>
+
+        @if (_showTagMenu)
+        {
+            <div class="tag-menu">
+                <h4>Filter with Tags</h4>
+                <div class="tag-list">
+                    @foreach (Tag tag in _allTags)
+                    {
+                        <div class="tag-item">
+                            <input type="checkbox"
+                                   id="tag-@tag.UUID"
+                                   class="form-check-input"
+                                   checked="@_selectedTagIds.Contains(tag.UUID)"
+                                   @onchange="(e) => OnTagFilterChanged(tag.UUID, (bool?) e.Value == true)"/>
+                            <label for="tag-@tag.UUID" class="form-check-label">@tag.Name</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="asset-grid">
+            <SortableList Group="sharedLists" Items="_assetGallery" Context="asset"
+                          OnRemove="GalleryRemove" OnUpdate="GalleryReorder">
+                <SortableItemTemplate>
+                    <div class="asset-item">
+                        <img src="@ReadService.GetAssetContentByAssetId(asset.UUID)" alt="Asset"/>
+                        <p class="text-muted small mt-1">@asset.UUID</p>
+                    </div>
+                </SortableItemTemplate>
+            </SortableList>
+        </div>
+    </section>
+</div>

@@ -1,10 +1,10 @@
-using DAM.Backend.Controllers.API;
 using DAM.Backend.Data;
-using DAM.Backend.Data.Models;
 using DAM.Backend.Services.ControllerServices;
+using DAM.Shared.Models;
+using DAM.Shared.Requests;
+using DAM.Shared.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace DAM.Backend.Services;
 
@@ -18,6 +18,59 @@ public class TagService : ITagService
         _configuration = configuration;
         _database = database;
     }
+
+	public async Task<IActionResult> CreateTag(CreateTagRequest requestParams)
+	{
+		try
+		{
+			Tag? existingTag = await _database.Tags
+				.FirstOrDefaultAsync(t => t.Name.Equals(requestParams.Name));
+
+			if (existingTag is not null)
+			{
+				return new BadRequestObjectResult("A tag with that name already exists.");
+			} 
+	    
+			var tag = new Tag
+			{
+				Name = requestParams.Name,
+				UUID = Guid.NewGuid()
+			};
+	    
+			await _database.Tags.AddAsync(tag);
+			await _database.SaveChangesAsync();
+	    
+			return new OkObjectResult(tag);
+		}
+		catch (Exception e)
+		{
+			return new BadRequestObjectResult("Error occured when adding tag: " + e.Message);
+		}
+	}
+
+    public async Task<IActionResult> DeleteTag(Guid tagId)
+    {
+	    try
+	    { 
+		    Tag? existingTag = await _database.Tags
+			    .FirstOrDefaultAsync(t => t.UUID == tagId);
+		    
+		    if (existingTag is null) 
+		    {
+			    return new NotFoundObjectResult("A tag with that ID doesn't exist");
+		    } 
+		    
+		    _database.Remove(existingTag);
+		    await _database.SaveChangesAsync();
+		    
+		    return new OkObjectResult("Tag removed successfully");
+	    }
+	    catch (Exception e)
+	    { 
+		    return new BadRequestObjectResult("Error occured when deleting tag: " + e.Message);
+	    }
+    }
+    
     
     public async Task<IActionResult> GetTags(string? searchString, int? amount, int? page)
     {
@@ -28,114 +81,76 @@ public class TagService : ITagService
     
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(t => EF.Functions.Like(t.Name, "%" + searchString + "%") || 
-		                             EF.Functions.Like(t.UUID.ToString(), "%" + searchString + "%"));
+		    query = query.Where(tag => EF.Functions.Like(tag.Name, $"%{searchString}%") || 
+		                               EF.Functions.Like(tag.UUID.ToString(), $"%{searchString}%"));
 	    }
-    
-	    var tags = await query
+
+	    Task<int> count = query.CountAsync();
+	    
+	    Task<List<Tag>> tags = query
 		    .OrderBy(t => t.Name)
 		    .Skip((currentPage - 1) * itemsPerPage)
 		    .Take(itemsPerPage)
 		    .ToListAsync();
+
+	    await Task.WhenAll(count, tags);
+
+	    var response = new GetTagsResponse
+	    {
+		    Tags = tags.Result,
+		    TotalCount = count.Result
+	    };
         
-	    return new OkObjectResult(tags);
+	    return new OkObjectResult(response);
     }
-    
-    
-    public async Task<IActionResult> CreateTag(CreateTagRequest requestParams)
-    {
-        var existingTag = await _database.Tags
-            .FirstOrDefaultAsync(t => t.Name.ToLower() == requestParams.Name.ToLower());
 
-        if (existingTag != null)
-        {
-            return new BadRequestObjectResult("A tag with that name already exists.");
-        } 
-        
-        var tag = new Tag()
-        {
-            Name = requestParams.Name,
-            UUID = Guid.NewGuid()
-        };
-        
-        await _database.Tags.AddAsync(tag);
-        await _database.SaveChangesAsync();
-        return new OkObjectResult(tag);
+    public async Task<IActionResult> GetTagsOnAsset(Guid assetId)
+    {
+	    IQueryable<Tag> query = _database.Tags
+		    .Where(tag => _database.AssetTags
+			    .Any(assetTag => assetTag.AssetUUID.Equals(assetId) && assetTag.TagUUID.Equals(tag.UUID)));
+	    
+	    List<Tag> tags = await query.ToListAsync();
+
+	    var response = new GetTagsResponse
+	    {
+		    Tags = tags
+	    };
+	    
+	    return new OkObjectResult(response);
     }
-    
-    public async Task<IActionResult> DeleteTag(string tagId)
+
+    public async Task<IActionResult> GetTagsGallery(Guid assetIdToAvoid, string? searchString, int? amount, int? page)
     {
-        try
-        {
-            var existingTag = await _database.Tags
-                .FirstOrDefaultAsync(t => t.UUID.ToString() == tagId);
-
-            if (existingTag == null)
-            {
-                return new NotFoundObjectResult("A tag with that ID doesn't exist");
-            }
-            
-            await _database.Delete(existingTag);
-            return new OkObjectResult("Tag removed successfully");
-        }
-        catch
-        {
-            return new BadRequestObjectResult("Error occured");
-        }
-    }
+	    int itemsPerPage = amount ?? 20;
+	    int currentPage = page ?? 1;
     
-    public async Task<IActionResult> GetAssetsTags(GetAssetsTagsRequest query)
-    {
-        if (!query.TagList.Any())
-        {
-            return new BadRequestObjectResult("Tag list cannot be null or empty");
-        }
-
-        var assetsWithTags = await _database.AssetTags
-            .Where(it => query.TagList.Contains(it.TagUUID))
-            .GroupBy(it => it.AssetUUID)
-            .Where(group => group.Select(it => it.TagUUID).Distinct().Count() == query.TagList.Count)
-            .Select(group => group.Key)
-            .ToListAsync();
-
-        var assets = await _database.Asset
-            .Where(asset => assetsWithTags.Contains(asset.UUID))
-            .Select(asset => new Asset
-            {
-                UUID = asset.UUID,
-                Content = asset.Content,
-                Width = asset.Width,
-                Height = asset.Height,
-                CreatedAt = asset.CreatedAt,
-                UpdatedAt = asset.UpdatedAt
-            })
-            .ToListAsync();
-
-        return new OkObjectResult(assets);
-    }
+	    IQueryable<Tag> query = _database.Tags
+		    .Where(tag => !_database.AssetTags
+			    .Any(assetTag => assetTag.AssetUUID.Equals(assetIdToAvoid) && assetTag.TagUUID.Equals(tag.UUID)));
     
-    public async Task<IActionResult> GetCountOfTags(string? searchString, string? assetId)
-    {
-	    // Start with all assets query
-	    IQueryable<Tag> query = _database.Tags;
-
-	    // Filter by UUID if searchString is provided
 	    if (!string.IsNullOrEmpty(searchString))
 	    {
-		    query = query.Where(tag => EF.Functions.Like(tag.UUID.ToString(), "%" + searchString + "%"));
+		    query = query.Where(tag => EF.Functions.Like(tag.Name, $"%{searchString}%") || 
+		                             EF.Functions.Like(tag.UUID.ToString(), $"%{searchString}%"));
 	    }
 
-	    if (assetId != null)
+	    Task<int> count = query.CountAsync();
+	    
+	    Task<List<Tag>> tags = query
+		    .OrderBy(t => t.Name)
+		    .Skip((currentPage - 1) * itemsPerPage)
+		    .Take(itemsPerPage)
+		    .ToListAsync();
+
+	    await Task.WhenAll(count, tags);
+
+	    var response = new GetTagsResponse
 	    {
-		    query = query
-			    .Join(_database.AssetTags, t => t.UUID, at => at.TagUUID, (t, at) => new { Tag = t, AssetTag = at })
-			    .Where(joined => !joined.Tag.UUID.ToString().Equals(joined.AssetTag.AssetUUID.ToString()))
-			    .Select(joined => joined.Tag);
-	    }
-
-	    // Count total matching assets
-	    int count = await query.CountAsync();
-	    return new OkObjectResult(count);
+		    Tags = tags.Result,
+		    TotalCount = count.Result
+	    };
+        
+	    return new OkObjectResult(response);
     }
-    
 }

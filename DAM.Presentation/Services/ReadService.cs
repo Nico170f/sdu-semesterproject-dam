@@ -1,130 +1,153 @@
 using System.Net.Http.Json;
-using DAM.Presentation.EnhancedModels;
-using DAM.Presentation.Models;
-using DAM.Presentation.Services.API;
+using DAM.Shared.Models;
+using DAM.Shared.Responses;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace DAM.Presentation.Services;
 
-public class ReadService : BaseService
+public class ReadService(IHttpClientFactory httpClientFactory) : BaseService(httpClientFactory)
 {
 
-	public ReadService(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+	#region Tags
+	
+	/// <summary>
+	/// Retrieves tags from the API with optional filtering parameters.
+	/// </summary>
+	/// <param name="assetIdParent">Optional parent asset ID to filter tags by parent.</param>
+	/// <param name="assetIdToAvoid">Optional asset ID to exclude from the results.</param>
+	/// <param name="searchString">Optional search string to filter tags by name or value.</param>
+	/// <param name="amount">Optional number of tags to return per page.</param>
+	/// <param name="page">Optional page number for pagination.</param>
+	/// <returns>A <see cref="GetTagsResponse"/> containing the filtered tags, or null if the request fails.</returns>
+	public async Task<GetTagsResponse?> GetTags(
+		Guid? assetIdParent = null,
+		Guid? assetIdToAvoid = null,
+		string? searchString = null, 
+		int? amount = null, 
+		int? page = null)
 	{
+		var queryParams = new Dictionary<string, string?>();
+		
+		if (assetIdParent.HasValue)
+			queryParams.Add("assetIdParent", assetIdParent.ToString());
+		if (assetIdToAvoid.HasValue)
+			queryParams.Add("assetIdToAvoid", assetIdToAvoid.ToString());
+		if (!string.IsNullOrEmpty(searchString))
+			queryParams.Add("searchString", searchString);
+		if (amount.HasValue)
+			queryParams.Add("amount", amount.ToString());
+		if (page.HasValue)
+			queryParams.Add("page", page.ToString());
+
+		string apiUrl = QueryHelpers.AddQueryString("api/v1/tags", queryParams);
+		var response = await HttpClient.GetFromJsonAsync<GetTagsResponse>(apiUrl);
+
+		return response;
 	}
 
+	#endregion
+
+	#region Assets
+	
 	/// <summary>
-	/// Converts a assetId into a url for that asset.
+	/// Retrieves assets from the API with optional filtering parameters.
 	/// </summary>
-	/// <param name="assetId"></param>
-	/// <param name="width"></param>
-	/// <param name="height"></param>
-	/// <returns>The url that points to that asset.</returns>
-	public string GetAssetContentById(Guid assetId, int width = default, int height = default)
+	/// <param name="productIdParent">Optional parent product ID to filter assets.</param>
+	/// <param name="productIdToAvoid">Optional product ID to exclude from the results.</param>
+	/// <param name="searchString">Optional search string to filter assets.</param>
+	/// <param name="selectedTags">Optional set of selected tags to filter assets.</param>
+	/// <param name="amount">Optional number of assets to return per page.</param>
+	/// <param name="page">Optional page number for pagination.</param>
+	/// <returns>A <see cref="GetAssetsResponse"/> containing the filtered assets, or null if the request fails.</returns>
+	public async Task<GetAssetsResponse?> GetAssets(
+		Guid? productIdParent = null,
+		Guid? productIdToAvoid = null,
+		string? searchString = null, 
+		HashSet<Tag>? selectedTags = null,
+		int? amount = null, 
+		int? page = null)
 	{
-		if (width == default || height == default)
-		{
-			return $"http://localhost:5115/api/v1/assets/{assetId}";
-		}
-		return $"http://localhost:5115/api/v1/assets/{assetId}?width={width}&height={height}";
+		var queryParams = new Dictionary<string, string?>();
+		
+		if (productIdParent.HasValue)
+			queryParams.Add("productIdParent", productIdParent.ToString());
+		if (productIdToAvoid.HasValue)
+			queryParams.Add("productIdToAvoid", productIdToAvoid.ToString());
+		if (!string.IsNullOrEmpty(searchString))
+			queryParams.Add("searchString", searchString);
+		if (selectedTags is not null && selectedTags.Count > 0)
+			queryParams.Add("selectedTags", string.Join(',', selectedTags.Select(tag => tag.UUID)));
+		if (amount.HasValue)
+			queryParams.Add("amount", amount.ToString());
+		if (page.HasValue)
+			queryParams.Add("page", page.ToString());
+
+		string apiUrl = QueryHelpers.AddQueryString("api/v1/assets", queryParams);
+		var response = await HttpClient.GetFromJsonAsync<GetAssetsResponse>(apiUrl);
+
+		return response;
 	}
 	
 	/// <summary>
-	/// Returns a list of assetIds associated with a product.
+	/// Gets the asset content URL by asset ID, optionally with dimensions.
 	/// </summary>
-	/// <param name="productId"></param>
-	/// <returns></returns>
+	/// <param name="assetId">The ID of the asset.</param>
+	/// <param name="dimensions">Optional width and height for the asset.</param>
+	/// <returns>The URL to access the asset content.</returns>
+	public string GetAssetContentByAssetId(Guid assetId, (int width, int height) dimensions = default /* (0, 0) */)
+	{
+		if (dimensions == default)
+			return $"{HttpClient.BaseAddress}api/v1/assets/{assetId}";
+		
+		return $"{HttpClient.BaseAddress}api/v1/assets/{assetId}?width={dimensions.width}&height={dimensions.height}";
+	}
+	
+	/// <summary>
+	/// Gets the asset content URL by product ID and priority, optionally with dimensions.
+	/// </summary>
+	/// <param name="productId">The ID of the product.</param>
+	/// <param name="priority">The priority of the asset.</param>
+	/// <param name="dimensions">Optional width and height for the asset.</param>
+	/// <returns>The URL to access the asset content.</returns>
+	public string GetAssetContentByProductId(Guid productId, int priority = 0, (int width, int height) dimensions = default /* (0, 0) */)
+	{
+		if(dimensions == default)
+			return $"{HttpClient.BaseAddress}api/v1/products/{productId}/assets/{priority}";
+
+		return $"{HttpClient.BaseAddress}api/v1/products/{productId}/assets/{priority}?width={dimensions.width}&height={dimensions.height}";
+	}
+	
+	/// <summary>
+	/// Returns a list of asset IDs associated with a product.
+	/// </summary>
+	/// <param name="productId">The ID of the product.</param>
+	/// <returns>A list of asset IDs.</returns>
 	public async Task<List<Guid>> GetAssetsByProduct(Guid productId)
 	{
-		var response = await _httpClient.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
+		var response = await HttpClient.GetFromJsonAsync<GetProductAssetsIdsResponse>($"api/v1/products/{productId}/assets");
 		return response?.AssetIds ?? [];
 	}
 	
 	/// <summary>
-	/// Returns a complete list of all asset ids.
+	/// Returns a complete list of all asset IDs.
 	/// </summary>
-	/// <returns></returns>
+	/// <returns>A list of all asset IDs.</returns>
 	public async Task<List<Guid>> GetAllAssetIds ()
 	{
-		List<Guid>? guids = await _httpClient.GetFromJsonAsync<List<Guid>>("api/v1/assets");
+		List<Guid>? guids = await HttpClient.GetFromJsonAsync<List<Guid>>("api/v1/assets");
 		return guids ?? [];
 	}
 	
-	/// <summary>
-	/// Returns a list of all tags
-	/// </summary>
-	/// <returns></returns>
-	public async Task<List<Tag>> GetAllTags()
-	{
-		List<Tag>? tags = await _httpClient.GetFromJsonAsync<List<Tag>>("api/v1/tags");
-		return tags ?? [];
-	}
-	
-	/// <summary>
-	/// Returns a list of assetIds based on a list of tagIds
-	/// </summary>
-	/// <param name="selectedTagsIds"></param>
-	/// <returns></returns>
-	public async Task<List<Guid>> GetAssetsByTags(List<Guid> selectedTagsIds)
-	{
-		string tagQuery = string.Join(",", selectedTagsIds);
-		string apiUrl = $"api/v1/tags/search?tagList={tagQuery}";
-
-		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
-
-		List<Guid> assetIds = [];
-		assetIds.AddRange((response ?? []).Select(asset => asset.UUID));
-
-		return assetIds;
-	}
-	
-	/// <summary>
-	/// Returns a list of tags based on an assetId
-	/// </summary>
-	/// <param name="assetId"></param>
-	/// <returns></returns>
-	public async Task<List<Tag>> GetTagsByAsset (Guid assetId)
-	{
-		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>($"api/v1/assets/{assetId}/tags");
-		return response ?? [];
-	}
-
-	/// <summary>
-	/// Returns a list of tags that are not associated with the specified asset.
-	/// </summary>
-	/// <param name="assetId">The ID of the asset to check for unassigned tags.</param>
-	/// <param name="searchString"></param>
-	/// <returns>A list of tags not present on the asset, or empty list if none found.</returns>
-	public async Task<(List<Tag> tagList, int totalAmount)> GetTagsNotOnAsset(Guid assetId, string searchString = "", int amount = 20, int page = 1)
-	{
-		string apiUrl = $"api/v1/assets/{assetId}/tags/gallery?";
-		List<string> parameters = [];
-		
-		if (!string.IsNullOrEmpty(searchString))
-		{
-			parameters.Add($"searchString={searchString}");
-		}
-		
-		string amountApiUrl = $"api/v1/tags/count?assetId={assetId}&" + string.Join('&', parameters); 
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
-		
-		parameters.Add($"amount={amount}");
-		parameters.Add($"page={page}");
-
-		apiUrl += string.Join('&', parameters);
-		
-		List<Tag>? response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
-		return (response ?? [], totalAmount);
-	}
 
 	/// <summary>
 	/// Returns a list of assets that are not associated with the specified product.
 	/// </summary>
 	/// <param name="productId">The ID of the product to check for unassigned assets.</param>
-	/// <param name="searchString"></param>
-	/// <param name="selectedTags"></param>
-	/// <param name="amount"></param>
-	/// <param name="page"></param>
-	/// <returns>A list of assets not present on the product, or an empty list if none found.</returns>
+	/// <param name="searchString">Optional search string to filter assets.</param>
+	/// <param name="selectedTagIds">Optional set of selected tag IDs to filter assets.</param>
+	/// <param name="amount">Number of assets to return per page.</param>
+	/// <param name="page">Page number for pagination.</param>
+	/// <returns>A tuple containing a list of assets not present on the product and the total amount.</returns>
 	public async Task<(List<Asset> assetList, int totalAmount)> GetAssetsNotOnProduct(Guid productId, string searchString = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
 	{
 		string apiUrl = $"api/v1/products/{productId}/assets/gallery?";
@@ -140,55 +163,25 @@ public class ReadService : BaseService
 			parameters.Add($"selectedTagIds={string.Join(',', selectedTagIds)}");
 		}
 		string amountApiUrl = $"api/v1/products/{productId}/assets/gallery/count";
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 		
-		List<Asset>? response = await _httpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
+		List<Asset>? response = await HttpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
 		return (response ?? [], totalAmount);
 	}
 	
 	/// <summary>
-	/// Returns a product name based on a product id
+	/// Returns a paginated list of asset IDs with optional filtering.
 	/// </summary>
-	/// <param name="productGuid">The ID of the product</param>
-	/// <returns>The name of the product. If not exist, "No product found!"</returns>
-	public async Task<string> GetProductName(Guid productGuid)
-	{
-		var response = await _httpClient.GetFromJsonAsync<GetProductResponse>($"api/v1/products/{productGuid}");
-		return response?.Name ?? "No product found!";
-	}
-
-	public async Task<List<EnhancedProduct>> GetAllProducts()
-	{
-		List<EnhancedProduct> enhancedProducts = [];
-		List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>("api/v1/products") ?? [];
-
-		foreach (Product product in products)
-		{
-			var enhancedProduct = new EnhancedProduct
-			{
-				UUID = product.UUID,
-				Name = product.Name,
-			};
-
-			var assets = await GetAssetsByProduct(product.UUID);
-			Guid assetId = Guid.Empty;
-			if (assets.Count > 0)
-			{
-				assetId = assets[0];
-			}
-			enhancedProduct.MainAssetUUID = assetId;
-			
-			enhancedProducts.Add(enhancedProduct);
-		}
-
-		return enhancedProducts;
-	}
-
+	/// <param name="searchString">Optional search string to filter assets.</param>
+	/// <param name="selectedTags">Optional set of selected tag IDs to filter assets.</param>
+	/// <param name="amount">Number of asset IDs to return per page.</param>
+	/// <param name="page">Page number for pagination.</param>
+	/// <returns>A tuple containing a list of asset IDs and the total amount.</returns>
 	public async Task<(List<Guid> assetIds, int totalAmount)> GetAssetIds(string searchString = "", HashSet<Guid>? selectedTags = null, int amount = 20, int page = 1)
 	{
 		string apiUrl = "api/v1/assets?";
@@ -204,86 +197,72 @@ public class ReadService : BaseService
 			parameters.Add($"selectedTagIds={string.Join(',', selectedTags)}");
 		}
 		string amountApiUrl = "api/v1/assets/count?" + string.Join('&', parameters);
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
+		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
 		
 		parameters.Add($"amount={amount}");
 		parameters.Add($"page={page}");
 
 		apiUrl += string.Join('&', parameters);
 
-		List<Guid>? assetIds = await _httpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
+		List<Guid>? assetIds = await HttpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
 		return (assetIds ?? [], totalAmount);
 	}
 
-	public async Task<(List<EnhancedProduct> productList, int totalAmount)> GetProducts(string searchString = "", int amount = 20, int page = 1)
+	#endregion
+
+	#region Products
+
+	/// <summary>
+	/// Returns a product name based on a product ID.
+	/// </summary>
+	/// <param name="productGuid">The ID of the product.</param>
+	/// <returns>The name of the product. If not exist, "No product found!".</returns>
+	public async Task<string> GetProductName(Guid productGuid)
 	{
-		string apiUrl = "api/v1/products?";
-		List<string> parameters = [];
-		
-		if (!string.IsNullOrEmpty(searchString))
-		{
-			parameters.Add($"searchString={searchString}");
-		}
-
-		string amountApiUrl = "api/v1/products/count?" + string.Join('&', parameters);
-		int total = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
-		
-		parameters.Add($"amount={amount}");
-		parameters.Add($"page={page}");
-
-		apiUrl += string.Join('&', parameters);
-
-		List<Product>? products = await _httpClient.GetFromJsonAsync<List<Product>>(apiUrl);
-		
-		List<EnhancedProduct> enhancedProducts = [];
-
-		foreach (var product in products ?? [])
-		{
-			var enhancedProduct = new EnhancedProduct
-			{
-				UUID = product.UUID,
-				Name = product.Name,
-			};
-
-			var assets = await GetAssetsByProduct(product.UUID);
-			Guid assetId = Guid.Empty;
-			if (assets.Count > 0)
-			{
-				assetId = assets[0];
-			}
-			enhancedProduct.MainAssetUUID = assetId;
-			
-			enhancedProducts.Add(enhancedProduct);
-		}
-		
-		return (enhancedProducts, amount);
+		var response = await HttpClient.GetFromJsonAsync<GetProductResponse>($"api/v1/products/{productGuid}");
+		return response?.Product.Name ?? "No product found!";
 	}
 
+	/// <summary>
+	/// Retrieves products from the API with optional filtering parameters.
+	/// </summary>
+	/// <param name="searchString">Optional search string to filter products.</param>
+	/// <param name="amount">Optional number of products to return per page.</param>
+	/// <param name="page">Optional page number for pagination.</param>
+	/// <returns>A <see cref="GetProductsResponse"/> containing the filtered products, or null if the request fails.</returns>
+	public async Task<GetProductsResponse?> GetProducts(
+		string? searchString = null, 
+		int? amount = null, 
+		int? page = null)
+	{
+		var queryParams = new Dictionary<string, string?>();
+		
+		if (!string.IsNullOrEmpty(searchString))
+			queryParams.Add("searchString", searchString);
+		if (amount.HasValue)
+			queryParams.Add("amount", amount.ToString());
+		if (page.HasValue)
+			queryParams.Add("page", page.ToString());
+
+		string apiUrl = QueryHelpers.AddQueryString("api/v1/products", queryParams);
+		var response = await HttpClient.GetFromJsonAsync<GetProductsResponse>(apiUrl);
+
+		return response;
+	}
+	
+	#endregion
+
+	#region Others
+
+	/// <summary>
+	/// Synchronizes products with the PIM system via the API.
+	/// </summary>
 	public async Task SyncWithPim ()
 	{
-		var response = await _httpClient.GetAsync("api/v1/products/syncWithPim");
+		var response = await HttpClient.GetAsync("api/v1/products/syncWithPim");
 		Console.WriteLine(response.Content);
 	}
 
-	public async Task<(List<Tag> tagList, int totalAmount)> GetTags(string searchString = "", int amount = 50, int page = 1)
-	{
-		string apiUrl = "api/v1/tags?";
-		List<string> parameters = [];
-		
-		if (!string.IsNullOrEmpty(searchString))
-		{
-			parameters.Add($"searchString={searchString}");
-		}
-		
-		string amountApiUrl = "api/v1/tags/count?" + string.Join('&', parameters);
-		int totalAmount = int.Parse(await _httpClient.GetStringAsync(amountApiUrl));
-		
-		parameters.Add($"amount={amount}");
-		parameters.Add($"page={page}");
-		
-		apiUrl += string.Join('&', parameters);
-		
-		var response = await _httpClient.GetFromJsonAsync<List<Tag>>(apiUrl);
-		return (response ?? [], totalAmount);
-	}
+	#endregion
+	
 }

@@ -1,5 +1,3 @@
-using DAM.Backend.Data;
-
 namespace DAM.Backend;
 
 public class Program

@@ -1,25 +1,18 @@
-using DAM.Backend.Data.Models;
+using DAM.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-namespace DAM.Backend.Services;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats.Png;
-using System.IO;
+namespace DAM.Backend.Services.ControllerServices;
 
 public static class HelperService
 {
 	public static string DefaultImage = "";
 	
-	public static FileContentResult ConvertAssetToFileContent(DAM.Backend.Data.Models.Asset finalAsset)
+	public static FileContentResult ConvertAssetToFileContent(Asset finalAsset)
 	{
 		string content = finalAsset.Content;
 		string contentType;
@@ -45,67 +38,15 @@ public static class HelperService
     
     public static (int Width, int Height) GetAssetDimensions(string base64Asset)
     {
-        var base64Data = base64Asset.Contains(",") ? base64Asset.Split(',')[1] : base64Asset;
+        var base64Data = base64Asset.Contains(',') ? base64Asset.Split(',')[1] : base64Asset;
         byte[] assetBytes = Convert.FromBase64String(base64Data);
 
         using var ms = new MemoryStream(assetBytes);
-        using var asset = SixLabors.ImageSharp.Image.Load<Rgba32>(ms);
+        using var asset = Image.Load<Rgba32>(ms);
         return (asset.Width, asset.Height);
     }
-
-    public static int? GetAssetPriority(string priorityString)
-    {
-        bool isParsed = int.TryParse(priorityString, out int priority);
-        if(!isParsed)
-        {
-            return null;
-        }
-
-        return priority;
-    }
-
-
-    public static Guid? ParseStringGuid(string guidString)
-    {
-        if (string.IsNullOrEmpty(guidString))
-        {
-            return null;
-        }
-
-        if (Guid.TryParse(guidString, out Guid guid))
-        {
-            return guid;
-        }
-
-        return null;
-    }
-        
-    public static async Task<string> ResizeAssetByNewWidth(string base64Asset, int newWidth)
-    {
-        byte[] assetBytes = Convert.FromBase64String(base64Asset);
-        
-        using (var inputStream = new MemoryStream(assetBytes))
-        using (Image asset = await SixLabors.ImageSharp.Image.LoadAsync(inputStream))
-        {
-            var aspectRatio = (double)asset.Height / asset.Width;
-            int newHeight = (int)(newWidth * aspectRatio);
-
-            asset.Mutate(x => x.Resize(newWidth, newHeight));
-            
-            using (var outputStream = new MemoryStream())
-            {
-                await asset.SaveAsync(outputStream, new JpegEncoder{Quality = 85});
-                return Convert.ToBase64String(outputStream.ToArray());
-            }
-        } 
-    }
     
-    
-    
-    public static string ResizeBase64WithPadding(
-	    DAM.Backend.Data.Models.Asset currentAsset,
-	    int? newWidth = null,
-	    int? newHeight = null)
+    public static string ResizeBase64WithPadding(Asset currentAsset, int? newWidth = null, int? newHeight = null)
     {
 	    if (newWidth is null && newHeight is null)
 		    throw new ArgumentException("At least one of newWidth or newHeight must be provided.");

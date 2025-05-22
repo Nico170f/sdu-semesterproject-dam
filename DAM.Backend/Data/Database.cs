@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using DAM.Backend.Data.Models;
+using DAM.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAM.Backend.Data;
@@ -14,11 +10,11 @@ public sealed class Database : DbContext
     public DbSet<Tag> Tags { get; set; }
     public DbSet<ProductAsset> ProductAssets { get; set; }	
 	public DbSet<AssetTags> AssetTags { get; set; }
+	
 	public Database(DbContextOptions<Database> options) : base(options)
 	{
-		this.Database.EnsureCreated();
+		Database.EnsureCreated();
 	}
-    
 
     public static string GetDatabasePath()
     {
@@ -49,6 +45,7 @@ public sealed class Database : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+	    
         // Configure Asset model
         modelBuilder.Entity<Asset>()
             .Property(i => i.UUID)
@@ -56,7 +53,6 @@ public sealed class Database : DbContext
                 v => v.ToString(),
                 v => Guid.Parse(v)
             );
-        
         
         // Configure Tag model
         modelBuilder.Entity<Tag>()
@@ -74,8 +70,6 @@ public sealed class Database : DbContext
                 v => Guid.Parse(v)
             );
         
-        
-        
         // Configure AssetTags model
         modelBuilder.Entity<AssetTags>()
             .Property(i => i.AssetUUID)
@@ -92,7 +86,7 @@ public sealed class Database : DbContext
             );
         
         modelBuilder.Entity<AssetTags>()
-            .HasKey(it => new { AssetUUID = it.AssetUUID, it.TagUUID });
+            .HasKey(it => new { it.AssetUUID, it.TagUUID });
 
         modelBuilder.Entity<AssetTags>()
             .HasOne<Asset>()
@@ -105,11 +99,6 @@ public sealed class Database : DbContext
             .WithMany()
             .HasForeignKey(it => it.TagUUID)
             .OnDelete(DeleteBehavior.Cascade);
-        
-        
-        
-        
-        
         
         // Configure AssetTags ProductAssets
         modelBuilder.Entity<ProductAsset>()
@@ -127,7 +116,7 @@ public sealed class Database : DbContext
             );
         
         modelBuilder.Entity<ProductAsset>()
-            .HasKey(pi => new { pi.ProductUUID, AssetUUID = pi.AssetUUID });
+            .HasKey(pi => new { pi.ProductUUID, pi.AssetUUID });
         
         modelBuilder.Entity<ProductAsset>()
             .HasOne<Product>()
@@ -140,7 +129,6 @@ public sealed class Database : DbContext
             .WithMany()
             .HasForeignKey(pi => pi.AssetUUID)
             .OnDelete(DeleteBehavior.Cascade);
-        
         
         base.OnModelCreating(modelBuilder);
     }
