@@ -137,78 +137,8 @@ public class ReadService(IHttpClientFactory httpClientFactory) : BaseService(htt
 		List<Guid>? guids = await HttpClient.GetFromJsonAsync<List<Guid>>("api/v1/assets");
 		return guids ?? [];
 	}
-	
 
-	/// <summary>
-	/// Returns a list of assets that are not associated with the specified product.
-	/// </summary>
-	/// <param name="productId">The ID of the product to check for unassigned assets.</param>
-	/// <param name="searchString">Optional search string to filter assets.</param>
-	/// <param name="selectedTagIds">Optional set of selected tag IDs to filter assets.</param>
-	/// <param name="amount">Number of assets to return per page.</param>
-	/// <param name="page">Page number for pagination.</param>
-	/// <returns>A tuple containing a list of assets not present on the product and the total amount.</returns>
-	public async Task<(List<Asset> assetList, int totalAmount)> GetAssetsNotOnProduct(Guid productId, string searchString = "", HashSet<Guid>? selectedTagIds = null, int amount = 20, int page = 1)
-	{
-		string apiUrl = $"api/v1/products/{productId}/assets/gallery?";
-		List<string> parameters = [];
-		
-		if (!string.IsNullOrEmpty(searchString))
-		{
-			parameters.Add($"searchString={searchString}");
-		}
-		
-		if (selectedTagIds is not null && selectedTagIds.Count > 0)
-		{
-			parameters.Add($"selectedTagIds={string.Join(',', selectedTagIds)}");
-		}
-		string amountApiUrl = $"api/v1/products/{productId}/assets/gallery/count";
-		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
-		
-		parameters.Add($"amount={amount}");
-		parameters.Add($"page={page}");
-
-		apiUrl += string.Join('&', parameters);
-		
-		List<Asset>? response = await HttpClient.GetFromJsonAsync<List<Asset>>(apiUrl);
-		return (response ?? [], totalAmount);
-	}
-	
-	/// <summary>
-	/// Returns a paginated list of asset IDs with optional filtering.
-	/// </summary>
-	/// <param name="searchString">Optional search string to filter assets.</param>
-	/// <param name="selectedTags">Optional set of selected tag IDs to filter assets.</param>
-	/// <param name="amount">Number of asset IDs to return per page.</param>
-	/// <param name="page">Page number for pagination.</param>
-	/// <returns>A tuple containing a list of asset IDs and the total amount.</returns>
-	public async Task<(List<Guid> assetIds, int totalAmount)> GetAssetIds(string searchString = "", HashSet<Guid>? selectedTags = null, int amount = 20, int page = 1)
-	{
-		string apiUrl = "api/v1/assets?";
-		List<string> parameters = [];
-		
-		if (!string.IsNullOrEmpty(searchString))
-		{
-			parameters.Add($"searchString={searchString}");
-		}
-		
-		if (selectedTags is not null && selectedTags.Count > 0)
-		{
-			parameters.Add($"selectedTagIds={string.Join(',', selectedTags)}");
-		}
-		string amountApiUrl = "api/v1/assets/count?" + string.Join('&', parameters);
-		int totalAmount = int.Parse(await HttpClient.GetStringAsync(amountApiUrl));
-		
-		parameters.Add($"amount={amount}");
-		parameters.Add($"page={page}");
-
-		apiUrl += string.Join('&', parameters);
-
-		List<Guid>? assetIds = await HttpClient.GetFromJsonAsync<List<Guid>>(apiUrl);
-		return (assetIds ?? [], totalAmount);
-	}
-
-	#endregion
+    #endregion
 
 	#region Products
 

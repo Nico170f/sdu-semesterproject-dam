@@ -197,10 +197,10 @@
                     {
                         <div class="tag-item">
                             <input type="checkbox"
-                                   id="tag-@tag.UUID"
+                                   id="tag-@tag"
                                    class="form-check-input"
-                                   checked="@_selectedTagIds.Contains(tag.UUID)"
-                                   @onchange="(e) => OnTagFilterChanged(tag.UUID, (bool?) e.Value == true)"/>
+                                   checked="@_selectedTags.Contains(tag)"
+                                   @onchange="(e) => OnTagFilterChanged(tag, (bool?) e.Value == true)"/>
                             <label for="tag-@tag.UUID" class="form-check-label">@tag.Name</label>
                         </div>
                     }

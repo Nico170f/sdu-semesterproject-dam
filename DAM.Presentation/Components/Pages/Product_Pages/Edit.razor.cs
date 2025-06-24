@@ -1,5 +1,6 @@
 using DAM.Presentation.Services;
 using DAM.Shared.Models;
+using DAM.Shared.Responses;
 using Microsoft.AspNetCore.Components;
 
 namespace DAM.Presentation.Components.Pages.Product_Pages;
@@ -21,7 +22,7 @@ public partial class Edit : ComponentBase
     private string _searchText = "";
 
     private List<Tag> _allTags = [];
-    private HashSet<Guid> _selectedTagIds = [];
+    private HashSet<Tag> _selectedTags = [];
 
     private bool _showTagMenu = false;
     
@@ -66,23 +67,24 @@ public partial class Edit : ComponentBase
 	    _showTagMenu = !_showTagMenu;
     }
     
-    private void OnTagFilterChanged(Guid tagId, bool isChecked)
+    private void OnTagFilterChanged(Tag tag, bool isChecked)
     {
 	    if (isChecked)
 	    {
-		    _selectedTagIds.Add(tagId);
+		    _selectedTags.Add(tag);
 	    }
 	    else
 	    {
-		    _selectedTagIds.Remove(tagId);
+		    _selectedTags.Remove(tag);
 	    }
 	    UpdateAssetGallery();
     }
 
     private async void UpdateAssetGallery()
     {
-	    (_assetGallery, int totalAmount) = await ReadService.GetAssetsNotOnProduct(_productId, _searchText, _selectedTagIds,amount: _amount, page: _currentPageNumber);
-	    _totalPageCount = (int)Math.Ceiling((totalAmount * 1.0f)/ _amount);
+	    var response = await ReadService.GetAssets(null, _productId, _searchText, _selectedTags,amount: _amount, page: _currentPageNumber);
+	    _totalPageCount = (int)Math.Ceiling(((response?.TotalCount??0) * 1.0f)/ _amount);
+        _assetGallery = response?.Assets ?? [];
 	    StateHasChanged();
     }
     
